@@ -44,7 +44,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [~] Résolution de dépendances + compatibilité version/loader : dépendances requises récursives + choix de la version compatible ✅ ; détection des incompatibilités à faire
 - [ ] Import/export `.mrpack`
 - [ ] Import modpacks CurseForge (`manifest.json`, clé API, gestion des mods non distribuables)
-- [ ] Mises à jour de contenu par instance
+- [x] Mises à jour de contenu par instance (+ activer/désactiver un contenu)
 - [ ] Changement de version d'une instance (avec vérif de compatibilité des mods)
 
 ## Phase 4 — Performance & UX
@@ -123,4 +123,10 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Vérifié : exemple CLI `mods -- fabric@1.21.4 sodium modmenu iris complementary-reimagined faithful-32x` (Fabric API + Placeholder API tirées comme dépendances, Sodium non dupliqué pour Iris), puis `play -- instance:dev-fabric-1-21-4` : le jeu charge Sodium, Iris, Mod Menu. UI testée dans l'aperçu navigateur (mock).
 - Note : l'instance de test « Dev fabric 1.21.4 » existe dans la base réelle (supprimable depuis l'UI).
 - Prochaine étape : mises à jour de contenu par instance, import/export `.mrpack` (modpacks), activer/désactiver un mod.
+- Blocages : Phase 2 toujours en attente de la validation Mojang.
+
+### 2026-10-08 (9)
+- Fait : mises à jour et activation du contenu. Core : `check_updates` (une requête groupée `POST /version_files/update` par type de contenu, releases d’abord puis repli bêta, jamais de retour à une version plus ancienne grâce à `date_published`), `update` (réutilise le plan d’installation : nouvelles dépendances requises installées, ancien fichier remplacé, choix activé/dépendance conservés), `set_enabled` (renommage `x.jar` ↔ `x.jar.disabled`), `install` accepte une version épinglée. Migration 0003 (`enabled`), `installed_at` conservé lors d’une mise à jour. UI : onglet Contenu avec vérification auto à l’ouverture, bandeau « N mises à jour disponibles » + « Tout mettre à jour », mise à jour par ligne (ancienne → nouvelle version), interrupteur pixel par élément, éléments désactivés grisés. Tout est bloqué pendant que le jeu tourne.
+- Vérifié : exemple CLI `mods` dans un dossier de données temporaire (Sodium 0.6.9 et Mod Menu 13.0.2 épinglés → 2 mises à jour détectées puis appliquées, anciens fichiers supprimés, Lithium à jour non touché) ; tests unitaires du renommage `.disabled` ; UI testée dans l’aperçu navigateur (mock).
+- Prochaine étape : import/export `.mrpack` (modpacks Modrinth).
 - Blocages : Phase 2 toujours en attente de la validation Mojang.

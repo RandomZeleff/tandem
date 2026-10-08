@@ -78,3 +78,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 ### D14 · 2026-10-08 · Icônes de loaders dessinées en pixel art maison
 - Vanilla, Fabric, Quilt, Forge, NeoForge ont une icône 12×12 dans le style de la DA (`LoaderIcon` / `LoaderTag` dans `src/components/pixel.tsx`), inspirée des logos officiels sans les copier : cohérent avec D11 et sans question de licence.
 - Statut : validé
+
+### D15 · 2026-10-08 · Mises à jour et désactivation du contenu
+- Désactiver = renommer le fichier en `<nom>.disabled` (convention de Prism / app Modrinth, ignorée par le jeu et par Iris) ; l’état est aussi en base (`enabled`).
+- Une mise à jour cherche la dernière version compatible via le SHA-1 du fichier installé : releases d’abord, bêtas seulement s’il n’existe aucune release compatible, et jamais une version publiée avant celle installée.
+- Une mise à jour conserve les choix du joueur (activé/désactivé, marqué dépendance) et la date d’installation ; ses nouvelles dépendances requises sont installées.
+- Modifier le contenu est refusé tant que le jeu tourne (fichiers verrouillés sous Windows).
+- Statut : validé
