@@ -4,3 +4,8 @@ dist/
 src-tauri/gen/schemas
 .env
 *.log
+
+# Local AI assistant context
+.claude/
+CLAUDE.md
+CLAUDE.local.md
