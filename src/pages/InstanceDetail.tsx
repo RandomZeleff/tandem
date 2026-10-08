@@ -145,7 +145,12 @@ export default function InstanceDetail(props: { instance: Instance }) {
                 <dt class="text-muted">Version</dt>
                 <dd>Minecraft {props.instance.gameVersion}</dd>
                 <dt class="text-muted">Loader</dt>
-                <dd>{loaderLabel(props.instance.loader)}</dd>
+                <dd>
+                  {loaderLabel(props.instance.loader)}
+                  <Show when={props.instance.loaderVersion}>
+                    <span class="font-mono text-xs text-muted"> {props.instance.loaderVersion}</span>
+                  </Show>
+                </dd>
                 <dt class="text-muted">Java</dt>
                 <dd>{props.instance.javaPath ?? "Automatique (fourni par Mojang)"}</dd>
                 <dt class="text-muted">Mémoire</dt>

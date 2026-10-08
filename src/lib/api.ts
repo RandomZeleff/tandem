@@ -28,11 +28,26 @@ export interface VersionList {
   versions: VersionEntry[];
 }
 
+export type Loader = "vanilla" | "fabric" | "quilt" | "forge" | "neoforge";
+
+export interface LoaderVersion {
+  version: string;
+  stable: boolean;
+}
+
+export interface NewInstance {
+  name: string;
+  gameVersion: string;
+  loader?: Loader;
+  /** Latest stable when omitted. */
+  loaderVersion?: string;
+}
+
 export interface Instance {
   id: string;
   name: string;
   gameVersion: string;
-  loader: string;
+  loader: Loader;
   loaderVersion: string | null;
   javaPath: string | null;
   memoryMb: number | null;
@@ -89,10 +104,11 @@ export const api = {
   setSetting: (key: string, value: unknown) => invoke<void>("set_setting", { key, value }),
 
   listVersions: () => invoke<VersionList>("list_versions"),
+  listLoaderVersions: (loader: Loader, gameVersion: string) =>
+    invoke<LoaderVersion[]>("list_loader_versions", { loader, gameVersion }),
 
   listInstances: () => invoke<Instance[]>("list_instances"),
-  createInstance: (name: string, gameVersion: string) =>
-    invoke<Instance>("create_instance", { instance: { name, gameVersion } }),
+  createInstance: (instance: NewInstance) => invoke<Instance>("create_instance", { instance }),
   deleteInstance: (id: string) => invoke<void>("delete_instance", { id }),
   openInstanceFolder: (id: string) => invoke<void>("open_instance_folder", { id }),
   launchInstance: (id: string) => invoke<void>("launch_instance", { id }),

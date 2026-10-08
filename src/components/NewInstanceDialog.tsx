@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createResource, createSignal, For, Show } from "solid-js";
-import { api, errorMessage, type Instance } from "../lib/api";
+import { api, errorMessage, type Instance, type Loader } from "../lib/api";
+import { loaderLabel } from "../lib/format";
 import Dialog from "./Dialog";
 
 interface Props {
@@ -9,11 +10,15 @@ interface Props {
   initialVersion?: string;
 }
 
+const LOADERS: Loader[] = ["vanilla", "fabric", "quilt"];
+
 export default function NewInstanceDialog(props: Props) {
   const [versions] = createResource(api.listVersions);
   const [showSnapshots, setShowSnapshots] = createSignal(false);
   const [name, setName] = createSignal("");
   const [version, setVersion] = createSignal(props.initialVersion ?? "");
+  const [loader, setLoader] = createSignal<Loader>("vanilla");
+  const [loaderVersion, setLoaderVersion] = createSignal("");
   const [error, setError] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
 
@@ -23,6 +28,9 @@ export default function NewInstanceDialog(props: Props) {
     ),
   );
 
+  const loaderQuery = () => (loader() !== "vanilla" && version() ? ([loader(), version()] as const) : null);
+  const [loaderVersions] = createResource(loaderQuery, ([l, v]) => api.listLoaderVersions(l, v));
+
   createEffect(() => {
     const list = versions();
     if (!list) return;
@@ -30,12 +38,28 @@ export default function NewInstanceDialog(props: Props) {
     if (list.versions.find((v) => v.id === version())?.type === "snapshot") setShowSnapshots(true);
   });
 
+  // Preselect the latest stable loader version whenever the list changes.
+  createEffect(() => {
+    const list = loaderVersions.latest ?? [];
+    setLoaderVersion((list.find((v) => v.stable) ?? list[0])?.version ?? "");
+  });
+
+  const loaderReady = () => loader() === "vanilla" || (!loaderVersions.loading && !!loaderVersion());
+  const defaultName = () => `${loader() === "vanilla" ? "Minecraft" : loaderLabel(loader())} ${version()}`;
+
   async function submit(e: SubmitEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
-      props.onCreated(await api.createInstance(name().trim() || `Minecraft ${version()}`, version()));
+      props.onCreated(
+        await api.createInstance({
+          name: name().trim() || defaultName(),
+          gameVersion: version(),
+          loader: loader(),
+          loaderVersion: loader() === "vanilla" ? undefined : loaderVersion(),
+        }),
+      );
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -53,7 +77,7 @@ export default function NewInstanceDialog(props: Props) {
           <input
             id="instance-name"
             class="field text-sm"
-            placeholder={version() ? `Minecraft ${version()}` : "Ma survie"}
+            placeholder={version() ? defaultName() : "Ma survie"}
             maxLength={64}
             value={name()}
             onInput={(e) => setName(e.currentTarget.value)}
@@ -102,6 +126,82 @@ export default function NewInstanceDialog(props: Props) {
           </Show>
         </div>
 
+        <div class="flex flex-col gap-1.5">
+          <span class="text-xs text-muted" id="instance-loader">
+            Loader
+          </span>
+          <div
+            role="radiogroup"
+            aria-labelledby="instance-loader"
+            class="flex w-fit gap-0.5 bg-slate-900 p-[3px] shadow-[inset_0_0_0_1px_var(--color-line)]"
+          >
+            <For each={LOADERS}>
+              {(l) => (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={loader() === l}
+                  class="h-7 px-3 text-[13px]"
+                  classList={{
+                    "bg-slate-600 font-medium text-chalk shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]": loader() === l,
+                    "text-muted hover:text-chalk": loader() !== l,
+                  }}
+                  onClick={() => setLoader(l)}
+                >
+                  {loaderLabel(l)}
+                </button>
+              )}
+            </For>
+          </div>
+        </div>
+
+        <Show when={loader() !== "vanilla"}>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs text-muted" for="instance-loader-version">
+              Version de {loaderLabel(loader())}
+            </label>
+            <Show
+              when={!loaderVersions.error}
+              fallback={
+                <p class="text-sm text-redstone-text">
+                  Impossible de charger les versions de {loaderLabel(loader())} : {errorMessage(loaderVersions.error)}
+                </p>
+              }
+            >
+              <Show
+                when={loaderVersions.loading || (loaderVersions.latest ?? []).length > 0}
+                fallback={
+                  <p class="text-sm text-chalk-2">
+                    {loaderLabel(loader())} n'est pas disponible pour Minecraft {version()}.
+                  </p>
+                }
+              >
+                <select
+                  id="instance-loader-version"
+                  class="field text-sm"
+                  value={loaderVersion()}
+                  onChange={(e) => setLoaderVersion(e.currentTarget.value)}
+                  disabled={loaderVersions.loading}
+                >
+                  <Show when={loaderVersions.loading}>
+                    <option>Chargement…</option>
+                  </Show>
+                  <Show when={!loaderVersions.loading}>
+                    <For each={loaderVersions.latest}>
+                      {(v) => (
+                        <option value={v.version}>
+                          {v.version}
+                          {v.stable ? "" : " (bêta)"}
+                        </option>
+                      )}
+                    </For>
+                  </Show>
+                </select>
+              </Show>
+            </Show>
+          </div>
+        </Show>
+
         <Show when={error()}>
           <p class="text-sm text-redstone-text">{error()}</p>
         </Show>
@@ -110,7 +210,11 @@ export default function NewInstanceDialog(props: Props) {
           <button type="button" class="btn btn-ghost" onClick={props.onClose}>
             Annuler
           </button>
-          <button type="submit" class="btn btn-primary px-corners px-5" disabled={!version() || saving()}>
+          <button
+            type="submit"
+            class="btn btn-primary px-corners px-5"
+            disabled={!version() || !loaderReady() || saving()}
+          >
             Créer
           </button>
         </div>

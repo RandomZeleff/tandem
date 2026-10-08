@@ -5,22 +5,22 @@
  */
 import { emit } from "@tauri-apps/api/event";
 import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
-import type { Account, Instance, LogEntry } from "../lib/api";
+import type { Account, Instance, Loader, LogEntry, NewInstance } from "../lib/api";
 
 const now = Date.now();
 const iso = (hoursAgo: number) => new Date(now - hoursAgo * 3_600_000).toISOString();
 
 const instances: Instance[] = [
-  ["survie-avec-leo", "Survie avec Léo", "26.3", "fabric", iso(20)],
-  ["pack-create", "Pack Create", "1.21.1", "neoforge", iso(70)],
-  ["crea-redstone", "Créa redstone", "26.3", "vanilla", iso(100)],
-  ["nostalgie-1-12", "Nostalgie 1.12", "1.12.2", "vanilla", iso(500)],
-].map(([id, name, gameVersion, loader, lastPlayedAt]) => ({
-  id,
-  name,
-  gameVersion,
-  loader,
-  loaderVersion: null,
+  ["survie-avec-leo", "Survie avec Léo", "26.3", "fabric", "0.19.5", iso(20)],
+  ["pack-create", "Pack Create", "1.21.1", "neoforge", "21.1.77", iso(70)],
+  ["crea-redstone", "Créa redstone", "26.3", "vanilla", null, iso(100)],
+  ["nostalgie-1-12", "Nostalgie 1.12", "1.12.2", "vanilla", null, iso(500)],
+].map(([id, name, gameVersion, loader, loaderVersion, lastPlayedAt]) => ({
+  id: id!,
+  name: name!,
+  gameVersion: gameVersion!,
+  loader: loader as Loader,
+  loaderVersion,
   javaPath: null,
   memoryMb: null,
   jvmArgs: null,
@@ -28,6 +28,14 @@ const instances: Instance[] = [
   createdAt: iso(900),
   lastPlayedAt,
 }));
+
+/** Fabric/Quilt-like answers: nothing before 1.14, a beta on top of stable builds. */
+function fakeLoaderVersions(loader: Loader, gameVersion: string) {
+  if (gameVersion === "1.12.2") return [];
+  return loader === "quilt"
+    ? [{ version: "0.31.0-beta.2", stable: false }, { version: "0.30.1", stable: true }, { version: "0.29.2", stable: true }]
+    : [{ version: "0.19.5", stable: true }, { version: "0.19.4", stable: true }, { version: "0.18.6", stable: true }];
+}
 
 let accounts: Account[] = [
   { id: "a1", kind: "offline", username: "Zeleff", mcUuid: "00000000-0000-3000-8000-000000000000", isActive: true },
@@ -85,6 +93,27 @@ export function installMocks() {
               sha1: "",
             })),
           };
+        case "list_loader_versions":
+          await new Promise((r) => setTimeout(r, 300));
+          return fakeLoaderVersions(args.loader as Loader, args.gameVersion as string);
+        case "create_instance": {
+          const input = args.instance as NewInstance;
+          const created: Instance = {
+            id: input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            name: input.name,
+            gameVersion: input.gameVersion,
+            loader: input.loader ?? "vanilla",
+            loaderVersion: input.loaderVersion ?? null,
+            javaPath: null,
+            memoryMb: null,
+            jvmArgs: null,
+            icon: null,
+            createdAt: new Date().toISOString(),
+            lastPlayedAt: null,
+          };
+          instances.unshift(created);
+          return created;
+        }
         case "launch_instance":
           void fakeLaunch(args.id as string);
           return null;
