@@ -40,6 +40,14 @@ pnpm tauri dev
 
 Roadmap and design notes live in [`docs/`](docs/) (in French).
 
+## Credits
+
+Developed by [Zeleff](https://github.com/RandomZeleff), with the help of [Claude](https://claude.com) (Anthropic) as an AI pair programmer.
+
+## License
+
+[MIT](LICENSE)
+
 ## Disclaimer
 
 Tandem is not an official Minecraft product. It is not approved by or associated with Mojang or Microsoft. You need a legitimate copy of Minecraft: Java Edition to play.
