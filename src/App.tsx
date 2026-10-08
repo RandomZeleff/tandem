@@ -12,6 +12,7 @@ import {
   route,
   setNewInstanceDialog,
 } from "./lib/store";
+import Discover from "./pages/Discover";
 import Home from "./pages/Home";
 import InstanceDetail from "./pages/InstanceDetail";
 import Instances from "./pages/Instances";
@@ -55,7 +56,7 @@ function App() {
               </Show>
             </Match>
             <Match when={route().page === "discover"}>
-              <Soon feature="discover" />
+              <Discover instanceId={(route() as { instanceId?: string }).instanceId} />
             </Match>
             <Match when={route().page === "multi"}>
               <Soon feature="multi" />

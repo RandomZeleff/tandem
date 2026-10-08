@@ -1,16 +1,17 @@
 import { createSignal, For, Match, Show, Switch } from "solid-js";
+import ContentList from "../components/ContentList";
 import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
-import { BlockSlot, Icon, XpBar } from "../components/pixel";
+import { BlockSlot, Icon, LoaderTag, XpBar } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
-import { formatBytes, formatRelative, loaderLabel } from "../lib/format";
+import { formatBytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { blockLook } from "../lib/look";
 import { navigate, refetchInstances } from "../lib/store";
 
-type Tab = "console" | "info";
+type Tab = "console" | "content" | "info";
 
 function stageLabel(p: InstallProgress | undefined): string {
   if (!p || p.stage === "metadata") return "Lecture des métadonnées Mojang…";
@@ -43,6 +44,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "console", label: "Console" },
+    { id: "content", label: "Contenu" },
     { id: "info", label: "Informations" },
   ];
 
@@ -69,7 +71,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
               {props.instance.name}
             </h1>
             <span class="text-[13px] text-chalk-2">
-              Minecraft {props.instance.gameVersion} · {loaderLabel(props.instance.loader)}
+              Minecraft {props.instance.gameVersion} · <LoaderTag loader={props.instance.loader} size={13} />
             </span>
           </div>
           <div class="flex items-stretch gap-2">
@@ -140,13 +142,16 @@ export default function InstanceDetail(props: { instance: Instance }) {
             <Match when={tab() === "console"}>
               <GameConsole instanceId={props.instance.id} />
             </Match>
+            <Match when={tab() === "content"}>
+              <ContentList instanceId={props.instance.id} locked={state().status !== "idle"} />
+            </Match>
             <Match when={tab() === "info"}>
               <dl class="panel px-corners-md grid max-w-xl grid-cols-[auto_1fr] gap-x-8 gap-y-3 p-5 text-sm">
                 <dt class="text-muted">Version</dt>
                 <dd>Minecraft {props.instance.gameVersion}</dd>
                 <dt class="text-muted">Loader</dt>
                 <dd>
-                  {loaderLabel(props.instance.loader)}
+                  <LoaderTag loader={props.instance.loader} />
                   <Show when={props.instance.loaderVersion}>
                     <span class="font-mono text-xs text-muted"> {props.instance.loaderVersion}</span>
                   </Show>

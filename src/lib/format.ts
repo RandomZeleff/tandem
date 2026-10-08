@@ -42,3 +42,10 @@ const LOADERS: Record<string, string> = {
 export function loaderLabel(loader: string): string {
   return LOADERS[loader] ?? loader;
 }
+
+const compact = new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 });
+
+/** `12 345 678` → `12,3 M`. */
+export function formatCount(value: number): string {
+  return compact.format(value);
+}

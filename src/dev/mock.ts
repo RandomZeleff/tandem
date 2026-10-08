@@ -5,7 +5,16 @@
  */
 import { emit } from "@tauri-apps/api/event";
 import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
-import type { Account, Instance, Loader, LogEntry, NewInstance } from "../lib/api";
+import type {
+  Account,
+  ContentKind,
+  InstalledContent,
+  Instance,
+  Loader,
+  LogEntry,
+  NewInstance,
+  SearchHit,
+} from "../lib/api";
 
 const now = Date.now();
 const iso = (hoursAgo: number) => new Date(now - hoursAgo * 3_600_000).toISOString();
@@ -35,6 +44,64 @@ function fakeLoaderVersions(loader: Loader, gameVersion: string) {
   return loader === "quilt"
     ? [{ version: "0.31.0-beta.2", stable: false }, { version: "0.30.1", stable: true }, { version: "0.29.2", stable: true }]
     : [{ version: "0.19.5", stable: true }, { version: "0.19.4", stable: true }, { version: "0.18.6", stable: true }];
+}
+
+type Row = [id: string, title: string, author: string, description: string, downloads: number, categories: string[]];
+
+const hit = ([projectId, title, author, description, downloads, displayCategories]: Row): SearchHit => ({
+  projectId,
+  slug: projectId,
+  title,
+  description,
+  author,
+  downloads,
+  follows: Math.round(downloads / 1000),
+  iconUrl: `https://cdn.modrinth.com/data/${projectId}/icon.png`,
+  displayCategories,
+  dateModified: iso(48),
+});
+
+/** Fake Modrinth catalogue (real project ids, so icons load from the Modrinth CDN). */
+const CATALOGUE: Record<ContentKind, SearchHit[]> = {
+  mod: (
+    [
+      ["P7dR8mSH", "Fabric API", "modmuss50", "Lightweight and modular API providing common hooks for Fabric mods.", 120_000_000, ["fabric", "library"]],
+      ["AANobbMI", "Sodium", "jellysquid3", "The fastest and most compatible rendering optimization mod for Minecraft.", 98_000_000, ["optimization"]],
+      ["YL57xq9U", "Iris Shaders", "coderbot", "A modern shader pack loader compatible with existing OptiFine shader packs.", 82_000_000, ["decoration", "optimization"]],
+      ["mOgUt4GM", "Mod Menu", "Prospector", "Adds a mod menu to view the list of mods you have installed.", 70_000_000, ["utility"]],
+    ] as Row[]
+  ).map(hit),
+  resourcepack: ([["Bq0hLR4Y", "Faithful 32x", "Faithful", "Faithful to the original textures, at twice the resolution.", 4_200_000, ["32x", "vanilla-like"]]] as Row[]).map(hit),
+  shader: ([["HVnmMxH1", "Complementary Shaders - Reimagined", "EminGT", "Enhances your Minecraft experience while staying close to the default art style.", 11_000_000, ["iris", "optifine"]]] as Row[]).map(hit),
+};
+
+const content: Record<string, InstalledContent[]> = {};
+
+function fakeInstall(instanceId: string, projectId: string): InstalledContent[] {
+  const found = Object.entries(CATALOGUE)
+    .flatMap(([kind, hits]) => hits.map((h) => ({ kind: kind as ContentKind, h })))
+    .find(({ h }) => h.projectId === projectId || h.title.toLowerCase().startsWith(projectId));
+  if (!found) throw new Error(`unknown project ${projectId}`);
+  const make = (h: SearchHit, kind: ContentKind, isDependency: boolean): InstalledContent => ({
+    projectId: h.projectId,
+    versionId: "v1",
+    kind,
+    title: h.title,
+    versionNumber: "1.0.0+1.21.4",
+    fileName: `${h.projectId}.jar`,
+    sha1: "0",
+    iconUrl: h.iconUrl,
+    isDependency,
+    installedAt: new Date().toISOString(),
+  });
+  const list = (content[instanceId] ??= []);
+  const added = [make(found.h, found.kind, false)];
+  // Mod Menu pulls Fabric API, like the real dependency resolution.
+  if (found.h.projectId === "mOgUt4GM" && !list.some((c) => c.projectId === "P7dR8mSH")) {
+    added.push(make(CATALOGUE.mod[0], "mod", true));
+  }
+  list.push(...added);
+  return added;
 }
 
 let accounts: Account[] = [
@@ -114,6 +181,20 @@ export function installMocks() {
           instances.unshift(created);
           return created;
         }
+        case "search_content": {
+          await new Promise((r) => setTimeout(r, 250));
+          const q = (args.query as string).toLowerCase();
+          const hits = CATALOGUE[args.kind as ContentKind].filter((h) => h.title.toLowerCase().includes(q));
+          return { hits, offset: 0, limit: 20, totalHits: hits.length };
+        }
+        case "list_content":
+          return content[args.instanceId as string] ?? [];
+        case "install_content":
+          await new Promise((r) => setTimeout(r, 900));
+          return fakeInstall(args.instanceId as string, args.projectId as string);
+        case "remove_content":
+          content[args.instanceId as string] = (content[args.instanceId as string] ?? []).filter((c) => c.projectId !== args.projectId);
+          return null;
         case "launch_instance":
           void fakeLaunch(args.id as string);
           return null;

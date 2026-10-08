@@ -1,12 +1,6 @@
 import Scene from "../components/Scene";
 
 const COPY = {
-  discover: {
-    eyebrow: "DÉCOUVRIR",
-    title: "Mods, shaders et packs de textures",
-    text: "Recherche sur Modrinth, filtrée d'office sur la version et le loader de ton instance, avec installation en un clic.",
-    scene: "day" as const,
-  },
   multi: {
     eyebrow: "JOUER À DEUX",
     title: "Ton monde, ton pote. Zéro serveur.",

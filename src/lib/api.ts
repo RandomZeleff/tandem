@@ -57,6 +57,41 @@ export interface Instance {
   lastPlayedAt: string | null;
 }
 
+export type ContentKind = "mod" | "resourcepack" | "shader";
+
+export interface SearchHit {
+  projectId: string;
+  slug: string;
+  title: string;
+  description: string;
+  author: string;
+  downloads: number;
+  follows: number;
+  iconUrl: string | null;
+  displayCategories: string[];
+  dateModified: string;
+}
+
+export interface SearchResults {
+  hits: SearchHit[];
+  offset: number;
+  limit: number;
+  totalHits: number;
+}
+
+export interface InstalledContent {
+  projectId: string;
+  versionId: string;
+  kind: ContentKind;
+  title: string;
+  versionNumber: string;
+  fileName: string;
+  sha1: string;
+  iconUrl: string | null;
+  isDependency: boolean;
+  installedAt: string;
+}
+
 export interface Account {
   id: string;
   kind: "microsoft" | "offline";
@@ -114,6 +149,14 @@ export const api = {
   launchInstance: (id: string) => invoke<void>("launch_instance", { id }),
   stopInstance: (id: string) => invoke<boolean>("stop_instance", { id }),
   runningInstances: () => invoke<string[]>("running_instances"),
+
+  searchContent: (query: string, kind: ContentKind, instanceId: string | null, offset = 0) =>
+    invoke<SearchResults>("search_content", { query, kind, instanceId, offset }),
+  listContent: (instanceId: string) => invoke<InstalledContent[]>("list_content", { instanceId }),
+  installContent: (instanceId: string, projectId: string) =>
+    invoke<InstalledContent[]>("install_content", { instanceId, projectId }),
+  removeContent: (instanceId: string, projectId: string) =>
+    invoke<void>("remove_content", { instanceId, projectId }),
 
   listAccounts: () => invoke<Account[]>("list_accounts"),
   addOfflineAccount: (username: string) => invoke<Account>("add_offline_account", { username }),
