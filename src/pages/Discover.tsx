@@ -237,15 +237,8 @@ export default function Discover(props: { instanceId?: string }) {
 
       <Show when={modpacks()}>
         <div class="panel px-corners-md flex items-center justify-between gap-4 p-4">
-          <p class="flex flex-wrap items-center gap-1.5 text-sm text-chalk-2">
-            Chaque modpack crée sa propre instance. Pour l'instant :
-            <span class="inline-flex items-center gap-1">
-              <LoaderIcon loader="fabric" size={12} /> Fabric
-            </span>
-            et
-            <span class="inline-flex items-center gap-1">
-              <LoaderIcon loader="quilt" size={12} /> Quilt
-            </span>
+          <p class="text-sm text-chalk-2">
+            Chaque modpack crée sa propre instance, avec la bonne version du jeu et du loader.
           </p>
           <button class="btn px-corners shrink-0" disabled={importing()} onClick={() => void importFile()}>
             <Icon name="folder" size={12} />

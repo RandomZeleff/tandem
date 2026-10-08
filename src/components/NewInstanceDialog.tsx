@@ -11,7 +11,7 @@ interface Props {
   initialVersion?: string;
 }
 
-const LOADERS: Loader[] = ["vanilla", "fabric", "quilt"];
+const LOADERS: Loader[] = ["vanilla", "fabric", "quilt", "forge", "neoforge"];
 
 export default function NewInstanceDialog(props: Props) {
   const [versions] = createResource(api.listVersions);
@@ -39,10 +39,10 @@ export default function NewInstanceDialog(props: Props) {
     if (list.versions.find((v) => v.id === version())?.type === "snapshot") setShowSnapshots(true);
   });
 
-  // Preselect the latest stable loader version whenever the list changes.
+  // Preselect the recommended (else latest stable) loader version whenever the list changes.
   createEffect(() => {
     const list = loaderVersions.latest ?? [];
-    setLoaderVersion((list.find((v) => v.stable) ?? list[0])?.version ?? "");
+    setLoaderVersion((list.find((v) => v.recommended) ?? list.find((v) => v.stable) ?? list[0])?.version ?? "");
   });
 
   const loaderReady = () => loader() === "vanilla" || (!loaderVersions.loading && !!loaderVersion());
@@ -193,7 +193,7 @@ export default function NewInstanceDialog(props: Props) {
                       {(v) => (
                         <option value={v.version}>
                           {v.version}
-                          {v.stable ? "" : " (bêta)"}
+                          {v.recommended ? " (recommandée)" : v.stable ? "" : " (bêta)"}
                         </option>
                       )}
                     </For>

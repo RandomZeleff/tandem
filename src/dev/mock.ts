@@ -44,10 +44,13 @@ const instances: Instance[] = [
 
 /** Fabric/Quilt-like answers: nothing before 1.14, a beta on top of stable builds. */
 function fakeLoaderVersions(loader: Loader, gameVersion: string) {
+  const v = (version: string, stable = true, recommended = false) => ({ version, stable, recommended });
+  if (loader === "forge") return [v("66.0.9"), v("66.0.4", true, true), v("66.0.1")];
+  if (loader === "neoforge") return [v("26.3.0.58-beta", false), v("26.3.0.40-beta", false)];
   if (gameVersion === "1.12.2") return [];
   return loader === "quilt"
-    ? [{ version: "0.31.0-beta.2", stable: false }, { version: "0.30.1", stable: true }, { version: "0.29.2", stable: true }]
-    : [{ version: "0.19.5", stable: true }, { version: "0.19.4", stable: true }, { version: "0.18.6", stable: true }];
+    ? [v("0.31.0-beta.2", false), v("0.30.1"), v("0.29.2")]
+    : [v("0.19.5"), v("0.19.4"), v("0.18.6")];
 }
 
 type Row = [id: string, title: string, author: string, description: string, downloads: number, categories: string[]];

@@ -33,6 +33,8 @@ export type Loader = "vanilla" | "fabric" | "quilt" | "forge" | "neoforge";
 export interface LoaderVersion {
   version: string;
   stable: boolean;
+  /** Picked by the loader's team for this game version (Forge). */
+  recommended: boolean;
 }
 
 export interface NewInstance {
