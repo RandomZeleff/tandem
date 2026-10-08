@@ -39,7 +39,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 ## Phase 3 — Loaders & contenu
 
 - [x] Fabric / Quilt (API meta, simple)
-- [ ] NeoForge / Forge (exécution des installers / processors)
+- [x] NeoForge / Forge (exécution des installers / processors) — Forge 1.12.2 → actuel, NeoForge 1.20.2 → actuel
 - [~] Client API Modrinth : recherche + installation mods, shaders, resource packs, modpacks ✅ ; datapacks (par monde) à faire
 - [~] Résolution de dépendances + compatibilité version/loader : dépendances requises récursives + choix de la version compatible ✅ ; détection des incompatibilités à faire
 - [x] Import/export `.mrpack` (+ installation de modpacks depuis Découvrir ; Fabric/Quilt uniquement)
@@ -135,4 +135,10 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Fait : modpacks Modrinth. Core `content::mrpack` : lecture de l’index, installation (fichiers via le store, filtrage `env.client`, liste blanche de domaines de la spec, chemins vérifiés contre le « zip slip », `overrides/` puis `client-overrides/`), reconnaissance des fichiers Modrinth par SHA-1 (`POST /version_files` + `GET /projects`) pour que mises à jour / interrupteurs marchent sur un pack, export (contenu Modrinth activé référencé par URL, reste en `overrides/` sauf mondes, logs, caches, fichiers `.disabled`). Migration 0004 : origine du pack sur l’instance (projet, version) + icône. App : `modpack.rs` crée l’instance d’abord (progression visible), la supprime si l’installation échoue ; événements `instances://changed` et `install://finished`. Plugin `dialog` pour choisir / enregistrer un `.mrpack`. UI : onglet Modpacks dans Découvrir (Installer → nouvelle instance, « Ouvrir » si déjà installé), « Importer un .mrpack » (Découvrir + Instances), « Exporter » dans l’onglet Contenu, ligne Modpack dans Informations, icône du pack à la place du bloc.
 - Vérifié : exemple CLI `modpack -- fabulously-optimized` (51 fichiers, tous reconnus comme contenu), export puis réimport de l’export, lancement : 148 mods chargés, menu atteint. Tests : chemins dangereux, domaines, overrides, cibles. UI testée dans l’aperçu navigateur (mock).
 - Prochaine étape : mises à jour de modpack (nouvelle version du pack), puis NeoForge/Forge (beaucoup de modpacks en dépendent).
+- Blocages : Phase 2 toujours en attente de la validation Mojang.
+
+### 2026-10-08 (11)
+- Fait : Forge et NeoForge. Core `meta::forge` : listes de versions (NeoForge via l’API Maven avec décodage `21.1.x` → 1.21.1 et `26.3.0.x` → 26.3 ; Forge via `maven-metadata.xml` + `promotions_slim.json` pour la version recommandée), téléchargement de l’installeur (SHA-1 du Maven), lecture de `version.json` / `install_profile.json`, extraction du dossier `maven/` de l’installeur, exécution des processors côté client (variables `{…}` / `[coords]` / fichiers `/data/…`, `Main-Class` lu dans le manifest, vérification des SHA-1 de sortie, marqueur `.processed` pour ne les lancer qu’une fois). Profil fusionné comme Fabric ; `minecraftArguments` des vieux profils (Forge 1.12.2) pris en compte. Étape de progression `processing`. Modpacks Forge/NeoForge autorisés (import, export, recherche). UI : Forge et NeoForge dans « Nouvelle instance », version recommandée présélectionnée.
+- Vérifié de bout en bout (exemple CLI `play`) : NeoForge 21.1.256 (1.21.1), Forge 47.4.10 (1.20.1), Forge 36.2.34 (1.16.5, Java 8), Forge 14.23.5.2859 (1.12.2, launchwrapper) atteignent le menu ; relancement sans processors (< 1 s de préparation). Modpack « Cobblemon Official Modpack [NeoForge] » installé depuis Modrinth et lancé jusqu’à l’écran titre.
+- Prochaine étape : mises à jour de modpack (nouvelle version du pack), puis Phase 4 (presets JVM, RAM auto).
 - Blocages : Phase 2 toujours en attente de la validation Mojang.
