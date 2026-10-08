@@ -44,8 +44,27 @@ impl DataDir {
         self.root.join("assets")
     }
 
+    /// Maven-layout library jars shared by every version.
+    pub fn libraries(&self) -> PathBuf {
+        self.root.join("libraries")
+    }
+
+    /// One folder per game version: `<id>.json`, `<id>.jar`, extracted natives.
+    pub fn versions(&self) -> PathBuf {
+        self.root.join("versions")
+    }
+
+    pub fn version_dir(&self, id: &str) -> PathBuf {
+        self.versions().join(id)
+    }
+
     pub fn instances(&self) -> PathBuf {
         self.root.join("instances")
+    }
+
+    /// Game directory (`.minecraft` equivalent) of an instance.
+    pub fn instance_dir(&self, id: &str) -> PathBuf {
+        self.instances().join(id)
     }
 
     pub fn java(&self) -> PathBuf {
@@ -65,6 +84,8 @@ impl DataDir {
         for dir in [
             self.store(),
             self.assets(),
+            self.libraries(),
+            self.versions(),
             self.instances(),
             self.java(),
             self.cache(),

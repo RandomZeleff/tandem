@@ -1,11 +1,20 @@
 //! Launcher business logic, independent of Tauri.
 
+pub mod account;
 pub mod auth;
+pub mod context;
 pub mod db;
+pub mod download;
 pub mod error;
+pub mod install;
+pub mod instance;
+pub mod java;
+pub mod launch;
 pub mod logging;
+pub mod meta;
 pub mod paths;
 
+pub use context::Context;
 pub use error::{Error, Result};
 
 pub fn version() -> &'static str {
