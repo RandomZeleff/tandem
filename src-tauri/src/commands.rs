@@ -2,7 +2,7 @@ use serde::Serialize;
 use serde_json::Value;
 use tandem_core::account::Account;
 use tandem_core::content::modrinth::{self, SearchFilter, SearchResults};
-use tandem_core::content::{self, ContentKind, InstalledContent};
+use tandem_core::content::{self, ContentKind, ContentUpdate, InstalledContent};
 use tandem_core::instance::{self, Instance, NewInstance};
 use tandem_core::logging::LogEntry;
 use tandem_core::meta::loader::{self, Loader, LoaderVersion};
@@ -139,7 +139,45 @@ pub async fn install_content(
     project_id: String,
 ) -> CommandResult<Vec<InstalledContent>> {
     let instance = state.ctx.db.get_instance(&instance_id).await?;
-    Ok(content::install(&state.ctx, &instance, &project_id).await?)
+    Ok(content::install(&state.ctx, &instance, &project_id, None).await?)
+}
+
+#[tauri::command]
+pub async fn check_content_updates(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<ContentUpdate>> {
+    let instance = state.ctx.db.get_instance(&instance_id).await?;
+    Ok(content::check_updates(&state.ctx, &instance).await?)
+}
+
+/// Updates the given projects, or every outdated one when `project_ids` is absent.
+#[tauri::command]
+pub async fn update_content(
+    state: State<'_, AppState>,
+    instance_id: String,
+    project_ids: Option<Vec<String>>,
+) -> CommandResult<Vec<InstalledContent>> {
+    if state.games.is_busy(&instance_id) {
+        return Err(CommandError::msg("stop the game before updating content"));
+    }
+    let instance = state.ctx.db.get_instance(&instance_id).await?;
+    Ok(content::update(&state.ctx, &instance, project_ids.as_deref()).await?)
+}
+
+#[tauri::command]
+pub async fn set_content_enabled(
+    state: State<'_, AppState>,
+    instance_id: String,
+    project_id: String,
+    enabled: bool,
+) -> CommandResult<InstalledContent> {
+    if state.games.is_busy(&instance_id) {
+        return Err(CommandError::msg(
+            "stop the game before enabling or disabling content",
+        ));
+    }
+    Ok(content::set_enabled(&state.ctx, &instance_id, &project_id, enabled).await?)
 }
 
 #[tauri::command]

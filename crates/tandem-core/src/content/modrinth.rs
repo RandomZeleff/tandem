@@ -1,5 +1,7 @@
 //! Modrinth API v2 client (https://docs.modrinth.com/api/).
 
+use std::collections::HashMap;
+
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
@@ -63,6 +65,9 @@ pub struct Version {
     pub project_id: String,
     pub version_number: String,
     pub version_type: String,
+    /// RFC 3339 in UTC, so string order is chronological.
+    #[serde(default)]
+    pub date_published: String,
     #[serde(default)]
     pub files: Vec<VersionFile>,
     #[serde(default)]
@@ -190,6 +195,62 @@ pub async fn project_versions(
         }
     }
     get(ctx, url).await
+}
+
+/// Several versions at once (unknown ids are skipped by the API).
+pub async fn versions(ctx: &Context, ids: &[String]) -> Result<Vec<Version>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut url = url(&["versions"])?;
+    url.query_pairs_mut()
+        .append_pair("ids", &serde_json::to_string(ids)?);
+    get(ctx, url).await
+}
+
+#[derive(Serialize)]
+struct UpdateQuery<'a> {
+    hashes: &'a [String],
+    algorithm: &'static str,
+    game_versions: [&'a str; 1],
+    #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    loaders: &'a [&'a str],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    version_types: Option<[&'static str; 1]>,
+}
+
+/// Latest compatible version for each file SHA-1, in one request. Files Modrinth does
+/// not know, or with nothing compatible, are absent from the result.
+pub async fn latest_versions(
+    ctx: &Context,
+    sha1s: &[String],
+    game_version: &str,
+    loaders: &[&str],
+    releases_only: bool,
+) -> Result<HashMap<String, Version>> {
+    if sha1s.is_empty() {
+        return Ok(HashMap::new());
+    }
+    let url = url(&["version_files", "update"])?;
+    let response = ctx
+        .http
+        .post(url.as_str())
+        .json(&UpdateQuery {
+            hashes: sha1s,
+            algorithm: "sha1",
+            game_versions: [game_version],
+            loaders,
+            version_types: releases_only.then_some(["release"]),
+        })
+        .send()
+        .await?;
+    if !response.status().is_success() {
+        return Err(Error::HttpStatus {
+            url: url.to_string(),
+            status: response.status().as_u16(),
+        });
+    }
+    Ok(response.json().await?)
 }
 
 #[cfg(test)]
