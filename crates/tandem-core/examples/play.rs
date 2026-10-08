@@ -1,6 +1,8 @@
 //! Dev tool: install a version and launch it offline, without the UI.
 //!
-//! cargo run -p tandem-core --example play -- <[fabric@|quilt@]version | instance:<id>> [username] [seconds]
+//! cargo run -p tandem-core --example play -- <[loader@]version | instance:<id>> [username] [seconds]
+//!
+//! `loader` is `fabric`, `quilt`, `forge` or `neoforge`.
 //!
 //! Uses `TANDEM_DATA_DIR` if set. When `seconds` is given, the game is killed after that delay.
 
@@ -47,7 +49,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let versions = meta::loader::list_versions(&ctx, loader, game_version).await?;
             let latest = versions
                 .iter()
-                .find(|v| v.stable)
+                .find(|v| v.recommended)
+                .or_else(|| versions.iter().find(|v| v.stable))
                 .ok_or("no loader version")?;
             println!("{loader} {}", latest.version);
             Some(latest.version.clone())

@@ -10,6 +10,7 @@ use crate::download::{self, DownloadTask, Progress};
 use crate::error::{Error, Result};
 use crate::instance::Instance;
 use crate::java;
+use crate::meta::forge;
 use crate::meta::loader::{self, Loader};
 use crate::meta::rules::Environment;
 use crate::meta::version::{LibraryFile, VersionJson};
@@ -21,6 +22,8 @@ pub enum Stage {
     Metadata,
     Downloading,
     Finalizing,
+    /// Running the Forge / NeoForge installer steps (first launch only).
+    Processing,
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -87,12 +90,24 @@ where
 
     let env = Environment::current();
     let mut version = meta::load_version(ctx, target.game_version).await?;
+    let mut forge_install = None;
     if target.loader != Loader::Vanilla {
         let loader_version = target
             .loader_version
             .ok_or_else(|| Error::InvalidInput(format!("no {} version selected", target.loader)))?;
-        let profile =
-            loader::load_profile(ctx, target.loader, target.game_version, loader_version).await?;
+        let profile = match target.loader {
+            Loader::Forge | Loader::NeoForge => {
+                let install =
+                    forge::load(ctx, target.loader, target.game_version, loader_version).await?;
+                let profile = install.profile.clone();
+                forge_install = Some(install);
+                profile
+            }
+            _ => {
+                loader::load_profile(ctx, target.loader, target.game_version, loader_version)
+                    .await?
+            }
+        };
         tracing::info!(profile = %profile.id, "applying loader profile");
         version.apply_loader(profile);
     }
@@ -107,7 +122,10 @@ where
         if let Some(file) = library.artifact() {
             let dest = libraries_dir.join(&file.path);
             classpath.push(dest.clone());
-            tasks.push(library_task(file, dest));
+            // Forge leaves the URL empty for jars its processors generate.
+            if !file.url.is_empty() {
+                tasks.push(library_task(file, dest));
+            }
         }
         if let Some(file) = library.native_artifact(&env) {
             let dest = libraries_dir.join(&file.path);
@@ -121,12 +139,26 @@ where
         }
     }
 
+    // Libraries the Forge installer's processors run with (not on the game classpath).
+    if let Some(install) = &forge_install {
+        for library in install
+            .installer_libraries
+            .iter()
+            .filter(|l| l.is_allowed(&env))
+        {
+            if let Some(file) = library.artifact().filter(|f| !f.url.is_empty()) {
+                let dest = libraries_dir.join(&file.path);
+                tasks.push(library_task(file, dest));
+            }
+        }
+    }
+
     let client = &version.downloads.client;
     let client_jar = version_dir.join(format!("{}.jar", version.id));
     classpath.push(client_jar.clone());
     tasks.push(artifact_task(
         &client.url,
-        client_jar,
+        client_jar.clone(),
         &client.sha1,
         client.size,
     ));
@@ -160,6 +192,19 @@ where
 
     stage(Stage::Finalizing);
     java::finalize_runtime(&runtime).await?;
+    if let Some(install) = &forge_install {
+        if !install.is_processed().await {
+            stage(Stage::Processing);
+        }
+        install
+            .run_processors(&forge::ProcessorEnv {
+                java: &runtime.java_executable,
+                client_jar: &client_jar,
+                game_version: target.game_version,
+                libraries: &libraries_dir,
+            })
+            .await?;
+    }
 
     let natives_dir = version_dir.join("natives");
     let game_assets = legacy_assets_dir(ctx, &assets, &version.assets, game_dir);

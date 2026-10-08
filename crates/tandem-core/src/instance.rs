@@ -59,7 +59,8 @@ pub async fn create(ctx: &Context, mut new: NewInstance) -> Result<Instance> {
                 Some(v) => available.into_iter().find(|a| a.version == v),
                 None => available
                     .iter()
-                    .find(|a| a.stable)
+                    .find(|a| a.recommended)
+                    .or_else(|| available.iter().find(|a| a.stable))
                     .or(available.first())
                     .cloned(),
             };

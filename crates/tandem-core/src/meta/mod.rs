@@ -1,5 +1,6 @@
 //! Mojang metadata: version manifest, version JSONs and asset indexes.
 
+pub mod forge;
 pub mod loader;
 pub mod rules;
 pub mod version;

@@ -104,10 +104,9 @@ impl PackIndex {
             ("forge", Loader::Forge),
         ] {
             if let Some(version) = self.dependencies.get(key) {
-                if matches!(loader, Loader::Forge | Loader::NeoForge) {
-                    return Err(Error::LoaderNotSupported(loader.to_string()));
-                }
-                return Ok((game, loader, Some(version.clone())));
+                // Some Forge packs write `1.20.1-47.2.0`; Tandem stores the Forge part only.
+                let version = version.strip_prefix(&format!("{game}-")).unwrap_or(version);
+                return Ok((game, loader, Some(version.to_owned())));
             }
         }
         Ok((game, Loader::Vanilla, None))
@@ -185,7 +184,7 @@ pub async fn download(ctx: &Context, project_id: &str) -> Result<DownloadedPack>
     let version = versions
         .into_iter()
         .nth(release.unwrap_or(0))
-        .ok_or_else(|| Error::LoaderNotSupported(format!("{} (Forge/NeoForge)", project.title)))?;
+        .ok_or_else(|| Error::InvalidInput(format!("{} has no version", project.title)))?;
     let file = version
         .primary_file()
         .ok_or_else(|| Error::InvalidInput(format!("{} has no file", project.title)))?;
@@ -425,8 +424,13 @@ pub async fn export(ctx: &Context, instance: &Instance, dest: &Path, version: &s
         (Loader::Quilt, Some(v)) => {
             dependencies.insert("quilt-loader".into(), v.clone());
         }
-        (Loader::Vanilla, _) => {}
-        (other, _) => return Err(Error::LoaderNotSupported(other.to_string())),
+        (Loader::Forge, Some(v)) => {
+            dependencies.insert("forge".into(), v.clone());
+        }
+        (Loader::NeoForge, Some(v)) => {
+            dependencies.insert("neoforge".into(), v.clone());
+        }
+        (Loader::Vanilla, _) | (_, None) => {}
     }
     let index = PackIndex {
         format_version: 1,
@@ -534,7 +538,21 @@ mod tests {
             &json.replace(r#""fabric-loader":"0.16.10""#, r#""neoforge":"21.1.77""#),
         )
         .unwrap();
-        assert!(matches!(neo.target(), Err(Error::LoaderNotSupported(_))));
+        let (_, loader, version) = neo.target().unwrap();
+        assert_eq!(
+            (loader, version.as_deref()),
+            (Loader::NeoForge, Some("21.1.77"))
+        );
+
+        let forge: PackIndex = serde_json::from_str(
+            &json.replace(r#""fabric-loader":"0.16.10""#, r#""forge":"1.21.4-54.0.1""#),
+        )
+        .unwrap();
+        let (_, loader, version) = forge.target().unwrap();
+        assert_eq!(
+            (loader, version.as_deref()),
+            (Loader::Forge, Some("54.0.1"))
+        );
     }
 
     #[test]

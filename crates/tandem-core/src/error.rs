@@ -41,6 +41,8 @@ pub enum Error {
         loader: String,
         game_version: String,
     },
+    #[error("installer step {processor} failed:\n{output}")]
+    ProcessorFailed { processor: String, output: String },
     #[error("mods need an instance with a mod loader")]
     ModLoaderRequired,
     #[error("no version of {title} is compatible with Minecraft {game_version}")]

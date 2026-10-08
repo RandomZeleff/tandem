@@ -16,6 +16,7 @@ type Tab = "console" | "content" | "info";
 function stageLabel(p: InstallProgress | undefined): string {
   if (!p || p.stage === "metadata") return "Lecture des métadonnées Mojang…";
   if (p.stage === "finalizing") return "Finalisation…";
+  if (p.stage === "processing") return "Préparation du loader (premier lancement, ~30 s)…";
   if (p.totalFiles === 0) return "Vérification des fichiers…";
   return `${p.doneFiles} / ${p.totalFiles} fichiers · ${formatBytes(p.doneBytes)} / ${formatBytes(p.totalBytes)}`;
 }

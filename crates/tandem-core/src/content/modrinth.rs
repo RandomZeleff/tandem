@@ -13,8 +13,8 @@ use crate::meta::loader::Loader;
 
 const API: &str = "https://api.modrinth.com/v2";
 
-/// Modpack loaders Tandem can launch (Forge / NeoForge are not supported yet).
-pub const MODPACK_LOADERS: &[&str] = &["fabric", "quilt"];
+/// Modpack loaders Tandem can launch.
+pub const MODPACK_LOADERS: &[&str] = &["fabric", "quilt", "forge", "neoforge"];
 
 /// Searchable project types: instance content plus modpacks.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -369,7 +369,7 @@ mod tests {
         };
         assert_eq!(
             facets(&modpacks),
-            r#"[["project_type:modpack"],["categories:fabric","categories:quilt"]]"#
+            r#"[["project_type:modpack"],["categories:fabric","categories:quilt","categories:forge","categories:neoforge"]]"#
         );
     }
 

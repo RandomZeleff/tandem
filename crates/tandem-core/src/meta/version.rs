@@ -206,6 +206,9 @@ impl VersionJson {
     /// (e.g. a newer ASM).
     pub fn apply_loader(&mut self, profile: LoaderProfile) {
         self.main_class = profile.main_class;
+        if profile.minecraft_arguments.is_some() {
+            self.minecraft_arguments = profile.minecraft_arguments;
+        }
         if let Some(extra) = profile.arguments {
             let arguments = self.arguments.get_or_insert_with(Arguments::default);
             arguments.jvm.extend(extra.jvm);

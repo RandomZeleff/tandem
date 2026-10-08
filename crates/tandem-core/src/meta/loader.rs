@@ -1,5 +1,6 @@
 //! Mod loaders. Fabric and Quilt publish launcher profiles that inherit from the
 //! vanilla version JSON: we only add their libraries, main class and arguments.
+//! Forge and NeoForge go through their installer (see [`super::forge`]).
 
 use std::cmp::Ordering;
 use std::fmt;
@@ -58,6 +59,8 @@ impl fmt::Display for Loader {
 pub struct LoaderVersion {
     pub version: String,
     pub stable: bool,
+    /// Picked by the loader's team for this game version (Forge only).
+    pub recommended: bool,
 }
 
 #[derive(Deserialize)]
@@ -81,6 +84,9 @@ pub struct LoaderProfile {
     pub main_class: String,
     #[serde(default)]
     pub arguments: Option<Arguments>,
+    /// Pre-1.13 profiles (Forge 1.12.2) replace the whole legacy argument string.
+    #[serde(default)]
+    pub minecraft_arguments: Option<String>,
     #[serde(default)]
     pub libraries: Vec<Library>,
 }
@@ -101,6 +107,13 @@ pub async fn list_versions(
     loader: Loader,
     game_version: &str,
 ) -> Result<Vec<LoaderVersion>> {
+    match loader {
+        Loader::Vanilla => return Ok(Vec::new()),
+        Loader::Forge | Loader::NeoForge => {
+            return super::forge::list_versions(ctx, loader, game_version).await
+        }
+        Loader::Fabric | Loader::Quilt => {}
+    }
     let url = meta_url(loader, &["versions", "loader", game_version])?;
     let bytes = match fetch_bytes(&ctx.http, url.as_str(), None).await {
         Ok(bytes) => bytes,
@@ -120,6 +133,7 @@ fn parse_versions(bytes: &[u8]) -> serde_json::Result<Vec<LoaderVersion>> {
                 .loader
                 .stable
                 .unwrap_or_else(|| !e.loader.version.contains('-')),
+            recommended: false,
             version: e.loader.version,
         })
         .collect();
@@ -130,7 +144,7 @@ fn parse_versions(bytes: &[u8]) -> serde_json::Result<Vec<LoaderVersion>> {
 
 /// Semver-like ordering: `0.9.0 < 0.10.0-beta.2 < 0.10.0-beta.10 < 0.10.0`.
 /// Build metadata (`+build.12`) is ignored.
-fn compare_versions(a: &str, b: &str) -> Ordering {
+pub(crate) fn compare_versions(a: &str, b: &str) -> Ordering {
     fn split(v: &str) -> (&str, Option<&str>) {
         let v = v.split('+').next().unwrap_or(v);
         match v.split_once('-') {
@@ -219,11 +233,13 @@ mod tests {
             [
                 LoaderVersion {
                     version: "0.16.11".into(),
-                    stable: false
+                    stable: false,
+                    recommended: false
                 },
                 LoaderVersion {
                     version: "0.16.10".into(),
-                    stable: true
+                    stable: true,
+                    recommended: false
                 }
             ]
         );

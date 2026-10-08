@@ -115,7 +115,7 @@ export interface Account {
   isActive: boolean;
 }
 
-export type InstallStage = "metadata" | "downloading" | "finalizing";
+export type InstallStage = "metadata" | "downloading" | "finalizing" | "processing";
 
 export interface InstallProgress {
   instanceId: string;
