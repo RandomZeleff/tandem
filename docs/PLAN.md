@@ -18,15 +18,15 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 ## Phase 1 — Lancer du vanilla
 
-- [ ] Client piston-meta : `version_manifest_v2.json` → JSON de version
-- [ ] Téléchargement : client.jar, libraries (règles OS/arch), natives, assets (index + objets)
-- [ ] Moteur de téléchargement : parallèle borné, retry, reprise, vérif SHA1, progression → UI
-- [ ] Store content-addressed (fichiers rangés par hash) + hardlinks vers les instances
-- [ ] Gestion Java : détection des JRE installés + téléchargement auto (runtimes Mojang) selon la version
-- [ ] Construction de la ligne de commande (arguments JVM/jeu, classpath, placeholders)
-- [ ] Lancement du process, capture stdout/stderr, détection crash
-- [ ] Compte offline (dev) pour tester sans auth
-- [ ] UI : liste des instances, création (choix version), bouton Jouer, barre de progression
+- [x] Client piston-meta : `version_manifest_v2.json` → JSON de version (cache hors ligne)
+- [x] Téléchargement : client.jar, libraries (règles OS/arch), natives, assets (index + objets, layouts legacy `virtual`/`resources`)
+- [x] Moteur de téléchargement : parallèle borné (16), retry avec backoff, reprise `.part`, vérif SHA1, progression → UI
+- [ ] ~~Store content-addressed + hardlinks~~ → déplacé en Phase 3 pour les mods (voir D10)
+- [~] Gestion Java : téléchargement auto des runtimes Mojang selon la version ✅ ; détection des JRE déjà installés à faire (override `java_path` par instance déjà en base, sans UI)
+- [x] Construction de la ligne de commande (format 1.13+ et legacy `minecraftArguments`)
+- [x] Lancement du process (sans console), capture stdout/stderr, détection crash + rapport
+- [x] Comptes offline (UUID identique au serveur vanilla), un seul actif
+- [x] UI : liste des instances, création (choix version), bouton Jouer/Arrêter, progression, console du jeu
 
 ## Phase 2 — Comptes
 
@@ -100,3 +100,9 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Fait : fin de Phase 0 — `tandem-core` : `paths` (DataDir), `db` (SQLite + migration 0001 + settings JSON), `logging` (fichiers + buffer UI), `error`. App : `AppState`, commandes `app_info`, `get_logs`, `get_setting`, `set_setting`, event `log://entry`. UI : header + panneau de logs filtrable. CI Windows. Démarrage vérifié (`%APPDATA%/Tandem` créé, log « Tandem started »).
 - Prochaine étape : Phase 1 — client piston-meta (manifest + JSON de version).
 - En attente : réponse Mojang au formulaire App ID.
+
+### 2026-10-08 (5)
+- Fait : Phase 1 — modules `meta`, `download`, `java`, `install`, `launch`, `account`, `instance` dans `tandem-core` ; `game.rs` côté app (préparation, streaming de la sortie, arrêt, crash) ; UI instances + comptes offline + console jeu. Exemple CLI `cargo run -p tandem-core --example play -- <version>`.
+- Vérifié de bout en bout (exemple CLI) : 1.12.2 (Java 8, natives legacy) et 26.3 (Java 25) téléchargent et atteignent le menu.
+- Reste : test de l'UI par l'utilisateur ; détection des JRE installés.
+- Prochaine étape : Phase 2 (comptes Microsoft) si Mojang a validé, sinon Phase 3 (Fabric + Modrinth).

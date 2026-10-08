@@ -48,3 +48,8 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Aucun serveur Tandem ne reçoit d'identifiants ni de données de compte.
 - Fichiers de jeu téléchargés uniquement depuis les serveurs officiels Mojang ; pas de contournement de la vérification de possession.
 - Statut : validé (formulaire envoyé le 2026-10-08) — ne pas s'en écarter.
+
+### D10 · 2026-10-08 · Fichiers vanilla partagés par chemin, store par hash réservé aux mods
+- Libraries (layout Maven), `versions/<id>/` et `assets/objects` (déjà rangés par hash par Mojang) sont partagés par toutes les instances via leur chemin : pas besoin de hardlinks.
+- Le store content-addressed + hardlinks (D4) sert en Phase 3 pour mods / resource packs / shaders copiés dans chaque instance.
+- Statut : validé

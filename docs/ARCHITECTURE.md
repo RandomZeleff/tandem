@@ -31,10 +31,12 @@ Racine surchargeable avec la variable d'environnement `TANDEM_DATA_DIR` (utile e
 ```
 %APPDATA%/Tandem/
 ├─ launcher.db          SQLite (instances, comptes, réglages, cache meta)
-├─ store/<sha1[0..2]>/<sha1>   fichiers dédupliqués (libs, mods, assets)
+├─ store/<sha1[0..2]>/<sha1>   fichiers dédupliqués (mods, packs — Phase 3)
+├─ libraries/           jars Maven partagés
+├─ versions/<id>/       <id>.json, <id>.jar, natives/
 ├─ assets/              index + objets (format Mojang, partagés)
 ├─ java/<version>/      runtimes téléchargés
-├─ instances/<id>/      .minecraft de chaque instance (mods = hardlinks vers store)
+├─ instances/<id>/      .minecraft de chaque instance (id = slug du nom)
 ├─ cache/               réponses API, traductions
 └─ logs/                tandem.YYYY-MM-DD.log (rotation journalière, 7 fichiers)
 ```
