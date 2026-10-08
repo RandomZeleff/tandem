@@ -41,3 +41,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Vérifs : aucun launcher/mod Minecraft homonyme (Modrinth, GitHub, web). `tandem.app`, `playtandem.com` et `tandemlauncher.com` déjà pris ; libres au 2026-10-08 : `tandemlauncher.app`, `tandemlauncher.net`, `tandemmc.com`.
 - Identifiants : crates `tandem` / `tandem-core`, bundle `dev.tandem.launcher`, données `%APPDATA%/Tandem`.
 - Statut : validé
+
+### D9 · 2026-10-08 · Engagements pris auprès de Mojang (formulaire App ID)
+- Connexion Microsoft via le **navigateur système** (pas de webview intégrée), tenant `consumers`, scopes `XboxLive.signin offline_access`.
+- Tokens stockés **uniquement** dans le gestionnaire d'identifiants de l'OS (Windows Credential Manager).
+- Aucun serveur Tandem ne reçoit d'identifiants ni de données de compte.
+- Fichiers de jeu téléchargés uniquement depuis les serveurs officiels Mojang ; pas de contournement de la vérification de possession.
+- Statut : validé (formulaire envoyé le 2026-10-08) — ne pas s'en écarter.
