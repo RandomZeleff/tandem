@@ -1,4 +1,6 @@
 import { For, type JSX } from "solid-js";
+import type { Loader } from "../lib/api";
+import { loaderLabel } from "../lib/format";
 import type { BlockLook, SkinLook } from "../lib/look";
 
 /** 12×12 pixel icons, drawn as even-odd paths. */
@@ -41,6 +43,138 @@ export function Icon(props: { name: IconName; size?: number; class?: string; col
     >
       <path d={ICONS[props.name]} fill={props.color ?? "currentColor"} />
     </svg>
+  );
+}
+
+interface Sprite {
+  rows: string[];
+  palette: Record<string, string>;
+}
+
+const ANVIL = [
+  "............",
+  "............",
+  "hhhhhhhhhhh.",
+  ".aaaaaaaaaaa",
+  "...aaaaaaaa.",
+  ".....aaaa...",
+  ".....aaaa...",
+  "....aaaaaa..",
+  "...aaaaaaaa.",
+  "..aaaaaaaaaa",
+  "..dddddddddd",
+  "............",
+];
+
+/** 12×12 loader marks, drawn in the launcher's pixel style rather than copied from the official logos. */
+const LOADER_SPRITES: Record<Loader, Sprite> = {
+  vanilla: {
+    rows: [
+      "gggggggggggg",
+      "glgggglggggg",
+      "gggggggggggg",
+      "ggdggggdggdg",
+      "dgddgdgddddd",
+      "dddddddddddd",
+      "ddsdddddddsd",
+      "dddddddddddd",
+      "dddddsdddddd",
+      "dddddddddddd",
+      "dsddddddsddd",
+      "dddddddddddd",
+    ],
+    palette: { g: "#5DBB3F", l: "#86D45E", d: "#8B5A2B", s: "#6B4423" },
+  },
+  fabric: {
+    rows: [
+      ".....oo.....",
+      "....ohho....",
+      "...ohssho...",
+      "..ohccccco..",
+      ".ohsccccsco.",
+      "ohccccccccco",
+      "ohsccccccsco",
+      ".ohccccccco.",
+      "..ocsccsco..",
+      "...occcco...",
+      "....occo....",
+      ".....oo.....",
+    ],
+    palette: { o: "#38342A", h: "#F2EAD3", c: "#DBD0B4", s: "#8A7F64" },
+  },
+  quilt: {
+    rows: [
+      ".mmmm..pppp.",
+      "mMMMMm.pPPPp",
+      "mMMMMm.pPPPp",
+      "mMMMMm.pPPPp",
+      ".mmmm..pppp.",
+      "............",
+      ".bbbb..oooo.",
+      "bBBBBb.oOOOo",
+      "bBBBBb.oOOOo",
+      "bBBBBb.oOOOo",
+      ".bbbb..oooo.",
+      "............",
+    ],
+    palette: {
+      m: "#9E1F9F",
+      M: "#DC29DD",
+      p: "#5E16A8",
+      P: "#9722FF",
+      b: "#1A6FB0",
+      B: "#27A2FD",
+      o: "#B86A16",
+      O: "#FEA034",
+    },
+  },
+  forge: { rows: ANVIL, palette: { h: "#C9CED6", a: "#7A818A", d: "#4A4F58" } },
+  neoforge: { rows: ANVIL, palette: { h: "#F6B26B", a: "#D7742F", d: "#8F4718" } },
+};
+
+/** Paths per colour, merging horizontal runs of the same pixel. */
+function spritePaths(sprite: Sprite): { color: string; d: string }[] {
+  const paths = new Map<string, string>();
+  sprite.rows.forEach((row, y) => {
+    let x = 0;
+    while (x < row.length) {
+      const key = row[x];
+      let end = x + 1;
+      while (end < row.length && row[end] === key) end++;
+      const color = sprite.palette[key];
+      if (color) paths.set(color, `${paths.get(color) ?? ""}M${x} ${y}h${end - x}v1H${x}z`);
+      x = end;
+    }
+  });
+  return [...paths].map(([color, d]) => ({ color, d }));
+}
+
+const LOADER_PATHS = Object.fromEntries(
+  Object.entries(LOADER_SPRITES).map(([loader, sprite]) => [loader, spritePaths(sprite)]),
+) as Record<Loader, { color: string; d: string }[]>;
+
+export function LoaderIcon(props: { loader: Loader; size?: number; class?: string }) {
+  return (
+    <svg
+      width={props.size ?? 14}
+      height={props.size ?? 14}
+      viewBox="0 0 12 12"
+      shape-rendering="crispEdges"
+      aria-hidden="true"
+      class={props.class}
+    >
+      <For each={LOADER_PATHS[props.loader] ?? LOADER_PATHS.vanilla}>{(p) => <path d={p.d} fill={p.color} />}</For>
+    </svg>
+  );
+}
+
+/** Loader mark followed by its name, for metadata lines. */
+export function LoaderTag(props: { loader: Loader; size?: number }) {
+  return (
+    <span class="inline-flex items-center gap-1.5 align-middle">
+      <LoaderIcon loader={props.loader} size={props.size ?? 12} />
+      {loaderLabel(props.loader)}
+    </span>
   );
 }
 

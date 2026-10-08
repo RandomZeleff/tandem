@@ -1,10 +1,10 @@
 import { createResource, For, Show } from "solid-js";
 import InstanceCard from "../components/InstanceCard";
-import { Icon } from "../components/pixel";
+import { Icon, LoaderTag } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
 import { api, type Instance } from "../lib/api";
-import { formatRelative, loaderLabel } from "../lib/format";
+import { formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { instances, navigate, setNewInstanceDialog } from "../lib/store";
 
@@ -32,7 +32,9 @@ function Hero(props: { instance: Instance }) {
           </h1>
           <div class="flex flex-wrap items-center gap-1.5 text-[13px] text-chalk-2">
             <span class="chip h-[26px]">{props.instance.gameVersion}</span>
-            <span class="chip h-[26px]">{loaderLabel(props.instance.loader)}</span>
+            <span class="chip h-[26px]">
+              <LoaderTag loader={props.instance.loader} />
+            </span>
           </div>
         </div>
 

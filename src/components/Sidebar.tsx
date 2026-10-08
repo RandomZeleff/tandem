@@ -1,10 +1,9 @@
 import { createResource, createSignal, For, Show } from "solid-js";
 import { api, errorMessage } from "../lib/api";
-import { loaderLabel } from "../lib/format";
 import { gameState } from "../lib/games";
 import { blockLook, skinLook } from "../lib/look";
 import { accounts, activeAccount, instances, navigate, refetchAccounts, route, type Route } from "../lib/store";
-import { BlockSlot, Icon, type IconName, SkinHead } from "./pixel";
+import { BlockSlot, Icon, type IconName, LoaderTag, SkinHead } from "./pixel";
 
 interface NavItem {
   label: string;
@@ -16,7 +15,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { label: "Accueil", icon: "home", to: { page: "home" } },
   { label: "Instances", icon: "grid", to: { page: "instances" } },
-  { label: "Découvrir", icon: "search", to: { page: "discover" }, soon: true },
+  { label: "Découvrir", icon: "search", to: { page: "discover" } },
   { label: "Jouer à deux", icon: "duo", to: { page: "multi" }, soon: true },
 ];
 
@@ -196,7 +195,7 @@ export default function Sidebar() {
                   <span class="flex min-w-0 flex-1 flex-col">
                     <span class="truncate text-[13px] font-medium">{instance.name}</span>
                     <span class="text-[11px] text-faint">
-                      {instance.gameVersion} · {loaderLabel(instance.loader)}
+                      {instance.gameVersion} · <LoaderTag loader={instance.loader} size={10} />
                     </span>
                   </span>
                   <Show when={state().status === "preparing"}>

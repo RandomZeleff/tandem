@@ -1,10 +1,10 @@
 import { Show } from "solid-js";
 import type { Instance } from "../lib/api";
-import { formatRelative, loaderLabel } from "../lib/format";
+import { formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { blockLook } from "../lib/look";
 import { navigate } from "../lib/store";
-import { BlockSlot, XpBar } from "./pixel";
+import { BlockSlot, LoaderTag, XpBar } from "./pixel";
 import PlayButton from "./PlayButton";
 
 export default function InstanceCard(props: { instance: Instance }) {
@@ -47,7 +47,7 @@ export default function InstanceCard(props: { instance: Instance }) {
         <div class="flex min-w-0 flex-col gap-0.5">
           <h3 class="truncate text-[15px] font-semibold">{props.instance.name}</h3>
           <span class="text-xs text-muted">
-            {props.instance.gameVersion} · {loaderLabel(props.instance.loader)}
+            {props.instance.gameVersion} · <LoaderTag loader={props.instance.loader} />
           </span>
         </div>
         <Show

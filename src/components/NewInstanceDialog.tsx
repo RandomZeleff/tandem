@@ -2,6 +2,7 @@ import { createEffect, createMemo, createResource, createSignal, For, Show } fro
 import { api, errorMessage, type Instance, type Loader } from "../lib/api";
 import { loaderLabel } from "../lib/format";
 import Dialog from "./Dialog";
+import { LoaderIcon } from "./pixel";
 
 interface Props {
   onClose: () => void;
@@ -141,13 +142,14 @@ export default function NewInstanceDialog(props: Props) {
                   type="button"
                   role="radio"
                   aria-checked={loader() === l}
-                  class="h-7 px-3 text-[13px]"
+                  class="flex h-7 items-center gap-1.5 px-3 text-[13px]"
                   classList={{
                     "bg-slate-600 font-medium text-chalk shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]": loader() === l,
                     "text-muted hover:text-chalk": loader() !== l,
                   }}
                   onClick={() => setLoader(l)}
                 >
+                  <LoaderIcon loader={l} size={12} />
                   {loaderLabel(l)}
                 </button>
               )}
