@@ -1,5 +1,5 @@
 import { createSignal, For, onMount, Show } from "solid-js";
-import { errorMessage, type ContentKind, type InstalledContent } from "../lib/api";
+import { errorMessage, type ContentKind, type InstalledContent, type Instance } from "../lib/api";
 import {
   checkUpdates,
   contentUpdates,
@@ -13,6 +13,7 @@ import {
   updateContent,
   updateFor,
 } from "../lib/content";
+import { exportModpackFile } from "../lib/modpacks";
 import { navigate } from "../lib/store";
 import { Icon, Toggle } from "./pixel";
 import ProjectIcon from "./ProjectIcon";
@@ -24,25 +25,41 @@ const SECTIONS: { kind: ContentKind; label: string }[] = [
 ];
 
 /** Installed mods, resource packs and shaders of an instance, with updates and on/off switches. */
-export default function ContentList(props: { instanceId: string; locked: boolean }) {
+export default function ContentList(props: { instance: Instance; locked: boolean }) {
   const [error, setError] = createSignal<string | null>(null);
-  const items = () => installedContent(props.instanceId);
-  const updates = () => contentUpdates(props.instanceId);
+  const [notice, setNotice] = createSignal<string | null>(null);
+  const [exporting, setExporting] = createSignal(false);
+  const items = () => installedContent(props.instance.id);
+  const updates = () => contentUpdates(props.instance.id);
   const disabledCount = () => items().filter((i) => !i.enabled).length;
-  const browse = () => navigate({ page: "discover", instanceId: props.instanceId });
+  const browse = () => navigate({ page: "discover", instanceId: props.instance.id });
 
   async function run(action: Promise<string | null>) {
     setError(await action);
   }
 
+  async function exportPack() {
+    setExporting(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const path = await exportModpackFile(props.instance);
+      if (path) setNotice(`Modpack exporté : ${path}`);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   onMount(async () => {
     try {
-      await loadContent(props.instanceId);
+      await loadContent(props.instance.id);
     } catch (err) {
       setError(errorMessage(err));
       return;
     }
-    if (items().length > 0) void run(checkUpdates(props.instanceId));
+    if (items().length > 0) void run(checkUpdates(props.instance.id));
   });
 
   const summary = () => {
@@ -62,11 +79,17 @@ export default function ContentList(props: { instanceId: string; locked: boolean
           <Show when={items().length > 0}>
             <button
               class="btn px-corners h-9"
-              disabled={isCheckingUpdates(props.instanceId) || isUpdatingAll(props.instanceId)}
-              onClick={() => void run(checkUpdates(props.instanceId))}
+              disabled={isCheckingUpdates(props.instance.id) || isUpdatingAll(props.instance.id)}
+              onClick={() => void run(checkUpdates(props.instance.id))}
             >
               <Icon name="sparkle" size={12} />
-              {isCheckingUpdates(props.instanceId) ? "Vérification…" : "Vérifier les mises à jour"}
+              {isCheckingUpdates(props.instance.id) ? "Vérification…" : "Vérifier les mises à jour"}
+            </button>
+          </Show>
+          <Show when={props.instance.loader === "fabric" || props.instance.loader === "quilt" || props.instance.loader === "vanilla"}>
+            <button class="btn px-corners h-9" disabled={exporting()} onClick={() => void exportPack()} title="Exporter en modpack Modrinth (.mrpack)">
+              <Icon name="download" size={12} />
+              {exporting() ? "Export…" : "Exporter"}
             </button>
           </Show>
           <button class="btn btn-primary px-corners h-9" onClick={browse}>
@@ -75,6 +98,10 @@ export default function ContentList(props: { instanceId: string; locked: boolean
           </button>
         </div>
       </div>
+
+      <Show when={notice()}>
+        <p class="bg-[#16240F] px-3 py-2 text-sm text-xp-text shadow-[inset_0_0_0_1px_#2E5A1A]">{notice()}</p>
+      </Show>
 
       <Show when={error()}>
         <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">{error()}</p>
@@ -90,11 +117,11 @@ export default function ContentList(props: { instanceId: string; locked: boolean
           </div>
           <button
             class="btn btn-primary px-corners h-9"
-            disabled={props.locked || isCheckingUpdates(props.instanceId) || isUpdatingAll(props.instanceId)}
-            onClick={() => void run(updateContent(props.instanceId))}
+            disabled={props.locked || isCheckingUpdates(props.instance.id) || isUpdatingAll(props.instance.id)}
+            onClick={() => void run(updateContent(props.instance.id))}
           >
             <Icon name="download" size={12} />
-            {isUpdatingAll(props.instanceId) ? "Mise à jour…" : "Tout mettre à jour"}
+            {isUpdatingAll(props.instance.id) ? "Mise à jour…" : "Tout mettre à jour"}
           </button>
         </div>
       </Show>
@@ -120,7 +147,7 @@ export default function ContentList(props: { instanceId: string; locked: boolean
                   {section.label} <span class="font-mono text-muted">{list().length}</span>
                 </h2>
                 <ul class="panel px-corners-md flex flex-col divide-y divide-line">
-                  <For each={list()}>{(item) => <Row instanceId={props.instanceId} item={item} locked={props.locked} run={run} />}</For>
+                  <For each={list()}>{(item) => <Row instanceId={props.instance.id} item={item} locked={props.locked} run={run} />}</For>
                 </ul>
               </section>
             );

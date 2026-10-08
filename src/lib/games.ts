@@ -38,7 +38,7 @@ export function gameState(id: string): GameState {
 }
 
 let onPlayedCallback: () => void = () => {};
-/** Called when a game starts, so the instance list can refresh "last played". */
+/** Called when a game starts or instances change in the background, so the list can refresh. */
 export function onGamePlayed(cb: () => void) {
   onPlayedCallback = cb;
 }
@@ -55,6 +55,11 @@ export async function startGameEvents() {
     setGames(id, { status: "running", progress: undefined });
     onPlayedCallback();
   });
+  // Modpack installs reuse the progress events but end without a game.
+  await listen<string>(EVENTS.installFinished, ({ payload: id }) => {
+    setGames(id, { status: "idle", progress: undefined });
+  });
+  await listen(EVENTS.instancesChanged, () => onPlayedCallback());
   await listen<GameOutput>(EVENTS.output, ({ payload }) => {
     setOutput(
       produce((all) => {

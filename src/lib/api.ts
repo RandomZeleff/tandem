@@ -55,9 +55,16 @@ export interface Instance {
   icon: string | null;
   createdAt: string;
   lastPlayedAt: string | null;
+  /** Modrinth modpack the instance was created from. */
+  packProjectId: string | null;
+  packVersionId: string | null;
+  packVersion: string | null;
 }
 
 export type ContentKind = "mod" | "resourcepack" | "shader";
+
+/** What the Discover page can search: instance content or modpacks. */
+export type ProjectType = ContentKind | "modpack";
 
 export interface SearchHit {
   projectId: string;
@@ -138,6 +145,8 @@ export const EVENTS = {
   output: "game://output",
   started: "game://started",
   exited: "game://exited",
+  installFinished: "install://finished",
+  instancesChanged: "instances://changed",
 } as const;
 
 export const api = {
@@ -158,7 +167,7 @@ export const api = {
   stopInstance: (id: string) => invoke<boolean>("stop_instance", { id }),
   runningInstances: () => invoke<string[]>("running_instances"),
 
-  searchContent: (query: string, kind: ContentKind, instanceId: string | null, offset = 0) =>
+  searchContent: (query: string, kind: ProjectType, instanceId: string | null, offset = 0) =>
     invoke<SearchResults>("search_content", { query, kind, instanceId, offset }),
   listContent: (instanceId: string) => invoke<InstalledContent[]>("list_content", { instanceId }),
   installContent: (instanceId: string, projectId: string) =>
@@ -171,6 +180,12 @@ export const api = {
     invoke<InstalledContent[]>("update_content", { instanceId, projectIds: projectIds ?? null }),
   setContentEnabled: (instanceId: string, projectId: string, enabled: boolean) =>
     invoke<InstalledContent>("set_content_enabled", { instanceId, projectId, enabled }),
+
+  /** Resolves once the whole pack is installed; progress arrives as install events. */
+  installModpack: (projectId: string) => invoke<Instance>("install_modpack", { projectId }),
+  importModpack: (path: string) => invoke<Instance>("import_modpack", { path }),
+  exportModpack: (instanceId: string, path: string, version: string) =>
+    invoke<void>("export_modpack", { instanceId, path, version }),
 
   listAccounts: () => invoke<Account[]>("list_accounts"),
   addOfflineAccount: (username: string) => invoke<Account>("add_offline_account", { username }),

@@ -1,9 +1,10 @@
 import { createResource, createSignal, For, Show } from "solid-js";
 import { api, errorMessage } from "../lib/api";
 import { gameState } from "../lib/games";
-import { blockLook, skinLook } from "../lib/look";
+import { skinLook } from "../lib/look";
+import InstanceSlot from "./InstanceSlot";
 import { accounts, activeAccount, instances, navigate, refetchAccounts, route, type Route } from "../lib/store";
-import { BlockSlot, Icon, type IconName, LoaderTag, SkinHead } from "./pixel";
+import { Icon, type IconName, LoaderTag, SkinHead } from "./pixel";
 
 interface NavItem {
   label: string;
@@ -191,7 +192,7 @@ export default function Sidebar() {
                   }}
                   onClick={() => navigate({ page: "instance", id: instance.id })}
                 >
-                  <BlockSlot look={blockLook(instance.id)} size={30} />
+                  <InstanceSlot instance={instance} size={30} />
                   <span class="flex min-w-0 flex-1 flex-col">
                     <span class="truncate text-[13px] font-medium">{instance.name}</span>
                     <span class="text-[11px] text-faint">

@@ -13,6 +13,7 @@ import type {
   Loader,
   LogEntry,
   NewInstance,
+  ProjectType,
   SearchHit,
 } from "../lib/api";
 
@@ -33,9 +34,12 @@ const instances: Instance[] = [
   javaPath: null,
   memoryMb: null,
   jvmArgs: null,
-  icon: null,
+  icon: null as string | null,
   createdAt: iso(900),
   lastPlayedAt,
+  packProjectId: null as string | null,
+  packVersionId: null as string | null,
+  packVersion: null as string | null,
 }));
 
 /** Fabric/Quilt-like answers: nothing before 1.14, a beta on top of stable builds. */
@@ -62,7 +66,13 @@ const hit = ([projectId, title, author, description, downloads, displayCategorie
 });
 
 /** Fake Modrinth catalogue (real project ids, so icons load from the Modrinth CDN). */
-const CATALOGUE: Record<ContentKind, SearchHit[]> = {
+const CATALOGUE: Record<ProjectType, SearchHit[]> = {
+  modpack: (
+    [
+      ["1KVo5zza", "Fabulously Optimized", "robotkoer", "Improved performance and graphics, with familiar menus and controls.", 14_000_000, ["fabric", "optimization"]],
+      ["BYfVnHa7", "Simply Optimized", "JustAlittleWolf", "The leading Fabric modpack for optimization, without changing the look of the game.", 3_100_000, ["fabric", "optimization"]],
+    ] as Row[]
+  ).map(hit),
   mod: (
     [
       ["P7dR8mSH", "Fabric API", "modmuss50", "Lightweight and modular API providing common hooks for Fabric mods.", 120_000_000, ["fabric", "library"]],
@@ -187,6 +197,9 @@ export function installMocks() {
             icon: null,
             createdAt: new Date().toISOString(),
             lastPlayedAt: null,
+            packProjectId: null,
+            packVersionId: null,
+            packVersion: null,
           };
           instances.unshift(created);
           return created;
@@ -194,7 +207,7 @@ export function installMocks() {
         case "search_content": {
           await new Promise((r) => setTimeout(r, 250));
           const q = (args.query as string).toLowerCase();
-          const hits = CATALOGUE[args.kind as ContentKind].filter((h) => h.title.toLowerCase().includes(q));
+          const hits = CATALOGUE[args.kind as ProjectType].filter((h) => h.title.toLowerCase().includes(q));
           return { hits, offset: 0, limit: 20, totalHits: hits.length };
         }
         case "list_content":
@@ -223,6 +236,41 @@ export function installMocks() {
         }
         case "remove_content":
           content[args.instanceId as string] = (content[args.instanceId as string] ?? []).filter((c) => c.projectId !== args.projectId);
+          return null;
+        case "install_modpack": {
+          const pack = CATALOGUE.modpack.find((h) => h.projectId === args.projectId)!;
+          const created: Instance = {
+            ...instances[0],
+            id: pack.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            name: pack.title,
+            gameVersion: "26.2",
+            loader: "fabric",
+            loaderVersion: "0.19.5",
+            icon: pack.iconUrl,
+            createdAt: new Date().toISOString(),
+            lastPlayedAt: null,
+            packProjectId: pack.projectId,
+            packVersionId: "v1",
+            packVersion: "14.1.0",
+          };
+          instances.unshift(created);
+          await emit("instances://changed");
+          const total = 120_000_000;
+          for (let i = 0; i <= 20; i++) {
+            await new Promise((r) => setTimeout(r, 120));
+            await emit("install://progress", {
+              instanceId: created.id,
+              stage: "downloading",
+              doneFiles: Math.round(i * 2.55),
+              totalFiles: 51,
+              doneBytes: (total * i) / 20,
+              totalBytes: total,
+            });
+          }
+          await emit("install://finished", created.id);
+          return created;
+        }
+        case "export_modpack":
           return null;
         case "launch_instance":
           void fakeLaunch(args.id as string);

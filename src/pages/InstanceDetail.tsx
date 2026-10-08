@@ -2,13 +2,13 @@ import { createSignal, For, Match, Show, Switch } from "solid-js";
 import ContentList from "../components/ContentList";
 import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
-import { BlockSlot, Icon, LoaderTag, XpBar } from "../components/pixel";
+import InstanceSlot from "../components/InstanceSlot";
+import { Icon, LoaderTag, XpBar } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
 import { formatBytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
-import { blockLook } from "../lib/look";
 import { navigate, refetchInstances } from "../lib/store";
 
 type Tab = "console" | "content" | "info";
@@ -54,8 +54,8 @@ export default function InstanceDetail(props: { instance: Instance }) {
         <Scene variant="day" />
         <div class="absolute inset-0 bg-[linear-gradient(180deg,transparent_30%,rgb(17_19_22/0.9)_100%)]" />
         <div class="absolute right-7 bottom-5 left-7 flex items-end gap-[18px]">
-          <BlockSlot
-            look={blockLook(props.instance.id)}
+          <InstanceSlot
+            instance={props.instance}
             size={84}
             style={{ "box-shadow": "inset 3px 3px 0 #373737, inset -3px -3px 0 #fff, 0 0 0 4px var(--color-slate-800)" }}
           />
@@ -143,7 +143,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
               <GameConsole instanceId={props.instance.id} />
             </Match>
             <Match when={tab() === "content"}>
-              <ContentList instanceId={props.instance.id} locked={state().status !== "idle"} />
+              <ContentList instance={props.instance} locked={state().status !== "idle"} />
             </Match>
             <Match when={tab() === "info"}>
               <dl class="panel px-corners-md grid max-w-xl grid-cols-[auto_1fr] gap-x-8 gap-y-3 p-5 text-sm">
@@ -156,6 +156,13 @@ export default function InstanceDetail(props: { instance: Instance }) {
                     <span class="font-mono text-xs text-muted"> {props.instance.loaderVersion}</span>
                   </Show>
                 </dd>
+                <Show when={props.instance.packProjectId}>
+                  <dt class="text-muted">Modpack</dt>
+                  <dd>
+                    Modrinth
+                    <span class="font-mono text-xs text-muted"> {props.instance.packVersion}</span>
+                  </dd>
+                </Show>
                 <dt class="text-muted">Java</dt>
                 <dd>{props.instance.javaPath ?? "Automatique (fourni par Mojang)"}</dd>
                 <dt class="text-muted">Mémoire</dt>

@@ -1,6 +1,8 @@
 import { createSignal, For, Show } from "solid-js";
 import InstanceCard from "../components/InstanceCard";
 import { Icon } from "../components/pixel";
+import { errorMessage } from "../lib/api";
+import { importModpackFile } from "../lib/modpacks";
 import { instances, setNewInstanceDialog } from "../lib/store";
 
 type Filter = "all" | "modded" | "vanilla";
@@ -13,6 +15,20 @@ const FILTERS: { id: Filter; label: string }[] = [
 
 export default function Instances() {
   const [filter, setFilter] = createSignal<Filter>("all");
+  const [importing, setImporting] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+
+  async function importFile() {
+    setImporting(true);
+    setError(null);
+    try {
+      await importModpackFile();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setImporting(false);
+    }
+  }
   const visible = () =>
     instances().filter((i) =>
       filter() === "all" ? true : filter() === "vanilla" ? i.loader === "vanilla" : i.loader !== "vanilla",
@@ -25,11 +41,21 @@ export default function Instances() {
           <h1 class="pixel-shadow font-pixel text-3xl font-bold">Instances</h1>
           <span class="text-[13px] text-muted">Chaque instance a son propre dossier, ses mondes et ses réglages.</span>
         </div>
-        <button class="btn btn-primary px-corners h-10 px-4" onClick={() => setNewInstanceDialog({})}>
-          <Icon name="plus" size={12} />
-          Nouvelle instance
-        </button>
+        <div class="flex gap-2">
+          <button class="btn px-corners h-10 px-4" disabled={importing()} onClick={() => void importFile()}>
+            <Icon name="folder" size={12} />
+            {importing() ? "Import…" : "Importer un .mrpack"}
+          </button>
+          <button class="btn btn-primary px-corners h-10 px-4" onClick={() => setNewInstanceDialog({})}>
+            <Icon name="plus" size={12} />
+            Nouvelle instance
+          </button>
+        </div>
       </div>
+
+      <Show when={error()}>
+        <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">{error()}</p>
+      </Show>
 
       <div role="tablist" aria-label="Filtrer" class="flex w-fit gap-0.5 bg-slate-900 p-[3px] shadow-[inset_0_0_0_1px_var(--color-line)]">
         <For each={FILTERS}>

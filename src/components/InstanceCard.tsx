@@ -4,7 +4,8 @@ import { formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { blockLook } from "../lib/look";
 import { navigate } from "../lib/store";
-import { BlockSlot, LoaderTag, XpBar } from "./pixel";
+import InstanceSlot from "./InstanceSlot";
+import { LoaderTag, XpBar } from "./pixel";
 import PlayButton from "./PlayButton";
 
 export default function InstanceCard(props: { instance: Instance }) {
@@ -32,8 +33,8 @@ export default function InstanceCard(props: { instance: Instance }) {
           <rect y="5" width="60" height="4" fill={look().sky[1]} />
           <path d="M0 10h8v-2h10v1h9v-3h11v2h9v-1h13V14H0z" fill={look().hill} />
         </svg>
-        <BlockSlot
-          look={look()}
+        <InstanceSlot
+          instance={props.instance}
           size={52}
           style={{
             position: "absolute",
