@@ -41,6 +41,12 @@ pub enum Error {
         loader: String,
         game_version: String,
     },
+    #[error("mods need an instance with a mod loader")]
+    ModLoaderRequired,
+    #[error("no version of {title} is compatible with Minecraft {game_version}")]
+    ContentUnavailable { title: String, game_version: String },
+    #[error("content not found: {0}")]
+    ContentNotFound(String),
     #[error("invalid input: {0}")]
     InvalidInput(String),
 }

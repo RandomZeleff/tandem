@@ -1,6 +1,8 @@
 use serde::Serialize;
 use serde_json::Value;
 use tandem_core::account::Account;
+use tandem_core::content::modrinth::{self, SearchFilter, SearchResults};
+use tandem_core::content::{self, ContentKind, InstalledContent};
 use tandem_core::instance::{self, Instance, NewInstance};
 use tandem_core::logging::LogEntry;
 use tandem_core::meta::loader::{self, Loader, LoaderVersion};
@@ -97,6 +99,59 @@ pub async fn delete_instance(state: State<'_, AppState>, id: String) -> CommandR
     }
     tracing::info!(%id, "instance deleted");
     Ok(())
+}
+
+#[tauri::command]
+pub async fn search_content(
+    state: State<'_, AppState>,
+    query: String,
+    kind: ContentKind,
+    instance_id: Option<String>,
+    offset: u32,
+) -> CommandResult<SearchResults> {
+    let instance = match &instance_id {
+        Some(id) => Some(state.ctx.db.get_instance(id).await?),
+        None => None,
+    };
+    let filter = SearchFilter {
+        query: &query,
+        kind,
+        game_version: instance.as_ref().map(|i| i.game_version.as_str()),
+        loader: instance.as_ref().map(|i| i.loader),
+        offset,
+        limit: 20,
+    };
+    Ok(modrinth::search(&state.ctx, &filter).await?)
+}
+
+#[tauri::command]
+pub async fn list_content(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<InstalledContent>> {
+    Ok(state.ctx.db.list_content(&instance_id).await?)
+}
+
+#[tauri::command]
+pub async fn install_content(
+    state: State<'_, AppState>,
+    instance_id: String,
+    project_id: String,
+) -> CommandResult<Vec<InstalledContent>> {
+    let instance = state.ctx.db.get_instance(&instance_id).await?;
+    Ok(content::install(&state.ctx, &instance, &project_id).await?)
+}
+
+#[tauri::command]
+pub async fn remove_content(
+    state: State<'_, AppState>,
+    instance_id: String,
+    project_id: String,
+) -> CommandResult<()> {
+    if state.games.is_busy(&instance_id) {
+        return Err(CommandError::msg("stop the game before removing content"));
+    }
+    Ok(content::remove(&state.ctx, &instance_id, &project_id).await?)
 }
 
 #[tauri::command]
