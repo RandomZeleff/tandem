@@ -13,11 +13,46 @@ use crate::meta::loader::Loader;
 
 const API: &str = "https://api.modrinth.com/v2";
 
+/// Modpack loaders Tandem can launch (Forge / NeoForge are not supported yet).
+pub const MODPACK_LOADERS: &[&str] = &["fabric", "quilt"];
+
+/// Searchable project types: instance content plus modpacks.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ProjectType {
+    #[default]
+    Mod,
+    ResourcePack,
+    Shader,
+    Modpack,
+}
+
+impl ProjectType {
+    fn as_str(self) -> &'static str {
+        match self {
+            ProjectType::Mod => "mod",
+            ProjectType::ResourcePack => "resourcepack",
+            ProjectType::Shader => "shader",
+            ProjectType::Modpack => "modpack",
+        }
+    }
+}
+
+impl From<ContentKind> for ProjectType {
+    fn from(kind: ContentKind) -> Self {
+        match kind {
+            ContentKind::Mod => ProjectType::Mod,
+            ContentKind::ResourcePack => ProjectType::ResourcePack,
+            ContentKind::Shader => ProjectType::Shader,
+        }
+    }
+}
+
 /// What the player searches for, already narrowed to an instance when there is one.
 #[derive(Debug, Clone, Default)]
 pub struct SearchFilter<'a> {
     pub query: &'a str,
-    pub kind: ContentKind,
+    pub kind: ProjectType,
     pub game_version: Option<&'a str>,
     pub loader: Option<Loader>,
     pub offset: u32,
@@ -94,6 +129,8 @@ pub struct VersionFile {
 #[derive(Debug, Clone, Deserialize)]
 pub struct FileHashes {
     pub sha1: String,
+    #[serde(default)]
+    pub sha512: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -137,18 +174,17 @@ async fn get<T: for<'de> Deserialize<'de>>(ctx: &Context, url: Url) -> Result<T>
 
 /// Search facets: AND between the outer arrays, OR inside each one.
 fn facets(filter: &SearchFilter<'_>) -> String {
-    let mut groups: Vec<Vec<String>> = vec![vec![format!(
-        "project_type:{}",
-        filter.kind.modrinth_type()
-    )]];
+    let mut groups: Vec<Vec<String>> = vec![vec![format!("project_type:{}", filter.kind.as_str())]];
     if let Some(version) = filter.game_version {
         groups.push(vec![format!("versions:{version}")]);
     }
-    if let (ContentKind::Mod, Some(loader)) = (filter.kind, filter.loader) {
-        let loaders = mod_loaders(loader);
-        if !loaders.is_empty() {
-            groups.push(loaders.iter().map(|l| format!("categories:{l}")).collect());
-        }
+    let loaders = match (filter.kind, filter.loader) {
+        (ProjectType::Mod, Some(loader)) => mod_loaders(loader),
+        (ProjectType::Modpack, _) => MODPACK_LOADERS,
+        _ => &[],
+    };
+    if !loaders.is_empty() {
+        groups.push(loaders.iter().map(|l| format!("categories:{l}")).collect());
     }
     serde_json::to_string(&groups).unwrap_or_default()
 }
@@ -197,6 +233,18 @@ pub async fn project_versions(
     get(ctx, url).await
 }
 
+/// Versions of a project for any of `loaders`, whatever the game version, newest first.
+pub async fn pack_versions(
+    ctx: &Context,
+    project_id: &str,
+    loaders: &[&str],
+) -> Result<Vec<Version>> {
+    let mut url = url(&["project", project_id, "version"])?;
+    url.query_pairs_mut()
+        .append_pair("loaders", &serde_json::to_string(loaders)?);
+    get(ctx, url).await
+}
+
 /// Several versions at once (unknown ids are skipped by the API).
 pub async fn versions(ctx: &Context, ids: &[String]) -> Result<Vec<Version>> {
     if ids.is_empty() {
@@ -231,19 +279,59 @@ pub async fn latest_versions(
     if sha1s.is_empty() {
         return Ok(HashMap::new());
     }
-    let url = url(&["version_files", "update"])?;
-    let response = ctx
-        .http
-        .post(url.as_str())
-        .json(&UpdateQuery {
+    post(
+        ctx,
+        url(&["version_files", "update"])?,
+        &UpdateQuery {
             hashes: sha1s,
             algorithm: "sha1",
             game_versions: [game_version],
             loaders,
             version_types: releases_only.then_some(["release"]),
-        })
-        .send()
-        .await?;
+        },
+    )
+    .await
+}
+
+#[derive(Serialize)]
+struct HashQuery<'a> {
+    hashes: &'a [String],
+    algorithm: &'static str,
+}
+
+/// The version each file SHA-1 belongs to; files unknown to Modrinth are absent.
+pub async fn versions_by_hash(ctx: &Context, sha1s: &[String]) -> Result<HashMap<String, Version>> {
+    if sha1s.is_empty() {
+        return Ok(HashMap::new());
+    }
+    post(
+        ctx,
+        url(&["version_files"])?,
+        &HashQuery {
+            hashes: sha1s,
+            algorithm: "sha1",
+        },
+    )
+    .await
+}
+
+/// Several projects at once (unknown ids are skipped by the API).
+pub async fn projects(ctx: &Context, ids: &[String]) -> Result<Vec<Project>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut url = url(&["projects"])?;
+    url.query_pairs_mut()
+        .append_pair("ids", &serde_json::to_string(ids)?);
+    get(ctx, url).await
+}
+
+async fn post<T: for<'de> Deserialize<'de>>(
+    ctx: &Context,
+    url: Url,
+    body: &impl Serialize,
+) -> Result<T> {
+    let response = ctx.http.post(url.as_str()).json(body).send().await?;
     if !response.status().is_success() {
         return Err(Error::HttpStatus {
             url: url.to_string(),
@@ -260,7 +348,7 @@ mod tests {
     #[test]
     fn builds_facets() {
         let filter = SearchFilter {
-            kind: ContentKind::Mod,
+            kind: ProjectType::Mod,
             game_version: Some("1.21.4"),
             loader: Some(Loader::Quilt),
             ..Default::default()
@@ -270,11 +358,19 @@ mod tests {
             r#"[["project_type:mod"],["versions:1.21.4"],["categories:quilt","categories:fabric"]]"#
         );
         let packs = SearchFilter {
-            kind: ContentKind::ResourcePack,
+            kind: ProjectType::ResourcePack,
             loader: Some(Loader::Fabric),
             ..Default::default()
         };
         assert_eq!(facets(&packs), r#"[["project_type:resourcepack"]]"#);
+        let modpacks = SearchFilter {
+            kind: ProjectType::Modpack,
+            ..Default::default()
+        };
+        assert_eq!(
+            facets(&modpacks),
+            r#"[["project_type:modpack"],["categories:fabric","categories:quilt"]]"#
+        );
     }
 
     #[test]

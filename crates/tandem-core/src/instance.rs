@@ -18,9 +18,22 @@ pub struct Instance {
     pub java_path: Option<String>,
     pub memory_mb: Option<u32>,
     pub jvm_args: Option<String>,
+    /// Image URL (e.g. the modpack's icon); the UI draws a block when absent.
     pub icon: Option<String>,
     pub created_at: String,
     pub last_played_at: Option<String>,
+    pub pack_project_id: Option<String>,
+    pub pack_version_id: Option<String>,
+    pub pack_version: Option<String>,
+}
+
+/// Modrinth modpack an instance comes from.
+#[derive(Debug, Clone)]
+pub struct PackOrigin {
+    pub project_id: String,
+    pub version_id: String,
+    pub version: String,
+    pub icon: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -69,8 +82,20 @@ pub async fn create(ctx: &Context, mut new: NewInstance) -> Result<Instance> {
     Ok(created)
 }
 
+/// Deletes an instance's row (and its content rows) and its whole folder.
+pub async fn delete(ctx: &Context, id: &str) -> Result<()> {
+    ctx.db.delete_instance(id).await?;
+    match tokio::fs::remove_dir_all(ctx.data.instance_dir(id)).await {
+        Err(err) if err.kind() != std::io::ErrorKind::NotFound => return Err(err.into()),
+        _ => {}
+    }
+    tracing::info!(%id, "instance deleted");
+    Ok(())
+}
+
 const COLUMNS: &str = "id, name, game_version, loader, loader_version, java_path, memory_mb, \
-                       jvm_args, icon, created_at, last_played_at";
+                       jvm_args, icon, created_at, last_played_at, pack_project_id, \
+                       pack_version_id, pack_version";
 
 /// Folder-friendly id derived from the name: `My World!` → `my-world`.
 fn slugify(name: &str) -> String {
@@ -146,6 +171,21 @@ impl Database {
             .bind(id)
             .execute(self.pool())
             .await?;
+        Ok(())
+    }
+
+    pub async fn set_instance_pack(&self, id: &str, origin: &PackOrigin) -> Result<()> {
+        sqlx::query(
+            "UPDATE instances SET pack_project_id = ?, pack_version_id = ?, pack_version = ?,
+             icon = COALESCE(?, icon) WHERE id = ?",
+        )
+        .bind(&origin.project_id)
+        .bind(&origin.version_id)
+        .bind(&origin.version)
+        .bind(&origin.icon)
+        .bind(id)
+        .execute(self.pool())
+        .await?;
         Ok(())
     }
 

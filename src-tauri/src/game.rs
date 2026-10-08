@@ -41,6 +41,25 @@ impl Games {
         self.lock().contains_key(id)
     }
 
+    /// Marks an instance busy for a non-game task (e.g. a modpack install).
+    /// Returns false if it is already busy.
+    pub fn begin(&self, id: &str) -> bool {
+        let mut slots = self.lock();
+        if slots.contains_key(id) {
+            return false;
+        }
+        slots.insert(id.to_owned(), Slot::Preparing);
+        true
+    }
+
+    /// Ends a task started with [`Games::begin`].
+    pub fn end(&self, id: &str) {
+        let mut slots = self.lock();
+        if matches!(slots.get(id), Some(Slot::Preparing)) {
+            slots.remove(id);
+        }
+    }
+
     pub fn running_ids(&self) -> Vec<String> {
         self.lock()
             .iter()
@@ -90,6 +109,28 @@ struct ExitedPayload {
     crash_report: Option<String>,
 }
 
+/// Forwards install progress to the UI, throttled except on stage changes and completion.
+pub fn progress_emitter<'a>(
+    app: &'a AppHandle,
+    id: &'a str,
+) -> impl Fn(InstallProgress) + Send + Sync + 'a {
+    let last_emit = Mutex::new((Instant::now() - PROGRESS_INTERVAL, Stage::Metadata));
+    move |progress| {
+        let mut last = last_emit.lock().unwrap_or_else(|e| e.into_inner());
+        let finished = progress.download.done_files == progress.download.total_files;
+        if progress.stage != last.1 || finished || last.0.elapsed() >= PROGRESS_INTERVAL {
+            *last = (Instant::now(), progress.stage);
+            let _ = app.emit(
+                PROGRESS_EVENT,
+                ProgressPayload {
+                    instance_id: id,
+                    progress,
+                },
+            );
+        }
+    }
+}
+
 pub async fn launch(app: AppHandle, ctx: Context, games: Games, id: String) -> CommandResult<()> {
     {
         let mut slots = games.lock();
@@ -130,23 +171,8 @@ async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathB
         "preparing launch"
     );
 
-    let last_emit = Mutex::new((Instant::now() - PROGRESS_INTERVAL, Stage::Metadata));
     let target = install::Target::of(&instance);
-    let mut prepared = install::prepare(ctx, target, &game_dir, |progress| {
-        let mut last = last_emit.lock().unwrap_or_else(|e| e.into_inner());
-        let finished = progress.download.done_files == progress.download.total_files;
-        if progress.stage != last.1 || finished || last.0.elapsed() >= PROGRESS_INTERVAL {
-            *last = (Instant::now(), progress.stage);
-            let _ = app.emit(
-                PROGRESS_EVENT,
-                ProgressPayload {
-                    instance_id: id,
-                    progress,
-                },
-            );
-        }
-    })
-    .await?;
+    let mut prepared = install::prepare(ctx, target, &game_dir, progress_emitter(app, id)).await?;
     if let Some(java) = &instance.java_path {
         prepared.java = PathBuf::from(java);
     }

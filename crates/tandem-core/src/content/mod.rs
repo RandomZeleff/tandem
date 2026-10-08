@@ -3,6 +3,7 @@
 //! into instances. Disabled content keeps its file, renamed with a `.disabled` suffix.
 
 pub mod modrinth;
+pub mod mrpack;
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;

@@ -1,8 +1,8 @@
 use serde::Serialize;
 use serde_json::Value;
 use tandem_core::account::Account;
-use tandem_core::content::modrinth::{self, SearchFilter, SearchResults};
-use tandem_core::content::{self, ContentKind, ContentUpdate, InstalledContent};
+use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
+use tandem_core::content::{self, mrpack, ContentUpdate, InstalledContent};
 use tandem_core::instance::{self, Instance, NewInstance};
 use tandem_core::logging::LogEntry;
 use tandem_core::meta::loader::{self, Loader, LoaderVersion};
@@ -11,7 +11,7 @@ use tauri::{AppHandle, State};
 use tauri_plugin_opener::OpenerExt;
 
 use crate::error::{CommandError, CommandResult};
-use crate::{game, AppState};
+use crate::{game, modpack, AppState};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -92,26 +92,23 @@ pub async fn delete_instance(state: State<'_, AppState>, id: String) -> CommandR
             "stop the game before deleting this instance",
         ));
     }
-    state.ctx.db.delete_instance(&id).await?;
-    match tokio::fs::remove_dir_all(state.ctx.data.instance_dir(&id)).await {
-        Err(err) if err.kind() != std::io::ErrorKind::NotFound => return Err(err.into()),
-        _ => {}
-    }
-    tracing::info!(%id, "instance deleted");
-    Ok(())
+    Ok(instance::delete(&state.ctx, &id).await?)
 }
 
 #[tauri::command]
 pub async fn search_content(
     state: State<'_, AppState>,
     query: String,
-    kind: ContentKind,
+    kind: ProjectType,
     instance_id: Option<String>,
     offset: u32,
 ) -> CommandResult<SearchResults> {
-    let instance = match &instance_id {
-        Some(id) => Some(state.ctx.db.get_instance(id).await?),
-        None => None,
+    // Modpacks create their own instance: the current one does not narrow the search.
+    let instance = match (&instance_id, kind) {
+        (Some(id), kind) if kind != ProjectType::Modpack => {
+            Some(state.ctx.db.get_instance(id).await?)
+        }
+        _ => None,
     };
     let filter = SearchFilter {
         query: &query,
@@ -190,6 +187,37 @@ pub async fn remove_content(
         return Err(CommandError::msg("stop the game before removing content"));
     }
     Ok(content::remove(&state.ctx, &instance_id, &project_id).await?)
+}
+
+/// Creates an instance from the latest compatible version of a Modrinth modpack.
+#[tauri::command]
+pub async fn install_modpack(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    project_id: String,
+) -> CommandResult<Instance> {
+    modpack::install_from_modrinth(&app, &state.ctx, &state.games, &project_id).await
+}
+
+/// Creates an instance from a `.mrpack` file.
+#[tauri::command]
+pub async fn import_modpack(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    path: String,
+) -> CommandResult<Instance> {
+    modpack::import_file(&app, &state.ctx, &state.games, std::path::Path::new(&path)).await
+}
+
+#[tauri::command]
+pub async fn export_modpack(
+    state: State<'_, AppState>,
+    instance_id: String,
+    path: String,
+    version: String,
+) -> CommandResult<()> {
+    let instance = state.ctx.db.get_instance(&instance_id).await?;
+    Ok(mrpack::export(&state.ctx, &instance, std::path::Path::new(&path), &version).await?)
 }
 
 #[tauri::command]

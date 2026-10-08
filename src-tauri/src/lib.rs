@@ -1,6 +1,7 @@
 mod commands;
 mod error;
 mod game;
+mod modpack;
 
 use tandem_core::logging::{self, LogBuffer, LogEntry, WorkerGuard};
 use tandem_core::paths::DataDir;
@@ -22,6 +23,7 @@ pub struct AppState {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let data_dir = DataDir::from_env()?;
             async_runtime::block_on(data_dir.ensure())?;
@@ -68,6 +70,9 @@ pub fn run() {
             commands::check_content_updates,
             commands::update_content,
             commands::set_content_enabled,
+            commands::install_modpack,
+            commands::import_modpack,
+            commands::export_modpack,
             commands::open_instance_folder,
             commands::launch_instance,
             commands::stop_instance,
