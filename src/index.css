@@ -1,4 +1,42 @@
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource/pixelify-sans/latin-500.css";
+@import "@fontsource/pixelify-sans/latin-600.css";
+@import "@fontsource/pixelify-sans/latin-700.css";
 @import "tailwindcss";
+
+/* Tandem visual system — see the "Fondations" board of the design canvas. */
+@theme {
+  --font-sans: "Geist Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --font-pixel: "Pixelify Sans", ui-monospace, monospace;
+
+  --color-bedrock: #08090a;
+  --color-slate-900: #0b0c0e;
+  --color-slate-850: #0d0e10;
+  --color-slate-800: #111316;
+  --color-slate-750: #15171a;
+  --color-slate-700: #171a1e;
+  --color-slate-600: #1f2328;
+  --color-line: #23272c;
+  --color-line-strong: #343941;
+
+  --color-chalk: #ece9e2;
+  --color-chalk-2: #d9d5cc;
+  --color-muted: #a9adb4;
+  --color-faint: #868b93;
+
+  --color-grass: #3c8527;
+  --color-grass-light: #5dbb3f;
+  --color-xp: #8be04e;
+  --color-xp-text: #8fd16a;
+  --color-gold: #f2c744;
+  --color-gold-deep: #6b5518;
+  --color-amethyst: #b99cf2;
+  --color-diamond: #4fd6d0;
+  --color-redstone: #e0483a;
+  --color-redstone-text: #f28a80;
+}
 
 html,
 body,
@@ -7,5 +45,196 @@ body,
 }
 
 body {
-  @apply bg-neutral-950 text-neutral-100 antialiased select-none;
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-slate-800);
+  color: var(--color-chalk);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-slate-600);
+  border: 2px solid var(--color-slate-800);
+}
+
+@layer components {
+  /* Stepped "pixel" corners instead of border-radius. */
+  .px-corners {
+    clip-path: polygon(
+      0 2px, 2px 2px, 2px 0, calc(100% - 2px) 0, calc(100% - 2px) 2px, 100% 2px,
+      100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 100%,
+      2px 100%, 2px calc(100% - 2px), 0 calc(100% - 2px)
+    );
+  }
+  .px-corners-md {
+    clip-path: polygon(
+      0 3px, 3px 3px, 3px 0, calc(100% - 3px) 0, calc(100% - 3px) 3px, 100% 3px,
+      100% calc(100% - 3px), calc(100% - 3px) calc(100% - 3px), calc(100% - 3px) 100%,
+      3px 100%, 3px calc(100% - 3px), 0 calc(100% - 3px)
+    );
+  }
+  .px-corners-lg {
+    clip-path: polygon(
+      0 6px, 3px 6px, 3px 3px, 6px 3px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 3px,
+      calc(100% - 3px) 3px, calc(100% - 3px) 6px, 100% 6px, 100% calc(100% - 6px),
+      calc(100% - 3px) calc(100% - 6px), calc(100% - 3px) calc(100% - 3px),
+      calc(100% - 6px) calc(100% - 3px), calc(100% - 6px) 100%, 6px 100%,
+      6px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 6px), 0 calc(100% - 6px)
+    );
+  }
+
+  .panel {
+    background: var(--color-slate-700);
+    box-shadow:
+      inset 0 0 0 1px var(--color-line),
+      inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+
+  .panel-title {
+    font-family: var(--font-pixel);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--color-gold);
+    text-transform: uppercase;
+  }
+
+  .pixel-shadow {
+    text-shadow: 3px 3px 0 rgb(0 0 0 / 0.45);
+  }
+
+  /* Bevelled buttons: light on top, shade below, pressed on :active. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    border: 0;
+    font-weight: 600;
+    color: var(--color-chalk);
+    background: var(--color-slate-600);
+    box-shadow:
+      inset 0 0 0 1px var(--color-line-strong),
+      inset 0 -3px 0 rgb(0 0 0 / 0.35);
+    transition: filter 80ms, transform 80ms;
+  }
+  .btn:hover:not(:disabled) {
+    filter: brightness(1.15);
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 0 0 1px var(--color-line-strong),
+      inset 0 2px 0 rgb(0 0 0 / 0.35);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .btn-primary {
+    color: #fff;
+    background: var(--color-grass);
+    box-shadow:
+      inset 0 3px 0 rgb(255 255 255 / 0.2),
+      inset 0 -4px 0 rgb(0 0 0 / 0.32);
+    text-shadow: 2px 2px 0 rgb(0 0 0 / 0.25);
+  }
+  .btn-primary:active:not(:disabled) {
+    box-shadow: inset 0 3px 0 rgb(0 0 0 / 0.3);
+  }
+
+  .btn-gold {
+    color: var(--color-gold);
+    background: var(--color-slate-700);
+    box-shadow:
+      inset 0 0 0 2px var(--color-gold-deep),
+      inset 0 -3px 0 rgb(0 0 0 / 0.35);
+  }
+
+  .btn-danger {
+    color: var(--color-redstone-text);
+    background: #2a1414;
+    box-shadow:
+      inset 0 0 0 1px #6e2a26,
+      inset 0 -3px 0 rgb(0 0 0 / 0.35);
+  }
+
+  .btn-ghost {
+    color: var(--color-muted);
+    background: transparent;
+    box-shadow: none;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--color-chalk);
+    background: var(--color-slate-600);
+    filter: none;
+  }
+
+  /* Inventory slot: shadow top-left, light bottom-right. */
+  .slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #8b8b8b;
+    box-shadow:
+      inset 2px 2px 0 #373737,
+      inset -2px -2px 0 #ffffff;
+  }
+
+  .field {
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    color: var(--color-chalk);
+    background: var(--color-slate-850);
+    border: 0;
+    outline: none;
+    box-shadow:
+      inset 0 0 0 1px #2b3036,
+      inset 0 3px 0 rgb(0 0 0 / 0.4);
+  }
+  .field:focus {
+    box-shadow:
+      inset 0 0 0 1px var(--color-xp),
+      inset 0 3px 0 rgb(0 0 0 / 0.4);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 8px;
+    font-size: 12px;
+    background: rgb(17 19 22 / 0.8);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  }
+
+  .dither {
+    background-image: repeating-conic-gradient(rgb(255 255 255 / 0.012) 0% 25%, transparent 0% 50%);
+    background-size: 4px 4px;
+  }
 }
