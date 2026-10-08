@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { listen } from "@tauri-apps/api/event";
-import { api, LOG_EVENT, type LogEntry } from "./api";
+import { api, EVENTS, type LogEntry } from "./api";
 
 const MAX_ENTRIES = 2000;
 
@@ -24,7 +24,7 @@ export async function startLogStream() {
   started = true;
   const pending: LogEntry[] = [];
   let backfilled = false;
-  await listen<LogEntry>(LOG_EVENT, ({ payload }) => {
+  await listen<LogEntry>(EVENTS.log, ({ payload }) => {
     if (backfilled) append([payload]);
     else pending.push(payload);
   });

@@ -1,9 +1,10 @@
 mod commands;
 mod error;
+mod game;
 
-use tandem_core::db::Database;
 use tandem_core::logging::{self, LogBuffer, LogEntry, WorkerGuard};
 use tandem_core::paths::DataDir;
+use tandem_core::Context;
 use tauri::{async_runtime, Emitter, Manager};
 
 /// Event carrying each new [`LogEntry`] to the frontend.
@@ -11,9 +12,9 @@ pub const LOG_EVENT: &str = "log://entry";
 const LOG_BUFFER_CAPACITY: usize = 2000;
 
 pub struct AppState {
-    pub data_dir: DataDir,
-    pub db: Database,
+    pub ctx: Context,
     pub logs: LogBuffer,
+    pub games: game::Games,
     _log_guard: WorkerGuard,
 }
 
@@ -35,17 +36,17 @@ pub fn run() {
                 })),
             )?;
 
-            let db = async_runtime::block_on(Database::open(&data_dir.database()))?;
+            let ctx = async_runtime::block_on(Context::init(data_dir))?;
             tracing::info!(
                 version = tandem_core::version(),
-                data_dir = %data_dir.root().display(),
+                data_dir = %ctx.data.root().display(),
                 "Tandem started"
             );
 
             app.manage(AppState {
-                data_dir,
-                db,
+                ctx,
                 logs,
+                games: game::Games::default(),
                 _log_guard: log_guard,
             });
             Ok(())
@@ -55,6 +56,18 @@ pub fn run() {
             commands::get_logs,
             commands::get_setting,
             commands::set_setting,
+            commands::list_versions,
+            commands::list_instances,
+            commands::create_instance,
+            commands::delete_instance,
+            commands::open_instance_folder,
+            commands::launch_instance,
+            commands::stop_instance,
+            commands::running_instances,
+            commands::list_accounts,
+            commands::add_offline_account,
+            commands::set_active_account,
+            commands::remove_account,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

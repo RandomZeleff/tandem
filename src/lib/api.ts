@@ -15,11 +15,99 @@ export interface LogEntry {
   message: string;
 }
 
-export const LOG_EVENT = "log://entry";
+export interface VersionEntry {
+  id: string;
+  type: "release" | "snapshot" | "old_beta" | "old_alpha";
+  url: string;
+  releaseTime: string;
+  sha1: string;
+}
+
+export interface VersionList {
+  latest: { release: string; snapshot: string };
+  versions: VersionEntry[];
+}
+
+export interface Instance {
+  id: string;
+  name: string;
+  gameVersion: string;
+  loader: string;
+  loaderVersion: string | null;
+  javaPath: string | null;
+  memoryMb: number | null;
+  jvmArgs: string | null;
+  icon: string | null;
+  createdAt: string;
+  lastPlayedAt: string | null;
+}
+
+export interface Account {
+  id: string;
+  kind: "microsoft" | "offline";
+  username: string;
+  mcUuid: string;
+  isActive: boolean;
+}
+
+export type InstallStage = "metadata" | "downloading" | "finalizing";
+
+export interface InstallProgress {
+  instanceId: string;
+  stage: InstallStage;
+  doneFiles: number;
+  totalFiles: number;
+  doneBytes: number;
+  totalBytes: number;
+}
+
+export interface GameOutput {
+  instanceId: string;
+  stream: "stdout" | "stderr";
+  line: string;
+}
+
+export interface GameExited {
+  instanceId: string;
+  code: number | null;
+  stopped: boolean;
+  crashReport: string | null;
+}
+
+export const EVENTS = {
+  log: "log://entry",
+  progress: "install://progress",
+  output: "game://output",
+  started: "game://started",
+  exited: "game://exited",
+} as const;
 
 export const api = {
   appInfo: () => invoke<AppInfo>("app_info"),
   getLogs: () => invoke<LogEntry[]>("get_logs"),
   getSetting: <T>(key: string) => invoke<T | null>("get_setting", { key }),
   setSetting: (key: string, value: unknown) => invoke<void>("set_setting", { key, value }),
+
+  listVersions: () => invoke<VersionList>("list_versions"),
+
+  listInstances: () => invoke<Instance[]>("list_instances"),
+  createInstance: (name: string, gameVersion: string) =>
+    invoke<Instance>("create_instance", { instance: { name, gameVersion } }),
+  deleteInstance: (id: string) => invoke<void>("delete_instance", { id }),
+  openInstanceFolder: (id: string) => invoke<void>("open_instance_folder", { id }),
+  launchInstance: (id: string) => invoke<void>("launch_instance", { id }),
+  stopInstance: (id: string) => invoke<boolean>("stop_instance", { id }),
+  runningInstances: () => invoke<string[]>("running_instances"),
+
+  listAccounts: () => invoke<Account[]>("list_accounts"),
+  addOfflineAccount: (username: string) => invoke<Account>("add_offline_account", { username }),
+  setActiveAccount: (id: string) => invoke<Account>("set_active_account", { id }),
+  removeAccount: (id: string) => invoke<void>("remove_account", { id }),
 };
+
+/** Tauri rejects with the serialized CommandError string; normalise anything else. */
+export function errorMessage(err: unknown): string {
+  if (typeof err === "string") return err;
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
