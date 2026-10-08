@@ -1,0 +1,2 @@
+# sqlx checksums migrations: line endings must never change.
+*.sql text eol=lf
