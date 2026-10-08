@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "mc-launcher",
+  "productName": "Tandem",
   "version": "0.1.0",
-  "identifier": "dev.mclauncher.app",
+  "identifier": "dev.tandem.launcher",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "mc-launcher",
+        "title": "Tandem",
         "width": 1200,
         "height": 760,
         "minWidth": 900,

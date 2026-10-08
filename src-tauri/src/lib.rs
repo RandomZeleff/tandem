@@ -1,6 +1,6 @@
 #[tauri::command]
 fn core_version() -> &'static str {
-    launcher_core::version()
+    tandem_core::version()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

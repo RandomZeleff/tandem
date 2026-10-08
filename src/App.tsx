@@ -6,7 +6,7 @@ function App() {
 
   return (
     <main class="flex h-full flex-col items-center justify-center gap-2">
-      <h1 class="text-3xl font-semibold tracking-tight">mc-launcher</h1>
+      <h1 class="text-3xl font-semibold tracking-tight">Tandem</h1>
       <p class="text-sm text-neutral-400">core v{version() ?? "…"}</p>
     </main>
   );

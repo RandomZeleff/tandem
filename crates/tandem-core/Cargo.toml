@@ -1,5 +1,5 @@
 [package]
-name = "launcher-core"
+name = "tandem-core"
 version.workspace = true
 edition.workspace = true
 

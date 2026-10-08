@@ -10,7 +10,7 @@
 ┌───────────────┴──────────────────▼─────────────────┐
 │  src-tauri (app Tauri) : commandes fines, events    │
 ├─────────────────────────────────────────────────────┤
-│  crates/launcher-core (Rust pur, sans Tauri)        │
+│  crates/tandem-core (Rust pur, sans Tauri)        │
 │   ├─ meta       piston-meta, loaders                 │
 │   ├─ download   moteur parallèle, store par hash     │
 │   ├─ java       détection / install JRE              │
@@ -27,7 +27,7 @@
 ## Données sur disque
 
 ```
-%APPDATA%/<nom>/
+%APPDATA%/Tandem/
 ├─ launcher.db          SQLite (instances, comptes, réglages, cache meta)
 ├─ store/<sha1[0..2]>/<sha1>   fichiers dédupliqués (libs, mods, assets)
 ├─ assets/              index + objets (format Mojang, partagés)

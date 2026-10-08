@@ -6,12 +6,12 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 ## Phase 0 — Fondations
 
-- [ ] Choisir le nom définitif du projet
+- [x] Choisir le nom définitif du projet : **Tandem**
 - [x] Valider le framework frontend : SolidJS + Tailwind v4
 - [x] Scaffold Tauri 2 (`pnpm create tauri-app`, template solid-ts)
-- [x] Workspace Cargo : `crates/launcher-core` (sans Tauri) + `src-tauri` (app)
+- [x] Workspace Cargo : `crates/tandem-core` (sans Tauri) + `src-tauri` (app)
 - [ ] Base SQLite (`sqlx`) + migrations : instances, comptes, réglages
-- [ ] Dossier de données (`%APPDATA%/<nom>`) : `store/`, `instances/`, `java/`, `cache/`
+- [ ] Dossier de données (`%APPDATA%/Tandem`) : `store/`, `instances/`, `java/`, `cache/`
 - [ ] Logging (`tracing`) + panneau de logs côté UI
 - [ ] CI GitHub Actions : fmt, clippy, tests, build Windows
 - [~] **Demande d'accès API Minecraft** : app Azure créée → formulaire https://aka.ms/mce-reviewappid (voir DECISIONS D7)
@@ -87,6 +87,11 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Blocages : aucun.
 
 ### 2026-10-08 (2)
-- Fait : scaffold Tauri 2 + SolidJS + Tailwind v4, workspace Cargo (`launcher-core` + `src-tauri`), commande `core_version` reliée à l'UI. fmt/clippy/tests OK.
+- Fait : scaffold Tauri 2 + SolidJS + Tailwind v4, workspace Cargo (`tandem-core` + `src-tauri`), commande `core_version` reliée à l'UI. fmt/clippy/tests OK.
 - Prochaine étape : finir Phase 0 (SQLite, dossier de données, logging, CI) puis Phase 1.
 - En attente : nom du projet ; validation Mojang du Client ID Azure.
+
+### 2026-10-08 (3)
+- Fait : nom choisi (Tandem), vérifs de disponibilité, renommage complet, Client ID Azure enregistré.
+- Prochaine étape : Phase 0 (SQLite, dossier de données, logging, CI).
+- En attente : formulaire Mojang (envoyé par l'utilisateur), renommage du dossier `mc-launcher` → `tandem`.

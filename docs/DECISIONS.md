@@ -32,6 +32,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 ### D7 · 2026-10-08 · Accès API Minecraft : app Azure + validation Mojang
 - Les nouvelles apps Azure reçoivent un 403 sur `api.minecraftservices.com` tant que leur Client ID n'est pas approuvé.
 - Étapes : app Azure (comptes Microsoft personnels uniquement, tenant `consumers`, public client flows activés) → formulaire https://aka.ms/mce-reviewappid avec le Client ID.
-- Client ID : `47ec2f94-9a22-4089-95c2-e2cbbc4afd44` (dans `launcher-core/src/auth.rs`). Formulaire Mojang : à envoyer une fois le nom choisi.
+- Client ID : `47ec2f94-9a22-4089-95c2-e2cbbc4afd44` (dans `tandem-core/src/auth.rs`). Formulaire Mojang : à envoyer une fois le nom choisi.
 - En attendant : développement avec compte offline.
 - Statut : en cours
+
+### D8 · 2026-10-08 · Nom du projet : Tandem
+- Pourquoi : « jouer à deux » = le différenciateur P2P ; court, bilingue, sans « Minecraft/Mojang/Craft ».
+- Vérifs : aucun launcher/mod Minecraft homonyme (Modrinth, GitHub, web). `tandem.app`, `playtandem.com` et `tandemlauncher.com` déjà pris ; libres au 2026-10-08 : `tandemlauncher.app`, `tandemlauncher.net`, `tandemmc.com`.
+- Identifiants : crates `tandem` / `tandem-core`, bundle `dev.tandem.launcher`, données `%APPDATA%/Tandem`.
+- Statut : validé
