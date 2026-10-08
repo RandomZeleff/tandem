@@ -38,7 +38,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 ## Phase 3 — Loaders & contenu
 
-- [ ] Fabric / Quilt (API meta, simple)
+- [x] Fabric / Quilt (API meta, simple)
 - [ ] NeoForge / Forge (exécution des installers / processors)
 - [ ] Client API Modrinth : recherche mods, modpacks, shaders, resource packs, datapacks
 - [ ] Résolution de dépendances + compatibilité version/loader
@@ -111,3 +111,9 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Fait : direction artistique v2 (canevas de design : écrans + planche « Fondations ») puis intégration dans l'app : thème Tailwind (couleurs Deepslate/Herbe/XP/Or/Améthyste/Redstone), polices embarquées (Pixelify Sans, Geist, Geist Mono), coins en escalier, boutons biseautés, cases d'inventaire, barre d'XP, icônes pixel, scènes en bandes. Fenêtre sans bordure avec barre de titre maison. Pages : Accueil, Instances, détail d'instance (console, infos, suppression), Réglages (journal), Découvrir / Jouer à deux en « bientôt ».
 - Aperçu navigateur : `pnpm dev` puis http://localhost:1420 simule le backend (`src/dev/mock.ts`, jamais inclus dans l'app).
 - Prochaine étape : reprendre les features (Phase 2 si Mojang a validé, sinon Phase 3).
+
+### 2026-10-08 (7)
+- Fait : début de Phase 3 — Fabric et Quilt. `meta::loader` (liste des versions via meta.fabricmc.net / meta.quiltmc.org, tri semver car Quilt renvoie un ordre aléatoire, profil mis en cache dans `versions/<id>/`), fusion du profil dans le JSON vanilla (`VersionJson::apply_loader`), libraries Maven (`url` + sha1/size optionnels), `install::Target`, version du loader figée à la création. UI : choix Vanilla/Fabric/Quilt + version du loader dans « Nouvelle instance », version du loader affichée dans l'onglet Informations.
+- Vérifié de bout en bout (exemple CLI `play -- fabric@1.21.4` / `quilt@1.21.4`) : Fabric 0.19.5 et Quilt 0.30.1 atteignent le menu. Dialogue testé dans l'aperçu navigateur.
+- Prochaine étape : client API Modrinth (recherche + installation de mods dans une instance), puis store par hash (D4/D10).
+- Blocages : Phase 2 toujours en attente de la validation Mojang.
