@@ -30,3 +30,15 @@ export function formatRelative(iso: string | null): string {
   }
   return "";
 }
+
+const LOADERS: Record<string, string> = {
+  vanilla: "Vanilla",
+  fabric: "Fabric",
+  quilt: "Quilt",
+  forge: "Forge",
+  neoforge: "NeoForge",
+};
+
+export function loaderLabel(loader: string): string {
+  return LOADERS[loader] ?? loader;
+}

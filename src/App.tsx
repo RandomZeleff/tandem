@@ -1,125 +1,84 @@
-import { createResource, createSignal, For, onMount, Show } from "solid-js";
-import AccountMenu from "./components/AccountMenu";
-import InstanceCard from "./components/InstanceCard";
-import LogPanel from "./components/LogPanel";
+import { Match, onMount, Show, Switch } from "solid-js";
 import NewInstanceDialog from "./components/NewInstanceDialog";
-import { api, errorMessage, type Instance } from "./lib/api";
+import Sidebar from "./components/Sidebar";
+import TitleBar from "./components/TitleBar";
 import { onGamePlayed, startGameEvents } from "./lib/games";
 import { startLogStream } from "./lib/logs";
+import {
+  instances,
+  navigate,
+  newInstanceDialog,
+  refetchInstances,
+  route,
+  setNewInstanceDialog,
+} from "./lib/store";
+import Home from "./pages/Home";
+import InstanceDetail from "./pages/InstanceDetail";
+import Instances from "./pages/Instances";
+import Settings from "./pages/Settings";
+import Soon from "./pages/Soon";
 
 function App() {
-  const [info] = createResource(api.appInfo);
-  const [instances, { refetch }] = createResource(api.listInstances);
-  const [showLogs, setShowLogs] = createSignal(true);
-  const [creating, setCreating] = createSignal(false);
-  const [error, setError] = createSignal<string | null>(null);
-
   onMount(() => {
     void startLogStream();
     void startGameEvents();
-    onGamePlayed(() => void refetch());
+    onGamePlayed(() => void refetchInstances());
   });
 
-  async function remove(instance: Instance) {
-    if (!confirm(`Supprimer « ${instance.name} » et tout son dossier (mondes compris) ?`)) return;
-    try {
-      await api.deleteInstance(instance.id);
-      await refetch();
-    } catch (err) {
-      setError(errorMessage(err));
-    }
-  }
-
-  async function openFolder(instance: Instance) {
-    try {
-      await api.openInstanceFolder(instance.id);
-    } catch (err) {
-      setError(errorMessage(err));
-    }
-  }
+  const detail = () => {
+    const r = route();
+    return r.page === "instance" ? instances().find((i) => i.id === r.id) : undefined;
+  };
 
   return (
     <div class="flex h-full flex-col">
-      <header class="flex h-12 shrink-0 items-center justify-between border-b border-neutral-800 px-4">
-        <div class="flex items-baseline gap-2">
-          <h1 class="text-lg font-semibold tracking-tight">Tandem</h1>
-          <span class="text-xs text-neutral-500">v{info()?.version ?? "…"}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            class="rounded px-2 py-1 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
-            onClick={() => setShowLogs((v) => !v)}
-          >
-            {showLogs() ? "Masquer la console" : "Afficher la console"}
-          </button>
-          <AccountMenu />
-        </div>
-      </header>
-
-      <main class="min-h-0 flex-1 overflow-y-auto p-6">
-        <div class="mb-5 flex items-center justify-between">
-          <h2 class="text-sm font-medium tracking-wide text-neutral-400 uppercase">Instances</h2>
-          <button
-            class="rounded-md bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700"
-            onClick={() => setCreating(true)}
-          >
-            Nouvelle instance
-          </button>
-        </div>
-
-        <Show when={error()}>
-          <p class="mb-4 rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-300">
-            {error()}
-            <button class="ml-2 text-red-400 underline" onClick={() => setError(null)}>
-              OK
-            </button>
-          </p>
-        </Show>
-
-        <Show
-          when={(instances()?.length ?? 0) > 0}
-          fallback={
-            <Show when={!instances.loading}>
-              <div class="flex flex-col items-center gap-3 py-20 text-center">
-                <p class="text-neutral-300">Aucune instance pour l'instant.</p>
-                <button
-                  class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
-                  onClick={() => setCreating(true)}
-                >
-                  Créer ma première instance
-                </button>
-              </div>
-            </Show>
-          }
-        >
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
-            <For each={instances()}>
-              {(instance) => (
-                <InstanceCard
-                  instance={instance}
-                  onDelete={() => remove(instance)}
-                  onOpenFolder={() => openFolder(instance)}
-                />
-              )}
-            </For>
-          </div>
-        </Show>
-      </main>
-
-      <Show when={showLogs()}>
-        <div class="h-56 shrink-0">
-          <LogPanel />
-        </div>
-      </Show>
-
-      <Show when={creating()}>
-        <NewInstanceDialog
-          onClose={() => setCreating(false)}
-          onCreated={() => {
-            setCreating(false);
-            void refetch();
+      <TitleBar />
+      <div class="flex min-h-0 flex-1">
+        <Sidebar />
+        <main
+          class="dither min-w-0 flex-1 bg-slate-800"
+          classList={{
+            "overflow-hidden": route().page === "instance",
+            "overflow-y-auto p-6": route().page !== "instance",
           }}
-        />
+        >
+          <Switch>
+            <Match when={route().page === "home"}>
+              <Home />
+            </Match>
+            <Match when={route().page === "instances"}>
+              <Instances />
+            </Match>
+            <Match when={route().page === "instance"}>
+              <Show when={detail()} keyed fallback={<p class="p-6 text-faint">Instance introuvable.</p>}>
+                {(instance) => <InstanceDetail instance={instance} />}
+              </Show>
+            </Match>
+            <Match when={route().page === "discover"}>
+              <Soon feature="discover" />
+            </Match>
+            <Match when={route().page === "multi"}>
+              <Soon feature="multi" />
+            </Match>
+            <Match when={route().page === "settings"}>
+              <Settings />
+            </Match>
+          </Switch>
+        </main>
+      </div>
+
+      <Show when={newInstanceDialog()}>
+        {(options) => (
+          <NewInstanceDialog
+            initialVersion={options().version}
+            onClose={() => setNewInstanceDialog(null)}
+            onCreated={(instance) => {
+              setNewInstanceDialog(null);
+              void refetchInstances();
+              navigate({ page: "instance", id: instance.id });
+            }}
+          />
+        )}
       </Show>
     </div>
   );

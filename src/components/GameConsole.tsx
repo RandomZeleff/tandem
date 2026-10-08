@@ -1,11 +1,8 @@
 import { createEffect, For, on, Show } from "solid-js";
-import { consoleInstance, output } from "../lib/games";
+import { output } from "../lib/games";
 
-export default function GameConsole() {
-  const lines = () => {
-    const id = consoleInstance();
-    return id ? (output[id] ?? []) : [];
-  };
+export default function GameConsole(props: { instanceId: string }) {
+  const lines = () => output[props.instanceId] ?? [];
 
   let scroller: HTMLDivElement | undefined;
   let stickToBottom = true;
@@ -21,7 +18,7 @@ export default function GameConsole() {
   return (
     <div
       ref={scroller}
-      class="h-full overflow-y-auto px-3 pb-2 font-mono text-xs leading-5 select-text"
+      class="h-full overflow-y-auto bg-slate-850 px-4 py-3 font-mono text-xs leading-5 select-text shadow-[inset_0_0_0_1px_#23272C,inset_0_3px_0_rgb(0_0_0/0.4)]"
       onScroll={(e) => {
         const el = e.currentTarget;
         stickToBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
@@ -29,16 +26,13 @@ export default function GameConsole() {
     >
       <Show
         when={lines().length > 0}
-        fallback={<p class="pt-2 text-neutral-500">Lance une instance pour voir la sortie du jeu.</p>}
+        fallback={<p class="text-faint">La sortie du jeu s'affichera ici au prochain lancement.</p>}
       >
         <For each={lines()}>
           {(l) => (
             <div
               class="whitespace-pre-wrap"
-              classList={{
-                "text-neutral-300": l.stream === "stdout",
-                "text-red-300": l.stream === "stderr",
-              }}
+              classList={{ "text-chalk-2": l.stream === "stdout", "text-redstone-text": l.stream === "stderr" }}
             >
               {l.line}
             </div>

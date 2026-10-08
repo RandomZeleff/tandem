@@ -1,29 +1,33 @@
 import { createEffect, createMemo, createResource, createSignal, For, Show } from "solid-js";
 import { api, errorMessage, type Instance } from "../lib/api";
+import Dialog from "./Dialog";
 
 interface Props {
   onClose: () => void;
   onCreated: (instance: Instance) => void;
+  /** Version to preselect (e.g. a snapshot from the news card). */
+  initialVersion?: string;
 }
 
 export default function NewInstanceDialog(props: Props) {
   const [versions] = createResource(api.listVersions);
   const [showSnapshots, setShowSnapshots] = createSignal(false);
   const [name, setName] = createSignal("");
-  const [version, setVersion] = createSignal("");
+  const [version, setVersion] = createSignal(props.initialVersion ?? "");
   const [error, setError] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
 
   const choices = createMemo(() =>
     (versions()?.versions ?? []).filter(
-      (v) => v.type === "release" || (showSnapshots() && v.type === "snapshot"),
+      (v) => v.type === "release" || ((showSnapshots() || v.id === version()) && v.type === "snapshot"),
     ),
   );
 
-  // Preselect the latest release once the list arrives.
   createEffect(() => {
-    const latest = versions()?.latest.release;
-    if (latest && !version()) setVersion(latest);
+    const list = versions();
+    if (!list) return;
+    if (!version()) setVersion(list.latest.release);
+    if (list.versions.find((v) => v.id === version())?.type === "snapshot") setShowSnapshots(true);
   });
 
   async function submit(e: SubmitEvent) {
@@ -31,8 +35,7 @@ export default function NewInstanceDialog(props: Props) {
     setSaving(true);
     setError(null);
     try {
-      const finalName = name().trim() || `Minecraft ${version()}`;
-      props.onCreated(await api.createInstance(finalName, version()));
+      props.onCreated(await api.createInstance(name().trim() || `Minecraft ${version()}`, version()));
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -41,23 +44,15 @@ export default function NewInstanceDialog(props: Props) {
   }
 
   return (
-    <div
-      class="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
-      onClick={(e) => e.target === e.currentTarget && props.onClose()}
-    >
-      <form
-        onSubmit={submit}
-        class="w-full max-w-md space-y-4 rounded-xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl"
-      >
-        <h2 class="text-lg font-semibold">Nouvelle instance</h2>
-
-        <div class="space-y-1">
-          <label class="text-xs text-neutral-400" for="instance-name">
+    <Dialog title="Nouvelle instance" onClose={props.onClose}>
+      <form onSubmit={submit} class="flex flex-col gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs text-muted" for="instance-name">
             Nom
           </label>
           <input
             id="instance-name"
-            class="w-full rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            class="field text-sm"
             placeholder={version() ? `Minecraft ${version()}` : "Ma survie"}
             maxLength={64}
             value={name()}
@@ -66,14 +61,15 @@ export default function NewInstanceDialog(props: Props) {
           />
         </div>
 
-        <div class="space-y-1">
+        <div class="flex flex-col gap-1.5">
           <div class="flex items-center justify-between">
-            <label class="text-xs text-neutral-400" for="instance-version">
+            <label class="text-xs text-muted" for="instance-version">
               Version
             </label>
-            <label class="flex items-center gap-1.5 text-xs text-neutral-400">
+            <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
               <input
                 type="checkbox"
+                class="accent-grass"
                 checked={showSnapshots()}
                 onChange={(e) => setShowSnapshots(e.currentTarget.checked)}
               />
@@ -82,15 +78,11 @@ export default function NewInstanceDialog(props: Props) {
           </div>
           <Show
             when={!versions.error}
-            fallback={
-              <p class="text-sm text-red-400">
-                Impossible de charger les versions : {errorMessage(versions.error)}
-              </p>
-            }
+            fallback={<p class="text-sm text-redstone-text">Impossible de charger les versions : {errorMessage(versions.error)}</p>}
           >
             <select
               id="instance-version"
-              class="w-full rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              class="field text-sm"
               value={version()}
               onChange={(e) => setVersion(e.currentTarget.value)}
               disabled={versions.loading}
@@ -111,26 +103,18 @@ export default function NewInstanceDialog(props: Props) {
         </div>
 
         <Show when={error()}>
-          <p class="text-sm text-red-400">{error()}</p>
+          <p class="text-sm text-redstone-text">{error()}</p>
         </Show>
 
         <div class="flex justify-end gap-2 pt-1">
-          <button
-            type="button"
-            class="rounded-md px-4 py-2 text-sm text-neutral-400 hover:bg-neutral-800"
-            onClick={props.onClose}
-          >
+          <button type="button" class="btn btn-ghost" onClick={props.onClose}>
             Annuler
           </button>
-          <button
-            type="submit"
-            class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-40"
-            disabled={!version() || saving()}
-          >
+          <button type="submit" class="btn btn-primary px-corners px-5" disabled={!version() || saving()}>
             Créer
           </button>
         </div>
       </form>
-    </div>
+    </Dialog>
   );
 }
