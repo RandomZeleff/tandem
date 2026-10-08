@@ -2,8 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::context::Context;
 use crate::db::Database;
 use crate::error::{Error, Result};
+use crate::meta::loader::{self, Loader};
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -11,7 +13,7 @@ pub struct Instance {
     pub id: String,
     pub name: String,
     pub game_version: String,
-    pub loader: String,
+    pub loader: Loader,
     pub loader_version: Option<String>,
     pub java_path: Option<String>,
     pub memory_mb: Option<u32>,
@@ -21,11 +23,50 @@ pub struct Instance {
     pub last_played_at: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NewInstance {
     pub name: String,
     pub game_version: String,
+    #[serde(default)]
+    pub loader: Loader,
+    /// Latest stable loader version when omitted.
+    #[serde(default)]
+    pub loader_version: Option<String>,
+}
+
+/// Creates an instance and its folder, pinning the loader version so it never
+/// changes under the player's feet.
+pub async fn create(ctx: &Context, mut new: NewInstance) -> Result<Instance> {
+    new.loader_version = match new.loader {
+        Loader::Vanilla => None,
+        loader => {
+            let available = loader::list_versions(ctx, loader, &new.game_version).await?;
+            let chosen = match new.loader_version.take() {
+                Some(v) => available.into_iter().find(|a| a.version == v),
+                None => available
+                    .iter()
+                    .find(|a| a.stable)
+                    .or(available.first())
+                    .cloned(),
+            };
+            let chosen = chosen.ok_or_else(|| Error::LoaderUnavailable {
+                loader: loader.to_string(),
+                game_version: new.game_version.clone(),
+            })?;
+            Some(chosen.version)
+        }
+    };
+    let created = ctx.db.create_instance(&new).await?;
+    tokio::fs::create_dir_all(ctx.data.instance_dir(&created.id)).await?;
+    tracing::info!(
+        id = %created.id,
+        version = %created.game_version,
+        loader = %created.loader,
+        loader_version = ?created.loader_version,
+        "instance created"
+    );
+    Ok(created)
 }
 
 const COLUMNS: &str = "id, name, game_version, loader, loader_version, java_path, memory_mb, \
@@ -86,12 +127,17 @@ impl Database {
             id = format!("{base}-{n}");
             n += 1;
         }
-        sqlx::query("INSERT INTO instances (id, name, game_version) VALUES (?, ?, ?)")
-            .bind(&id)
-            .bind(name)
-            .bind(&new.game_version)
-            .execute(self.pool())
-            .await?;
+        sqlx::query(
+            "INSERT INTO instances (id, name, game_version, loader, loader_version)
+             VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind(&id)
+        .bind(name)
+        .bind(&new.game_version)
+        .bind(new.loader)
+        .bind(&new.loader_version)
+        .execute(self.pool())
+        .await?;
         self.get_instance(&id).await
     }
 
@@ -132,12 +178,22 @@ mod tests {
         let new = NewInstance {
             name: "Survie".into(),
             game_version: "1.21.4".into(),
+            ..Default::default()
         };
         let a = db.create_instance(&new).await.unwrap();
-        let b = db.create_instance(&new).await.unwrap();
+        let b = db
+            .create_instance(&NewInstance {
+                loader: Loader::Fabric,
+                loader_version: Some("0.16.10".into()),
+                ..new.clone()
+            })
+            .await
+            .unwrap();
         assert_eq!(a.id, "survie");
         assert_eq!(b.id, "survie-2");
-        assert_eq!(a.loader, "vanilla");
+        assert_eq!(a.loader, Loader::Vanilla);
+        assert_eq!(b.loader, Loader::Fabric);
+        assert_eq!(b.loader_version.as_deref(), Some("0.16.10"));
 
         db.mark_instance_played(&b.id).await.unwrap();
         let list = db.list_instances().await.unwrap();

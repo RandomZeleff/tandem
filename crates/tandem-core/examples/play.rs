@@ -1,12 +1,13 @@
 //! Dev tool: install a version and launch it offline, without the UI.
 //!
-//! cargo run -p tandem-core --example play -- <version> [username] [seconds]
+//! cargo run -p tandem-core --example play -- <[fabric@|quilt@]version> [username] [seconds]
 //!
 //! Uses `TANDEM_DATA_DIR` if set. When `seconds` is given, the game is killed after that delay.
 
 use std::time::Duration;
 
 use tandem_core::launch::{self, LaunchSpec, DEFAULT_MEMORY_MB};
+use tandem_core::meta::{self, loader::Loader};
 use tandem_core::paths::DataDir;
 use tandem_core::{install, Context};
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -23,11 +24,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let ctx = Context::init(DataDir::from_env()?).await?;
     let account = ctx.db.add_offline_account(&username).await?;
-    let game_dir = ctx.data.instance_dir(&format!("dev-{version}"));
+    let game_dir = ctx
+        .data
+        .instance_dir(&format!("dev-{}", version.replace('@', "-")));
+
+    // `fabric@1.21.4` / `quilt@1.21.4`: latest loader version for that game version.
+    let (loader, game_version) = match version.split_once('@') {
+        Some((loader, game)) => (serde_json::from_value(loader.into())?, game),
+        None => (Loader::Vanilla, version.as_str()),
+    };
+    let loader_version = match loader {
+        Loader::Vanilla => None,
+        loader => {
+            let versions = meta::loader::list_versions(&ctx, loader, game_version).await?;
+            let latest = versions
+                .iter()
+                .find(|v| v.stable)
+                .ok_or("no loader version")?;
+            println!("{loader} {}", latest.version);
+            Some(latest.version.clone())
+        }
+    };
+    let target = install::Target {
+        game_version,
+        loader,
+        loader_version: loader_version.as_deref(),
+    };
 
     let started = std::time::Instant::now();
     let last = std::sync::Mutex::new(0usize);
-    let prepared = install::prepare(&ctx, &version, &game_dir, |p| {
+    let prepared = install::prepare(&ctx, target, &game_dir, |p| {
         let mut last = last.lock().unwrap();
         if p.download.done_files != *last && p.download.done_files % 250 == 0 {
             *last = p.download.done_files;

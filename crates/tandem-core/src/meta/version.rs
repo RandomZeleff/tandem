@@ -1,9 +1,10 @@
 //! Version JSON (`versions/<id>/<id>.json`) as published by piston-meta.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::Deserialize;
 
+use super::loader::LoaderProfile;
 use super::rules::{is_allowed, Environment, Rule};
 
 #[derive(Debug, Clone, Deserialize)]
@@ -107,6 +108,33 @@ pub struct Library {
     pub natives: Option<HashMap<String, String>>,
     #[serde(default)]
     pub extract: Option<Extract>,
+    /// Maven repository base (loader profiles list libraries this way instead of `downloads`).
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub sha1: Option<String>,
+    #[serde(default)]
+    pub size: Option<u64>,
+}
+
+/// A library file to download, with its path relative to the libraries directory.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LibraryFile {
+    pub path: String,
+    pub url: String,
+    pub sha1: Option<String>,
+    pub size: Option<u64>,
+}
+
+impl LibraryFile {
+    fn from_artifact(path: String, artifact: &Artifact) -> Self {
+        Self {
+            path,
+            url: artifact.url.clone(),
+            sha1: Some(artifact.sha1.clone()),
+            size: Some(artifact.size),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -128,15 +156,36 @@ impl Library {
         is_allowed(&self.rules, env)
     }
 
-    /// Main jar, with its path relative to the libraries directory.
-    pub fn artifact(&self) -> Option<(String, &Artifact)> {
-        let artifact = self.downloads.as_ref()?.artifact.as_ref()?;
-        let path = artifact.path.clone().or_else(|| maven_path(&self.name))?;
-        Some((path, artifact))
+    /// Main jar: from `downloads` (Mojang) or from a Maven repository (loaders).
+    pub fn artifact(&self) -> Option<LibraryFile> {
+        if let Some(artifact) = self.downloads.as_ref().and_then(|d| d.artifact.as_ref()) {
+            let path = artifact.path.clone().or_else(|| maven_path(&self.name))?;
+            return Some(LibraryFile::from_artifact(path, artifact));
+        }
+        let base = self.url.as_deref()?;
+        let path = maven_path(&self.name)?;
+        Some(LibraryFile {
+            url: format!("{}/{path}", base.trim_end_matches('/')),
+            path,
+            sha1: self.sha1.clone(),
+            size: self.size,
+        })
+    }
+
+    /// `group:artifact[:classifier]`: identifies a library regardless of its version.
+    fn key(&self) -> String {
+        let coords = self.name.split('@').next().unwrap_or_default();
+        let mut parts = coords.split(':');
+        let group = parts.next().unwrap_or_default();
+        let artifact = parts.next().unwrap_or_default();
+        match parts.nth(1) {
+            Some(classifier) => format!("{group}:{artifact}:{classifier}"),
+            None => format!("{group}:{artifact}"),
+        }
     }
 
     /// Legacy natives jar to extract for this platform, if any.
-    pub fn native_artifact(&self, env: &Environment) -> Option<(String, &Artifact)> {
+    pub fn native_artifact(&self, env: &Environment) -> Option<LibraryFile> {
         let classifier = self
             .natives
             .as_ref()?
@@ -147,7 +196,29 @@ impl Library {
             .path
             .clone()
             .or_else(|| maven_path(&format!("{}:{classifier}", self.name)))?;
-        Some((path, artifact))
+        Some(LibraryFile::from_artifact(path, artifact))
+    }
+}
+
+impl VersionJson {
+    /// Layers a loader profile on top of this vanilla version. Loader libraries come
+    /// first on the classpath and replace vanilla ones with the same group and artifact
+    /// (e.g. a newer ASM).
+    pub fn apply_loader(&mut self, profile: LoaderProfile) {
+        self.main_class = profile.main_class;
+        if let Some(extra) = profile.arguments {
+            let arguments = self.arguments.get_or_insert_with(Arguments::default);
+            arguments.jvm.extend(extra.jvm);
+            arguments.game.extend(extra.game);
+        }
+        let overridden: HashSet<String> = profile.libraries.iter().map(Library::key).collect();
+        let vanilla = std::mem::take(&mut self.libraries);
+        self.libraries = profile.libraries;
+        self.libraries.extend(
+            vanilla
+                .into_iter()
+                .filter(|l| !overridden.contains(&l.key())),
+        );
     }
 }
 
@@ -221,6 +292,61 @@ mod tests {
 
         let lib = &v.libraries[0];
         assert!(lib.artifact().is_none());
-        assert_eq!(lib.native_artifact(&env).unwrap().0, "p.jar");
+        assert_eq!(lib.native_artifact(&env).unwrap().path, "p.jar");
+    }
+
+    #[test]
+    fn applies_loader_profile() {
+        let vanilla = r#"{
+            "id": "1.21.4", "type": "release", "mainClass": "net.minecraft.client.main.Main",
+            "assets": "1", "assetIndex": {"id":"1","sha1":"a","size":1,"url":"u"},
+            "downloads": {"client": {"sha1":"b","size":2,"url":"v"}},
+            "arguments": {"game": ["--demo"], "jvm": ["-cp", "${classpath}"]},
+            "libraries": [
+                {"name": "org.ow2.asm:asm:9.6", "downloads": {"artifact": {"path":"old.jar","sha1":"c","size":3,"url":"w"}}},
+                {"name": "org.lwjgl:lwjgl:3.3.3:natives-windows", "downloads": {"artifact": {"path":"n.jar","sha1":"d","size":4,"url":"x"}}}
+            ]
+        }"#;
+        let profile = r#"{
+            "id": "fabric-loader-0.16.10-1.21.4", "inheritsFrom": "1.21.4",
+            "mainClass": "net.fabricmc.loader.impl.launch.knot.KnotClient",
+            "arguments": {"game": [], "jvm": ["-DFabricMcEmu= net.minecraft.client.main.Main "]},
+            "libraries": [
+                {"name": "org.ow2.asm:asm:9.7.1", "url": "https://maven.fabricmc.net/", "sha1": "e", "size": 5},
+                {"name": "net.fabricmc:intermediary:1.21.4", "url": "https://maven.fabricmc.net"}
+            ]
+        }"#;
+        let mut v: VersionJson = serde_json::from_str(vanilla).unwrap();
+        v.apply_loader(serde_json::from_str(profile).unwrap());
+
+        assert_eq!(
+            v.main_class,
+            "net.fabricmc.loader.impl.launch.knot.KnotClient"
+        );
+        let names: Vec<_> = v.libraries.iter().map(|l| l.name.as_str()).collect();
+        assert_eq!(
+            names,
+            [
+                "org.ow2.asm:asm:9.7.1",
+                "net.fabricmc:intermediary:1.21.4",
+                "org.lwjgl:lwjgl:3.3.3:natives-windows"
+            ]
+        );
+        assert_eq!(
+            v.libraries[0].artifact().unwrap(),
+            LibraryFile {
+                path: "org/ow2/asm/asm/9.7.1/asm-9.7.1.jar".into(),
+                url: "https://maven.fabricmc.net/org/ow2/asm/asm/9.7.1/asm-9.7.1.jar".into(),
+                sha1: Some("e".into()),
+                size: Some(5),
+            }
+        );
+        assert_eq!(
+            v.libraries[1].artifact().unwrap().url,
+            "https://maven.fabricmc.net/net/fabricmc/intermediary/1.21.4/intermediary-1.21.4.jar"
+        );
+        let args = v.arguments.unwrap();
+        assert_eq!(args.jvm.len(), 3);
+        assert_eq!(args.game.len(), 1);
     }
 }

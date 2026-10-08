@@ -8,9 +8,11 @@ use serde::Serialize;
 use crate::context::Context;
 use crate::download::{self, DownloadTask, Progress};
 use crate::error::{Error, Result};
+use crate::instance::Instance;
 use crate::java;
+use crate::meta::loader::{self, Loader};
 use crate::meta::rules::Environment;
-use crate::meta::version::VersionJson;
+use crate::meta::version::{LibraryFile, VersionJson};
 use crate::meta::{self, AssetIndex, ASSETS_BASE_URL};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -40,9 +42,35 @@ pub struct PreparedVersion {
     pub game_assets: PathBuf,
 }
 
+/// What to install: a vanilla version, optionally with a mod loader on top.
+#[derive(Debug, Clone, Copy)]
+pub struct Target<'a> {
+    pub game_version: &'a str,
+    pub loader: Loader,
+    pub loader_version: Option<&'a str>,
+}
+
+impl<'a> Target<'a> {
+    pub fn vanilla(game_version: &'a str) -> Self {
+        Self {
+            game_version,
+            loader: Loader::Vanilla,
+            loader_version: None,
+        }
+    }
+
+    pub fn of(instance: &'a Instance) -> Self {
+        Self {
+            game_version: &instance.game_version,
+            loader: instance.loader,
+            loader_version: instance.loader_version.as_deref(),
+        }
+    }
+}
+
 pub async fn prepare<F>(
     ctx: &Context,
-    version_id: &str,
+    target: Target<'_>,
     game_dir: &Path,
     on_progress: F,
 ) -> Result<PreparedVersion>
@@ -58,7 +86,16 @@ where
     stage(Stage::Metadata);
 
     let env = Environment::current();
-    let version = meta::load_version(ctx, version_id).await?;
+    let mut version = meta::load_version(ctx, target.game_version).await?;
+    if target.loader != Loader::Vanilla {
+        let loader_version = target
+            .loader_version
+            .ok_or_else(|| Error::InvalidInput(format!("no {} version selected", target.loader)))?;
+        let profile =
+            loader::load_profile(ctx, target.loader, target.game_version, loader_version).await?;
+        tracing::info!(profile = %profile.id, "applying loader profile");
+        version.apply_loader(profile);
+    }
     let version_dir = ctx.data.version_dir(&version.id);
     let libraries_dir = ctx.data.libraries();
 
@@ -67,30 +104,20 @@ where
     let mut native_jars = Vec::new();
 
     for library in version.libraries.iter().filter(|l| l.is_allowed(&env)) {
-        if let Some((path, artifact)) = library.artifact() {
-            let dest = libraries_dir.join(&path);
+        if let Some(file) = library.artifact() {
+            let dest = libraries_dir.join(&file.path);
             classpath.push(dest.clone());
-            tasks.push(artifact_task(
-                &artifact.url,
-                dest,
-                &artifact.sha1,
-                artifact.size,
-            ));
+            tasks.push(library_task(file, dest));
         }
-        if let Some((path, artifact)) = library.native_artifact(&env) {
-            let dest = libraries_dir.join(&path);
+        if let Some(file) = library.native_artifact(&env) {
+            let dest = libraries_dir.join(&file.path);
             let exclude = library
                 .extract
                 .as_ref()
                 .map(|e| e.exclude.clone())
                 .unwrap_or_default();
             native_jars.push((dest.clone(), exclude));
-            tasks.push(artifact_task(
-                &artifact.url,
-                dest,
-                &artifact.sha1,
-                artifact.size,
-            ));
+            tasks.push(library_task(file, dest));
         }
     }
 
@@ -167,6 +194,15 @@ fn artifact_task(url: &str, dest: PathBuf, sha1: &str, size: u64) -> DownloadTas
         dest,
         sha1: Some(sha1.to_owned()),
         size: Some(size),
+    }
+}
+
+fn library_task(file: LibraryFile, dest: PathBuf) -> DownloadTask {
+    DownloadTask {
+        url: file.url,
+        dest,
+        sha1: file.sha1,
+        size: file.size,
     }
 }
 

@@ -123,10 +123,16 @@ async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathB
         .await?
         .ok_or(Error::NoActiveAccount)?;
     let game_dir = ctx.data.instance_dir(id);
-    tracing::info!(instance = %id, version = %instance.game_version, "preparing launch");
+    tracing::info!(
+        instance = %id,
+        version = %instance.game_version,
+        loader = %instance.loader,
+        "preparing launch"
+    );
 
     let last_emit = Mutex::new((Instant::now() - PROGRESS_INTERVAL, Stage::Metadata));
-    let mut prepared = install::prepare(ctx, &instance.game_version, &game_dir, |progress| {
+    let target = install::Target::of(&instance);
+    let mut prepared = install::prepare(ctx, target, &game_dir, |progress| {
         let mut last = last_emit.lock().unwrap_or_else(|e| e.into_inner());
         let finished = progress.download.done_files == progress.download.total_files;
         if progress.stage != last.1 || finished || last.0.elapsed() >= PROGRESS_INTERVAL {

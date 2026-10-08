@@ -34,6 +34,13 @@ pub enum Error {
     AccountNotFound(String),
     #[error("no active account")]
     NoActiveAccount,
+    #[error("{0} is not supported yet")]
+    LoaderNotSupported(String),
+    #[error("{loader} is not available for Minecraft {game_version}")]
+    LoaderUnavailable {
+        loader: String,
+        game_version: String,
+    },
     #[error("invalid input: {0}")]
     InvalidInput(String),
 }

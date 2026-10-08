@@ -1,8 +1,9 @@
 use serde::Serialize;
 use serde_json::Value;
 use tandem_core::account::Account;
-use tandem_core::instance::{Instance, NewInstance};
+use tandem_core::instance::{self, Instance, NewInstance};
 use tandem_core::logging::LogEntry;
+use tandem_core::meta::loader::{self, Loader, LoaderVersion};
 use tandem_core::meta::{self, Latest, ManifestEntry};
 use tauri::{AppHandle, State};
 use tauri_plugin_opener::OpenerExt;
@@ -61,6 +62,15 @@ pub async fn list_versions(state: State<'_, AppState>) -> CommandResult<VersionL
 }
 
 #[tauri::command]
+pub async fn list_loader_versions(
+    state: State<'_, AppState>,
+    loader: Loader,
+    game_version: String,
+) -> CommandResult<Vec<LoaderVersion>> {
+    Ok(loader::list_versions(&state.ctx, loader, &game_version).await?)
+}
+
+#[tauri::command]
 pub async fn list_instances(state: State<'_, AppState>) -> CommandResult<Vec<Instance>> {
     Ok(state.ctx.db.list_instances().await?)
 }
@@ -70,10 +80,7 @@ pub async fn create_instance(
     state: State<'_, AppState>,
     instance: NewInstance,
 ) -> CommandResult<Instance> {
-    let created = state.ctx.db.create_instance(&instance).await?;
-    tokio::fs::create_dir_all(state.ctx.data.instance_dir(&created.id)).await?;
-    tracing::info!(id = %created.id, version = %created.game_version, "instance created");
-    Ok(created)
+    Ok(instance::create(&state.ctx, instance).await?)
 }
 
 #[tauri::command]
