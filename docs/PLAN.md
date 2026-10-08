@@ -10,10 +10,10 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Valider le framework frontend : SolidJS + Tailwind v4
 - [x] Scaffold Tauri 2 (`pnpm create tauri-app`, template solid-ts)
 - [x] Workspace Cargo : `crates/tandem-core` (sans Tauri) + `src-tauri` (app)
-- [ ] Base SQLite (`sqlx`) + migrations : instances, comptes, réglages
-- [ ] Dossier de données (`%APPDATA%/Tandem`) : `store/`, `instances/`, `java/`, `cache/`
-- [ ] Logging (`tracing`) + panneau de logs côté UI
-- [ ] CI GitHub Actions : fmt, clippy, tests, build Windows
+- [x] Base SQLite (`sqlx`, WAL) + migrations : instances, comptes, réglages
+- [x] Dossier de données (`%APPDATA%/Tandem`, surchargeable via `TANDEM_DATA_DIR`) : `store/`, `assets/`, `instances/`, `java/`, `cache/`, `logs/`
+- [x] Logging (`tracing`) : fichiers journaliers (7 conservés) + panneau de logs live côté UI
+- [x] CI GitHub Actions : fmt, clippy, tests, build Windows (artefacts MSI/NSIS)
 - [~] **Demande d'accès API Minecraft** : app Azure créée → formulaire https://aka.ms/mce-reviewappid (voir DECISIONS D7)
 
 ## Phase 1 — Lancer du vanilla
@@ -95,3 +95,8 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Fait : nom choisi (Tandem), vérifs de disponibilité, renommage complet, Client ID Azure enregistré.
 - Prochaine étape : Phase 0 (SQLite, dossier de données, logging, CI).
 - En attente : formulaire Mojang (envoyé par l'utilisateur), renommage du dossier `mc-launcher` → `tandem`.
+
+### 2026-10-08 (4)
+- Fait : fin de Phase 0 — `tandem-core` : `paths` (DataDir), `db` (SQLite + migration 0001 + settings JSON), `logging` (fichiers + buffer UI), `error`. App : `AppState`, commandes `app_info`, `get_logs`, `get_setting`, `set_setting`, event `log://entry`. UI : header + panneau de logs filtrable. CI Windows. Démarrage vérifié (`%APPDATA%/Tandem` créé, log « Tandem started »).
+- Prochaine étape : Phase 1 — client piston-meta (manifest + JSON de version).
+- En attente : réponse Mojang au formulaire App ID.
