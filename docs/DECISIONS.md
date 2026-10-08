@@ -32,5 +32,6 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 ### D7 · 2026-10-08 · Accès API Minecraft : app Azure + validation Mojang
 - Les nouvelles apps Azure reçoivent un 403 sur `api.minecraftservices.com` tant que leur Client ID n'est pas approuvé.
 - Étapes : app Azure (comptes Microsoft personnels uniquement, tenant `consumers`, public client flows activés) → formulaire https://aka.ms/mce-reviewappid avec le Client ID.
+- Client ID : `47ec2f94-9a22-4089-95c2-e2cbbc4afd44` (dans `launcher-core/src/auth.rs`). Formulaire Mojang : à envoyer une fois le nom choisi.
 - En attendant : développement avec compte offline.
 - Statut : en cours
