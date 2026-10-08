@@ -89,7 +89,15 @@ export interface InstalledContent {
   sha1: string;
   iconUrl: string | null;
   isDependency: boolean;
+  enabled: boolean;
   installedAt: string;
+}
+
+export interface ContentUpdate {
+  projectId: string;
+  title: string;
+  currentVersion: string;
+  newVersion: string;
 }
 
 export interface Account {
@@ -157,6 +165,12 @@ export const api = {
     invoke<InstalledContent[]>("install_content", { instanceId, projectId }),
   removeContent: (instanceId: string, projectId: string) =>
     invoke<void>("remove_content", { instanceId, projectId }),
+  checkContentUpdates: (instanceId: string) => invoke<ContentUpdate[]>("check_content_updates", { instanceId }),
+  /** Every outdated project when `projectIds` is omitted. */
+  updateContent: (instanceId: string, projectIds?: string[]) =>
+    invoke<InstalledContent[]>("update_content", { instanceId, projectIds: projectIds ?? null }),
+  setContentEnabled: (instanceId: string, projectId: string, enabled: boolean) =>
+    invoke<InstalledContent>("set_content_enabled", { instanceId, projectId, enabled }),
 
   listAccounts: () => invoke<Account[]>("list_accounts"),
   addOfflineAccount: (username: string) => invoke<Account>("add_offline_account", { username }),

@@ -75,25 +75,35 @@ const CATALOGUE: Record<ContentKind, SearchHit[]> = {
   shader: ([["HVnmMxH1", "Complementary Shaders - Reimagined", "EminGT", "Enhances your Minecraft experience while staying close to the default art style.", 11_000_000, ["iris", "optifine"]]] as Row[]).map(hit),
 };
 
-const content: Record<string, InstalledContent[]> = {};
+const make = (h: SearchHit, kind: ContentKind, isDependency: boolean, versionId = "v2"): InstalledContent => ({
+  projectId: h.projectId,
+  versionId,
+  kind,
+  title: h.title,
+  versionNumber: versionId === "old" ? "1.0.0+1.21.4" : "1.2.0+1.21.4",
+  fileName: `${h.projectId}.jar`,
+  sha1: "0",
+  iconUrl: h.iconUrl,
+  isDependency,
+  enabled: true,
+  installedAt: new Date().toISOString(),
+});
+
+/** "survie-avec-leo" starts with content, two items outdated (version id "old"). */
+const content: Record<string, InstalledContent[]> = {
+  "survie-avec-leo": [
+    make(CATALOGUE.mod[1], "mod", false, "old"),
+    make(CATALOGUE.mod[3], "mod", false),
+    make(CATALOGUE.mod[0], "mod", true, "old"),
+    { ...make(CATALOGUE.shader[0], "shader", false), enabled: false },
+  ],
+};
 
 function fakeInstall(instanceId: string, projectId: string): InstalledContent[] {
   const found = Object.entries(CATALOGUE)
     .flatMap(([kind, hits]) => hits.map((h) => ({ kind: kind as ContentKind, h })))
     .find(({ h }) => h.projectId === projectId || h.title.toLowerCase().startsWith(projectId));
   if (!found) throw new Error(`unknown project ${projectId}`);
-  const make = (h: SearchHit, kind: ContentKind, isDependency: boolean): InstalledContent => ({
-    projectId: h.projectId,
-    versionId: "v1",
-    kind,
-    title: h.title,
-    versionNumber: "1.0.0+1.21.4",
-    fileName: `${h.projectId}.jar`,
-    sha1: "0",
-    iconUrl: h.iconUrl,
-    isDependency,
-    installedAt: new Date().toISOString(),
-  });
   const list = (content[instanceId] ??= []);
   const added = [make(found.h, found.kind, false)];
   // Mod Menu pulls Fabric API, like the real dependency resolution.
@@ -192,6 +202,25 @@ export function installMocks() {
         case "install_content":
           await new Promise((r) => setTimeout(r, 900));
           return fakeInstall(args.instanceId as string, args.projectId as string);
+        case "check_content_updates":
+          await new Promise((r) => setTimeout(r, 600));
+          return (content[args.instanceId as string] ?? [])
+            .filter((c) => c.versionId === "old")
+            .map((c) => ({ projectId: c.projectId, title: c.title, currentVersion: c.versionNumber, newVersion: "1.2.0+1.21.4" }));
+        case "update_content": {
+          await new Promise((r) => setTimeout(r, 900));
+          const ids = args.projectIds as string[] | null;
+          const changed = (content[args.instanceId as string] ?? []).filter(
+            (c) => c.versionId === "old" && (!ids || ids.includes(c.projectId)),
+          );
+          for (const c of changed) Object.assign(c, { versionId: "v2", versionNumber: "1.2.0+1.21.4" });
+          return changed.map((c) => ({ ...c }));
+        }
+        case "set_content_enabled": {
+          const item = (content[args.instanceId as string] ?? []).find((c) => c.projectId === args.projectId)!;
+          item.enabled = args.enabled as boolean;
+          return { ...item };
+        }
         case "remove_content":
           content[args.instanceId as string] = (content[args.instanceId as string] ?? []).filter((c) => c.projectId !== args.projectId);
           return null;

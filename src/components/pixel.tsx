@@ -178,6 +178,34 @@ export function LoaderTag(props: { loader: Loader; size?: number }) {
   );
 }
 
+/** On/off switch in the inventory style: square knob, grass track when on. */
+export function Toggle(props: { checked: boolean; label: string; disabled?: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={props.checked}
+      aria-label={props.label}
+      title={props.label}
+      disabled={props.disabled}
+      class="relative h-[18px] w-[34px] shrink-0 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+      classList={{
+        "bg-grass shadow-[inset_0_-2px_0_rgb(0_0_0/0.3)]": props.checked,
+        "bg-slate-900 shadow-[inset_0_0_0_1px_var(--color-line-strong)]": !props.checked,
+      }}
+      onClick={() => props.onChange(!props.checked)}
+    >
+      <span
+        class="absolute top-[3px] size-3 transition-[left] duration-100"
+        classList={{
+          "left-[19px] bg-chalk shadow-[inset_0_-2px_0_rgb(0_0_0/0.25)]": props.checked,
+          "left-[3px] bg-muted": !props.checked,
+        }}
+      />
+    </button>
+  );
+}
+
 /** Front face of a block, used as an instance icon. */
 export function BlockIcon(props: { look: BlockLook; size?: number }) {
   return (
