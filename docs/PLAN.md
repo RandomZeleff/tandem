@@ -21,7 +21,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Client piston-meta : `version_manifest_v2.json` → JSON de version (cache hors ligne)
 - [x] Téléchargement : client.jar, libraries (règles OS/arch), natives, assets (index + objets, layouts legacy `virtual`/`resources`)
 - [x] Moteur de téléchargement : parallèle borné (16), retry avec backoff, reprise `.part`, vérif SHA1, progression → UI
-- [ ] ~~Store content-addressed + hardlinks~~ → déplacé en Phase 3 pour les mods (voir D10)
+- [x] ~~Store content-addressed + hardlinks~~ → fait en Phase 3 pour le contenu des instances (voir D10)
 - [~] Gestion Java : téléchargement auto des runtimes Mojang selon la version ✅ ; détection des JRE déjà installés à faire (override `java_path` par instance déjà en base, sans UI)
 - [x] Construction de la ligne de commande (format 1.13+ et legacy `minecraftArguments`)
 - [x] Lancement du process (sans console), capture stdout/stderr, détection crash + rapport
@@ -40,8 +40,8 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 - [x] Fabric / Quilt (API meta, simple)
 - [ ] NeoForge / Forge (exécution des installers / processors)
-- [ ] Client API Modrinth : recherche mods, modpacks, shaders, resource packs, datapacks
-- [ ] Résolution de dépendances + compatibilité version/loader
+- [~] Client API Modrinth : recherche + installation mods, shaders, resource packs ✅ ; modpacks (→ `.mrpack`) et datapacks (par monde) à faire
+- [~] Résolution de dépendances + compatibilité version/loader : dépendances requises récursives + choix de la version compatible ✅ ; détection des incompatibilités à faire
 - [ ] Import/export `.mrpack`
 - [ ] Import modpacks CurseForge (`manifest.json`, clé API, gestion des mods non distribuables)
 - [ ] Mises à jour de contenu par instance
@@ -116,4 +116,11 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Fait : début de Phase 3 — Fabric et Quilt. `meta::loader` (liste des versions via meta.fabricmc.net / meta.quiltmc.org, tri semver car Quilt renvoie un ordre aléatoire, profil mis en cache dans `versions/<id>/`), fusion du profil dans le JSON vanilla (`VersionJson::apply_loader`), libraries Maven (`url` + sha1/size optionnels), `install::Target`, version du loader figée à la création. UI : choix Vanilla/Fabric/Quilt + version du loader dans « Nouvelle instance », version du loader affichée dans l'onglet Informations.
 - Vérifié de bout en bout (exemple CLI `play -- fabric@1.21.4` / `quilt@1.21.4`) : Fabric 0.19.5 et Quilt 0.30.1 atteignent le menu. Dialogue testé dans l'aperçu navigateur.
 - Prochaine étape : client API Modrinth (recherche + installation de mods dans une instance), puis store par hash (D4/D10).
+- Blocages : Phase 2 toujours en attente de la validation Mojang.
+
+### 2026-10-08 (8)
+- Fait : contenu Modrinth. Core : `content::modrinth` (recherche avec facettes version/loader — Quilt accepte aussi les mods Fabric —, projets, versions), `content::install` (version compatible la plus récente, préférence release, dépendances requises récursives, plafond 64), `content::remove`, table `instance_content` (migration 0002), `store` (fichiers par SHA-1 + hardlink, repli copie). Commandes `search_content`, `list_content`, `install_content`, `remove_content`. UI : page Découvrir (instance, Mods / Packs de textures / Shaders, recherche, « Voir plus », aide si instance Vanilla ou si Iris manque pour les shaders), onglet Contenu de l'instance (par type, badge dépendance, retrait). Icônes de loaders en pixel art (Vanilla, Fabric, Quilt, Forge, NeoForge) partout où le loader apparaît. `.gitattributes` : migrations SQL figées en LF (checksums sqlx).
+- Vérifié : exemple CLI `mods -- fabric@1.21.4 sodium modmenu iris complementary-reimagined faithful-32x` (Fabric API + Placeholder API tirées comme dépendances, Sodium non dupliqué pour Iris), puis `play -- instance:dev-fabric-1-21-4` : le jeu charge Sodium, Iris, Mod Menu. UI testée dans l'aperçu navigateur (mock).
+- Note : l'instance de test « Dev fabric 1.21.4 » existe dans la base réelle (supprimable depuis l'UI).
+- Prochaine étape : mises à jour de contenu par instance, import/export `.mrpack` (modpacks), activer/désactiver un mod.
 - Blocages : Phase 2 toujours en attente de la validation Mojang.
