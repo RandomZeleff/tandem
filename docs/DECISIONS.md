@@ -10,7 +10,7 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 
 ### D2 · 2026-10-08 · Frontend SolidJS + Tailwind
 - Pourquoi : réactivité fine sans virtual DOM, bundle léger, cohérent avec l'objectif performance.
-- Statut : **proposé** (à valider en Phase 0)
+- Statut : validé (Tailwind v4 via `@tailwindcss/vite`)
 
 ### D3 · 2026-10-08 · Logique métier dans une crate `core` séparée
 - Pourquoi : testable sans Tauri, réutilisable (CLI, serveur relais éventuel).
@@ -28,3 +28,9 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 ### D6 · 2026-10-08 · Modrinth en source principale, CurseForge en secondaire
 - Pourquoi : API ouverte et propre ; CurseForge exige une clé et certains mods interdisent la distribution tierce.
 - Statut : validé
+
+### D7 · 2026-10-08 · Accès API Minecraft : app Azure + validation Mojang
+- Les nouvelles apps Azure reçoivent un 403 sur `api.minecraftservices.com` tant que leur Client ID n'est pas approuvé.
+- Étapes : app Azure (comptes Microsoft personnels uniquement, tenant `consumers`, public client flows activés) → formulaire https://aka.ms/mce-reviewappid avec le Client ID.
+- En attendant : développement avec compte offline.
+- Statut : en cours

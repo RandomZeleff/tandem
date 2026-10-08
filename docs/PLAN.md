@@ -7,14 +7,14 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 ## Phase 0 — Fondations
 
 - [ ] Choisir le nom définitif du projet
-- [ ] Valider le framework frontend (proposé : SolidJS + Tailwind) → DECISIONS.md
-- [ ] Scaffold Tauri 2 (`pnpm create tauri-app`)
-- [ ] Structure du workspace Rust (crate `core` sans dépendance Tauri + crate `app` Tauri)
+- [x] Valider le framework frontend : SolidJS + Tailwind v4
+- [x] Scaffold Tauri 2 (`pnpm create tauri-app`, template solid-ts)
+- [x] Workspace Cargo : `crates/launcher-core` (sans Tauri) + `src-tauri` (app)
 - [ ] Base SQLite (`sqlx`) + migrations : instances, comptes, réglages
 - [ ] Dossier de données (`%APPDATA%/<nom>`) : `store/`, `instances/`, `java/`, `cache/`
 - [ ] Logging (`tracing`) + panneau de logs côté UI
 - [ ] CI GitHub Actions : fmt, clippy, tests, build Windows
-- [ ] **Faire la demande d'accès Azure/Minecraft API auprès de Mojang** (délai long → à lancer tôt)
+- [~] **Demande d'accès API Minecraft** : app Azure créée → formulaire https://aka.ms/mce-reviewappid (voir DECISIONS D7)
 
 ## Phase 1 — Lancer du vanilla
 
@@ -85,3 +85,8 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Fait : création du dossier, git init, plan initial, CLAUDE.md, docs d'archi et de décisions.
 - Prochaine étape : Phase 0 (nom, valider le frontend, scaffold Tauri).
 - Blocages : aucun.
+
+### 2026-10-08 (2)
+- Fait : scaffold Tauri 2 + SolidJS + Tailwind v4, workspace Cargo (`launcher-core` + `src-tauri`), commande `core_version` reliée à l'UI. fmt/clippy/tests OK.
+- Prochaine étape : finir Phase 0 (SQLite, dossier de données, logging, CI) puis Phase 1.
+- En attente : nom du projet ; validation Mojang du Client ID Azure.

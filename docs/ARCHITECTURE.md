@@ -8,9 +8,9 @@
 └───────────────▲──────────────────┬─────────────────┘
         events  │                  │ commands
 ┌───────────────┴──────────────────▼─────────────────┐
-│  crate `app` (Tauri) : commandes fines, events      │
+│  src-tauri (app Tauri) : commandes fines, events    │
 ├─────────────────────────────────────────────────────┤
-│  crate `core` (Rust pur, testable sans Tauri)        │
+│  crates/launcher-core (Rust pur, sans Tauri)        │
 │   ├─ meta       piston-meta, loaders                 │
 │   ├─ download   moteur parallèle, store par hash     │
 │   ├─ java       détection / install JRE              │
