@@ -30,6 +30,8 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 ## Phase 2 — Comptes
 
+> En pause (2026-10-09) : attend la réponse de Mojang à la demande d'App ID (D9). On avance sur les autres phases en attendant ; pas de build distribuable avant (D31).
+
 - [ ] OAuth Microsoft (auth code + loopback ou device code)
 - [ ] Chaîne Xbox Live → XSTS → Minecraft Services → profil
 - [ ] Refresh token automatique, stockage sécurisé (keyring Windows)
@@ -209,4 +211,5 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - Prochaine étape : partie interface des tests sous charge (Raphaël), puis build installable de la v0.1.
 - Publication v0.1 préparée : métadonnées de l'installeur, workflow `release.yml` (tag `v*` → installeurs Windows + `.dmg` → brouillon de Release marqué pré-version, notes `docs/releases/v<version>.md`, vérifie que le tag correspond à la version de l'app), notes de la v0.1.0, README à jour. Aucun tag poussé.
 - Décision (D31) : pas de build ni de Release tant que Mojang n'a pas répondu à la demande d'App ID et que la connexion Microsoft (Phase 2) n'est pas faite. Jobs de build de la CI désactivés (lint et tests gardés). Section « Comptes » des notes de la v0.1.0 à écrire à ce moment-là.
-- Prochaine étape : selon la réponse de Mojang, Phase 2 (connexion Microsoft) ; sinon autres aspects au choix.
+- Anciens installeurs produits par la CI supprimés (41 artefacts). Phase 2 mise en pause en attendant Mojang : on continue le développement sur les autres phases.
+- Prochaine étape : choisir avec Raphaël entre la Phase 5 (traduction IA : discussion de conception d'abord, pistes réunies) et la Phase 6 (jeu à deux sans serveur, le différenciateur).
