@@ -184,3 +184,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Client HTTP en fenêtre HTTP/2 adaptative : la fenêtre par défaut (64 Ko) limitait les téléchargements à ~7 Mo/s.
 - Java lancé avec sa sortie en UTF-8 (`stdout.encoding` / `sun.stdout.encoding`), pour que la console affiche les accents.
 - Statut : validé
+
+### D30 · 2026-10-09 · Dépendances entre mods lues dans les jars
+- Les dépendances viennent des métadonnées des jars (`fabric.mod.json`, `quilt.mod.json`, `mods.toml`, `neoforge.mods.toml`), pas de Modrinth : ça marche hors ligne, pour les mods ajoutés à la main, et ça colle à ce que le loader vérifiera. Ids du jeu, du loader et de Java ignorés ; ids des jars imbriqués (jar-in-jar, `META-INF/jarjar`) comptés comme fournis.
+- Un mod est « nécessaire » si un mod activé exige un de ses ids et qu'aucun autre jar activé ne le fournit. Désactiver ou retirer un mod nécessaire demande confirmation (liste des mods concernés) ; un mod dont personne n'a besoin passe sans question.
+- Lecture coûteuse sur les gros packs (1-3 s à chaud, 20+ s disque froid) : lecture parallèle et cache par jar (taille + date), préchauffé en arrière-plan à l'ouverture de l'onglet Contenu ; ensuite ~10 ms.
+- Forge et NeoForge ne plantent pas quand une dépendance manque (écran d'erreur dans le jeu) : Tandem lit leur rapport dans la sortie du jeu et propose de réactiver le mod (arrêt, réactivation, relance) ou de le chercher sur Modrinth. Fabric quitte, le panneau de crash (D21) couvre déjà ce cas.
+- Statut : validé
