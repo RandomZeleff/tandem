@@ -54,7 +54,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Gestion des instances en cours : RAM/CPU (panneau au-dessus de la console, échantillon toutes les 2 s, 2 min d’historique), logs live, kill, plusieurs instances simultanées
 - [x] Analyse de crash (lecture du crash report, mod coupable probable) — D21
 - [x] Gestion des mondes (liste, sauvegardes, backup auto) — D22
-- [ ] Captures d'écran par instance
+- [x] Captures d'écran par instance — D23 ; onglet « Captures » (grille, visionneuse, suppression)
 - [ ] Démarrage du launcher < 1 s, UI fluide
 
 ## Phase 5 — Traduction IA de modpacks
@@ -170,3 +170,9 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Analyse de crash (D21) : `tandem_core::crash`, panneau dans la page de l’instance (cause, exception, suspects, « Désactiver », « Voir le rapport »). Vrai crash testé : Sodium 1.20.1 sur Fabric 1.21.4 → Sodium désigné « incompatible », bon fichier retrouvé. Formats Forge/NeoForge, Mixin et pile d’appels couverts par des tests unitaires ; panneau testé avec le backend simulé.
 - Mondes (D22) : onglet « Mondes », sauvegardes zip manuelles et automatiques (après chaque partie, 5 gardées), restauration réversible. Lecture de `level.dat`, sauvegarde, restauration et rotation couvertes par des tests sur des mondes générés ; onglet testé avec le backend simulé. Pas encore vérifié sur un vrai monde créé en jeu.
 - Prochaine étape : captures d’écran par instance (dernier point de la Phase 4 hors « démarrage < 1 s »).
+
+### 2026-10-09 (Windows)
+- Fait : pull des 14 commits du Mac ; Rust mis à jour 1.93 → 1.99 (`sysinfo` 0.39 demande 1.95) ; fmt, clippy et tests verts sur Windows, l’app tourne.
+- Captures d’écran (D23) : `tandem_core::screenshots` (liste, miniatures JPEG 480 px en cache, suppression), protocole `tandem-shot://` pour les images, onglet « Captures » avec grille paresseuse, visionneuse (← → Échap Suppr), « Afficher dans le dossier », rafraîchissement en direct sur « Saved screenshot as ». Tests unitaires sur des images générées ; onglet testé avec le backend simulé.
+- Pas encore vérifié : le protocole dans la vraie app (prendre une capture F2 en jeu, l’ouvrir dans l’onglet).
+- Prochaine étape : dernier point de la Phase 4, « Démarrage du launcher < 1 s, UI fluide ».

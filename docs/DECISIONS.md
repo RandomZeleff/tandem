@@ -137,3 +137,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Restaurer remplace le monde après en avoir sauvegardé l’état actuel (« avant restauration ») : une restauration s’annule toujours. Sauvegarde et restauration refusées pendant que le jeu tourne (fichiers en cours d’écriture).
 - Pas de suppression de monde depuis Tandem pour l’instant (risque de perte, le Finder / l’Explorateur suffit).
 - Statut : validé
+
+### D23 · 2026-10-09 · Captures d’écran par instance
+- Onglet « Captures » : les images de `screenshots/` (png/jpg), les plus récentes d’abord, datées par la date du fichier.
+- Les images passent par un protocole maison `tandem-shot://localhost/<instance>/<fichier>` plutôt que le protocole `asset` de Tauri : le webview ne reçoit jamais de chemin arbitraire (instance et nom de fichier validés côté Rust), et la grille ne charge que ce qui est à l’écran (`loading="lazy"`), le navigateur limitant lui-même les requêtes en parallèle.
+- Miniatures JPEG de 480 px de large générées à la demande (crate `image`, png + jpeg seulement) dans `cache/thumbnails/<instance>/`, refaites si la capture est plus récente, supprimées avec l’instance. URLs versionnées par la date de la capture → cache navigateur `immutable`.
+- Suppression définitive (pas de corbeille) après confirmation ; « Afficher dans le dossier » pour le reste (copier, partager).
+- Statut : validé
