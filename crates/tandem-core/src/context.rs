@@ -38,5 +38,8 @@ pub fn http_client() -> Result<reqwest::Client> {
         .user_agent(USER_AGENT)
         .connect_timeout(Duration::from_secs(15))
         .read_timeout(Duration::from_secs(60))
+        // The default HTTP/2 window (64 KB) caps a download at 64 KB per round trip:
+        // ~7 MB/s from Modrinth's CDN on a connection curl fills at 40+ MB/s.
+        .http2_adaptive_window(true)
         .build()?)
 }
