@@ -1,0 +1,90 @@
+name: Release
+
+# Pushing a tag `vX.Y.Z` builds the installers and opens a *draft* GitHub Release with
+# them and the notes from `docs/releases/vX.Y.Z.md`. Publishing the draft stays manual.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    name: Windows installers
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            target/release/bundle/msi/*.msi
+            target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+  macos:
+    name: macOS disk image
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+
+      - run: pnpm install --frozen-lockfile
+      # Unsigned for now: signing and notarization need an Apple Developer account.
+      - run: pnpm tauri build --target universal-apple-darwin --bundles dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
+  draft:
+    name: Draft release
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-release
+          merge-multiple: true
+      - name: Check the tag matches the app version
+        run: |
+          app="v$(jq -r .version src-tauri/tauri.conf.json)"
+          if [ "$app" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME but tauri.conf.json says $app" >&2
+            exit 1
+          fi
+      - name: Create the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="docs/releases/$GITHUB_REF_NAME.md"
+          test -f "$notes" || { echo "Missing $notes" >&2; exit 1; }
+          gh release create "$GITHUB_REF_NAME" dist-release/* \
+            --draft --verify-tag \
+            --title "Tandem ${GITHUB_REF_NAME#v}" \
+            --notes-file "$notes" \
+            $([[ "$GITHUB_REF_NAME" == v0.* ]] && echo --prerelease)

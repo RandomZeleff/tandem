@@ -29,6 +29,11 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Zeleff",
+    "copyright": "© 2026 Zeleff — MIT",
+    "category": "Game",
+    "shortDescription": "Launcher Minecraft rapide, pensé pour le solo et le jeu à deux",
+    "longDescription": "Tandem installe et lance Minecraft: Java Edition, ses mods et ses modpacks (Fabric, Quilt, Forge, NeoForge) depuis Modrinth, avec gestion des mondes, des sauvegardes, des captures et de la mémoire.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
