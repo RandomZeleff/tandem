@@ -383,6 +383,13 @@ pub async fn export_modpack(
 }
 
 #[tauri::command]
+pub async fn open_data_folder(app: AppHandle, state: State<'_, AppState>) -> CommandResult<()> {
+    app.opener()
+        .open_path(state.ctx.data.root().display().to_string(), None::<&str>)
+        .map_err(|e| CommandError::msg(e.to_string()))
+}
+
+#[tauri::command]
 pub async fn open_instance_folder(
     app: AppHandle,
     state: State<'_, AppState>,

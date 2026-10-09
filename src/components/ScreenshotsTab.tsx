@@ -5,7 +5,9 @@ import { api, errorMessage, screenshotUrl, type Screenshot } from "../lib/api";
 import { formatBytes } from "../lib/format";
 import { trapFocus } from "../lib/ui";
 import { gameState, lastOutput } from "../lib/games";
+import { toast } from "../lib/toast";
 import Dialog from "./Dialog";
+import LoadingRows from "./LoadingRows";
 import { Icon } from "./pixel";
 
 /** Minecraft logs this line each time F2 saves a screenshot. */
@@ -48,6 +50,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
     setDeleting(null);
     await attempt(async () => {
       await api.deleteScreenshot(props.instanceId, shot.fileName);
+      toast("Capture supprimée");
       const remaining = list().filter((s) => s.fileName !== shot.fileName);
       mutate(remaining);
       // Stay in the viewer on the next screenshot, or close it after the last one.
@@ -60,7 +63,9 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
     <div class="flex h-full flex-col gap-4 overflow-y-auto">
       <div class="flex items-center justify-between gap-3">
         <span class="text-[13px] text-muted">
-          {list().length === 0
+          {shots() === undefined
+            ? "Chargement…"
+            : list().length === 0
             ? "Aucune capture."
             : `${list().length} capture${list().length > 1 ? "s" : ""} · ${formatBytes(totalBytes())}`}
         </span>
@@ -77,6 +82,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
         <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
+      <Show when={shots() !== undefined || shots.error} fallback={<LoadingRows count={2} height={120} label="Chargement des captures…" />}>
       <Show
         when={list().length > 0}
         fallback={
@@ -112,6 +118,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
             )}
           </For>
         </ul>
+      </Show>
       </Show>
 
       <Show when={viewing() !== null && list()[viewing()!]}>

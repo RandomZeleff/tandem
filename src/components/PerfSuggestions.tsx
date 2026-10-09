@@ -57,7 +57,7 @@ export default function PerfSuggestions(props: {
 
   return (
     <Show when={hidden() === false && list().length > 0}>
-      <section class="panel px-corners-md flex flex-col gap-3 p-4 shadow-[inset_0_0_0_1px_#4E9A1E]">
+      <section class="panel px-corners-md flex flex-col gap-3 p-4 shadow-[inset_0_0_0_1px_var(--color-xp-deep)]">
         <div class="flex items-start justify-between gap-4">
           <div class="flex flex-col gap-1">
             <h2 class="flex items-center gap-2 text-sm font-medium">

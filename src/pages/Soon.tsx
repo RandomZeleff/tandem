@@ -23,7 +23,7 @@ export default function Soon(props: { feature: keyof typeof COPY }) {
         <h1 class="font-pixel text-[40px] leading-tight font-bold [text-shadow:4px_4px_0_rgb(0_0_0/0.45)]">
           {copy().title}
         </h1>
-        <p class="leading-relaxed text-[#C9CCD1]">{copy().text}</p>
+        <p class="leading-relaxed text-chalk-3">{copy().text}</p>
       </div>
     </section>
   );

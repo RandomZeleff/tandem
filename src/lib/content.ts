@@ -51,6 +51,11 @@ function replaceItems(instanceId: string, changed: InstalledContent[]) {
   );
 }
 
+/** True once the instance's content has been read at least once. */
+export function contentLoaded(instanceId: string): boolean {
+  return instanceId in state.content;
+}
+
 export function installedContent(instanceId: string): InstalledContent[] {
   return state.content[instanceId] ?? [];
 }

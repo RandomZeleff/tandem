@@ -12,7 +12,7 @@ function Logo() {
     <svg width="24" height="16" viewBox="0 0 12 8" shape-rendering="crispEdges" aria-hidden="true">
       <rect x="0" y="2" width="6" height="6" fill="#2E6B1E" />
       <rect x="0" y="2" width="6" height="2" fill="#5DBB3F" />
-      <rect x="1" y="2" width="1" height="1" fill="#8BE04E" />
+      <rect x="1" y="2" width="1" height="1" fill="var(--color-xp)" />
       <rect x="6" y="0" width="6" height="6" fill="#7A5420" />
       <rect x="6" y="0" width="6" height="2" fill="#F2C744" />
       <rect x="10" y="0" width="1" height="1" fill="#FFE38A" />
@@ -43,12 +43,12 @@ export default function TitleBar() {
   return (
     <header
       data-tauri-drag-region
-      class="flex h-10 shrink-0 items-center bg-slate-900 shadow-[inset_0_-1px_0_#1E2125]"
+      class="flex h-10 shrink-0 items-center bg-slate-900 shadow-[inset_0_-1px_0_var(--color-divider)]"
     >
       <Show when={!isMac}>
         <div
           data-tauri-drag-region
-          class="flex h-full w-60 shrink-0 items-center gap-2.5 px-[22px] shadow-[inset_-1px_0_0_#1E2125]"
+          class="flex h-full w-60 shrink-0 items-center gap-2.5 px-[22px] shadow-[inset_-1px_0_0_var(--color-divider)]"
         >
           <Logo />
           <span
@@ -92,7 +92,7 @@ export default function TitleBar() {
               class="flex h-7 items-center gap-2.5 bg-slate-750 px-2.5 text-xs shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-slate-700"
               onClick={() => navigate({ page: "instance", id: job().id })}
             >
-              <Icon name="download" size={12} color="#8BE04E" />
+              <Icon name="download" size={12} color="var(--color-xp)" />
               <span class="max-w-40 truncate">{job().name}</span>
               <span class="w-16">
                 <XpBar value={job().ratio} segments={8} height={8} label={`Installation de ${job().name}`} />

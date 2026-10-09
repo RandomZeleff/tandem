@@ -2,6 +2,7 @@ import { createResource, createSignal, For, type JSX, Show } from "solid-js";
 import { api, errorMessage } from "../lib/api";
 import { gameState } from "../lib/games";
 import { skinLook } from "../lib/look";
+import { removeWithUndo } from "../lib/toast";
 import { onDismiss } from "../lib/ui";
 import InstanceSlot from "./InstanceSlot";
 import { accounts, activeAccount, instances, navigate, refetchAccounts, route, type Route } from "../lib/store";
@@ -41,6 +42,36 @@ function AccountCard() {
   let anchor: HTMLButtonElement | undefined;
   const [username, setUsername] = createSignal("");
   const [error, setError] = createSignal<string | null>(null);
+
+  /** Accounts removed but still undoable. */
+  const [removing, setRemoving] = createSignal<ReadonlySet<string>>(new Set());
+  const listed = () => accounts().filter((a) => !removing().has(a.id));
+
+  function remove(id: string, username: string) {
+    const toggle = (on: boolean) =>
+      setRemoving((set) => {
+        const next = new Set(set);
+        if (on) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+    removeWithUndo({
+      message: `Compte ${username} retiré`,
+      hide: () => toggle(true),
+      show: () => toggle(false),
+      commit: async () => {
+        try {
+          await api.removeAccount(id);
+          await refetchAccounts();
+          return null;
+        } catch (err) {
+          return errorMessage(err);
+        } finally {
+          toggle(false);
+        }
+      },
+    });
+  }
 
   async function run(action: () => Promise<unknown>) {
     setError(null);
@@ -83,9 +114,9 @@ function AccountCard() {
 
       <Show when={open()}>
         <AccountMenu anchor={() => anchor} onClose={() => setOpen(false)}>
-          <Show when={accounts().length > 0}>
+          <Show when={listed().length > 0}>
             <ul class="mb-3 space-y-0.5">
-              <For each={accounts()}>
+              <For each={listed()}>
                 {(account) => (
                   <li class="group flex items-center gap-2 px-1.5 py-1 hover:bg-slate-600 focus-within:bg-slate-600">
                     <button
@@ -97,13 +128,13 @@ function AccountCard() {
                         {account.username}
                       </span>
                       <Show when={account.isActive}>
-                        <Icon name="check" size={12} color="#8BE04E" />
+                        <Icon name="check" size={12} color="var(--color-xp)" />
                       </Show>
                     </button>
                     <button
                       class="text-faint opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-redstone-text focus-visible:text-redstone-text"
                       aria-label={`Retirer ${account.username}`}
-                      onClick={() => run(() => api.removeAccount(account.id))}
+                      onClick={() => remove(account.id, account.username)}
                     >
                       <Icon name="close" size={10} />
                     </button>
@@ -156,7 +187,7 @@ export default function Sidebar() {
   return (
     <nav
       aria-label="Navigation principale"
-      class="flex w-60 shrink-0 flex-col bg-slate-850 shadow-[inset_-1px_0_0_#1E2125]"
+      class="flex w-60 shrink-0 flex-col bg-slate-850 shadow-[inset_-1px_0_0_var(--color-divider)]"
     >
       <AccountCard />
 
@@ -173,7 +204,7 @@ export default function Sidebar() {
               aria-current={isActive(item) ? "page" : undefined}
               onClick={() => navigate(item.to)}
             >
-              <Icon name={item.icon} size={18} color={isActive(item) ? "#8BE04E" : undefined} />
+              <Icon name={item.icon} size={18} color={isActive(item) ? "var(--color-xp)" : undefined} />
               <span class="flex-1">{item.label}</span>
               <Show when={item.soon}>
                 <span class="bg-slate-700 px-1.5 py-px font-pixel text-[11px] tracking-wide text-faint">BIENTÔT</span>
@@ -183,7 +214,7 @@ export default function Sidebar() {
         </For>
       </div>
 
-      <div class="mx-6 my-1 h-px bg-[#1E2125]" />
+      <div class="mx-6 my-1 h-px bg-[var(--color-divider)]" />
 
       <div class="flex min-h-0 flex-col gap-0.5 px-3 pt-3">
         <span class="px-3 pb-2 font-pixel text-xs font-medium tracking-[2px] text-faint">RÉCENTES</span>
@@ -227,14 +258,14 @@ export default function Sidebar() {
       <div class="flex-1" />
 
       <button
-        class="flex h-[46px] items-center gap-3 px-6 text-left shadow-[inset_0_1px_0_#1E2125]"
+        class="flex h-[46px] items-center gap-3 px-6 text-left shadow-[inset_0_1px_0_var(--color-divider)]"
         classList={{
           "text-chalk": route().page === "settings",
           "text-muted hover:text-chalk focus-visible:text-chalk": route().page !== "settings",
         }}
         onClick={() => navigate({ page: "settings" })}
       >
-        <Icon name="gear" size={18} color={route().page === "settings" ? "#8BE04E" : undefined} />
+        <Icon name="gear" size={18} color={route().page === "settings" ? "var(--color-xp)" : undefined} />
         <span class="flex-1 font-medium">Réglages</span>
         <span class="font-mono text-[11px] text-faint">v{info()?.version ?? "…"}</span>
       </button>

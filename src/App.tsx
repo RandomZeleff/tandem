@@ -3,6 +3,7 @@ import NewInstanceDialog from "./components/NewInstanceDialog";
 import RosettaDialog from "./components/RosettaDialog";
 import Sidebar from "./components/Sidebar";
 import TitleBar from "./components/TitleBar";
+import Toaster from "./components/Toaster";
 import { onGamePlayed, rosettaPrompt, setRosettaPrompt, startGameEvents } from "./lib/games";
 import { startLogStream } from "./lib/logs";
 import {
@@ -114,6 +115,8 @@ function App() {
           />
         )}
       </Show>
+
+      <Toaster />
 
       <Show when={rosettaPrompt()} keyed>
         {(id) => <RosettaDialog instanceId={id} onClose={() => setRosettaPrompt(null)} />}

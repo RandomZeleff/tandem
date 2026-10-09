@@ -242,7 +242,7 @@ function SelectList(props: {
           >
             <span class="flex w-3 shrink-0 justify-center">
               <Show when={option.value === props.value}>
-                <Icon name="check" size={10} color="#8BE04E" />
+                <Icon name="check" size={10} color="var(--color-xp)" />
               </Show>
             </span>
             <Show when={option.icon}>

@@ -300,7 +300,7 @@ export function XpBar(props: { value: number; segments?: number; height?: number
           <span
             style={
               on
-                ? { background: "#8BE04E", "box-shadow": "inset 0 -3px 0 #4E9A1E, inset 0 1px 0 #C8F59A" }
+                ? { background: "var(--color-xp)", "box-shadow": "inset 0 -3px 0 var(--color-xp-deep), inset 0 1px 0 #C8F59A" }
                 : { background: "#1A2416" }
             }
           />

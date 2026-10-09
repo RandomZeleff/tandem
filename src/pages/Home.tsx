@@ -41,10 +41,10 @@ function Hero(props: { instance: Instance }) {
 
         <div class="flex flex-col gap-3">
           <Show when={error() ?? state().error}>
-            <p class="w-fit bg-[#2A1414]/90 px-3 py-1.5 text-sm text-redstone-text">{error() ?? state().error}</p>
+            <p class="w-fit bg-danger/90 px-3 py-1.5 text-sm text-redstone-text">{error() ?? state().error}</p>
           </Show>
           <Show when={exit() && !exit()!.stopped && exit()!.code !== 0}>
-            <p class="w-fit bg-[#2A1F0E]/90 px-3 py-1.5 text-sm text-gold">
+            <p class="w-fit bg-warning/90 px-3 py-1.5 text-sm text-gold">
               Le jeu s'est arrêté (code {exit()!.code ?? "?"}). La console de l'instance contient les détails.
             </p>
           </Show>
@@ -101,7 +101,7 @@ function News() {
           <>
             <div class="flex items-start gap-3">
               <span class="flex size-9 shrink-0 items-center justify-center bg-[#16261A] shadow-[inset_0_0_0_1px_#2E5A2A]">
-                <Icon name="check" size={16} color="#8BE04E" />
+                <Icon name="check" size={16} color="var(--color-xp)" />
               </span>
               <div class="flex flex-col gap-0.5">
                 <span class="text-sm font-semibold">Version {list().latest.release}</span>
@@ -148,7 +148,7 @@ export default function Home() {
               Instances
             </h2>
             <div class="flex gap-2">
-              <Show when={instances().length > 3}>
+              <Show when={instances().length > 2}>
                 <button class="btn btn-ghost h-9 text-sm" onClick={() => navigate({ page: "instances" })}>
                   Tout voir
                 </button>
@@ -163,7 +163,8 @@ export default function Home() {
             when={instances().length > 0}
             fallback={<p class="text-sm text-faint">Tes instances apparaîtront ici.</p>}
           >
-            <div class="grid grid-cols-3 gap-3.5">
+            {/* Two cards in a narrow window, three from 1280 px. */}
+            <div class="grid grid-cols-2 gap-3.5 xl:grid-cols-3 max-xl:[&>*:nth-child(3)]:hidden">
               <For each={instances().slice(0, 3)}>{(instance) => <InstanceCard instance={instance} />}</For>
             </div>
           </Show>

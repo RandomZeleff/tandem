@@ -71,7 +71,7 @@ export default function Tabs<T extends string>(props: {
                     }
                   : {
                       "h-11 px-3.5": true,
-                      "font-semibold text-chalk shadow-[inset_0_-3px_0_#8BE04E]": selected(),
+                      "font-semibold text-chalk shadow-[inset_0_-3px_0_var(--color-xp)]": selected(),
                       "font-medium text-muted hover:text-chalk focus-visible:text-chalk": !selected(),
                     }
               }

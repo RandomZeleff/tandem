@@ -169,3 +169,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Chaque entrée garde l'état de sa page via `remembered(clé, défaut)` et la position de défilement de la zone principale. La page est recréée à chaque navigation (même entre deux pages du même type) et repart de cet état.
 - Une page d'instance supprimée depuis est sautée par Retour/Avance.
 - Statut : validé
+
+### D28 · 2026-10-09 · Retours d'action et suppressions annulables
+- Une action réussie se confirme par une notification courte en bas à droite (4 s, 6 s avec un bouton) ; les erreurs liées à un écran restent dans un bandeau `Alert` refermable sur cet écran.
+- Retirer un mod ou un compte n'ouvre pas de confirmation : l'élément disparaît tout de suite et la suppression n'est faite qu'après ~6 s, sauf clic sur « Annuler » dans la notification. Si le launcher est fermé entre-temps, rien n'est supprimé. Les suppressions lourdes (instance, capture) gardent leur boîte de confirmation.
+- Une liste qui charge affiche des lignes fantômes, jamais un faux « Aucun… ».
+- Réglage « Quand le jeu démarre » : rester ouvert (défaut) ou réduire le launcher, qui revient au premier plan quand le dernier jeu lancé ainsi se ferme.
+- Statut : validé

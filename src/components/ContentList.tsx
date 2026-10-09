@@ -3,6 +3,7 @@ import Alert from "./Alert";
 import { errorMessage, type ContentKind, type InstalledContent, type Instance } from "../lib/api";
 import {
   checkUpdates,
+  contentLoaded,
   contentUpdates,
   installedContent,
   isBusy,
@@ -16,6 +17,8 @@ import {
 } from "../lib/content";
 import { exportModpackFile } from "../lib/modpacks";
 import { navigate } from "../lib/store";
+import { removeWithUndo, toast } from "../lib/toast";
+import LoadingRows from "./LoadingRows";
 import PerfSuggestions from "./PerfSuggestions";
 import { Icon, Toggle } from "./pixel";
 import ProjectIcon from "./ProjectIcon";
@@ -29,9 +32,37 @@ const SECTIONS: { kind: ContentKind; label: string }[] = [
 /** Installed mods, resource packs and shaders of an instance, with updates and on/off switches. */
 export default function ContentList(props: { instance: Instance; locked: boolean }) {
   const [error, setError] = createSignal<string | null>(null);
-  const [notice, setNotice] = createSignal<string | null>(null);
   const [exporting, setExporting] = createSignal(false);
-  const items = () => installedContent(props.instance.id);
+  /** Removed but still undoable: hidden until the removal is committed. */
+  const [removing, setRemoving] = createSignal<ReadonlySet<string>>(new Set());
+  const items = () => installedContent(props.instance.id).filter((i) => !removing().has(i.projectId));
+
+  function remove(item: InstalledContent) {
+    const toggle = (on: boolean) =>
+      setRemoving((set) => {
+        const next = new Set(set);
+        if (on) next.add(item.projectId);
+        else next.delete(item.projectId);
+        return next;
+      });
+    removeWithUndo({
+      message: `${item.title} retiré`,
+      hide: () => toggle(true),
+      show: () => toggle(false),
+      commit: async () => {
+        const error = await removeContent(props.instance.id, item.projectId);
+        toggle(false);
+        return error;
+      },
+    });
+  }
+
+  async function updateAll() {
+    const count = updates().length;
+    const failure = await updateContent(props.instance.id);
+    setError(failure);
+    if (!failure) toast(count === 1 ? "1 élément mis à jour" : `${count} éléments mis à jour`);
+  }
   const updates = () => contentUpdates(props.instance.id);
   const disabledCount = () => items().filter((i) => !i.enabled).length;
   const browse = () => navigate({ page: "discover", instanceId: props.instance.id });
@@ -43,10 +74,9 @@ export default function ContentList(props: { instance: Instance; locked: boolean
   async function exportPack() {
     setExporting(true);
     setError(null);
-    setNotice(null);
     try {
       const path = await exportModpackFile(props.instance);
-      if (path) setNotice(`Modpack exporté : ${path}`);
+      if (path) toast(`Modpack exporté : ${path}`);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -101,10 +131,6 @@ export default function ContentList(props: { instance: Instance; locked: boolean
         </div>
       </div>
 
-      <Show when={notice()}>
-        <Alert tone="success" onClose={() => setNotice(null)}>{notice()}</Alert>
-      </Show>
-
       <Show when={error()}>
         <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
@@ -112,7 +138,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
       <PerfSuggestions instance={props.instance} locked={props.locked} onError={setError} />
 
       <Show when={updates().length > 0}>
-        <div class="panel px-corners-md flex items-center justify-between gap-4 p-3.5 shadow-[inset_0_0_0_1px_#4E9A1E]">
+        <div class="panel px-corners-md flex items-center justify-between gap-4 p-3.5 shadow-[inset_0_0_0_1px_var(--color-xp-deep)]">
           <div class="flex items-center gap-2.5">
             <span class="size-2 bg-xp shadow-[0_0_0_2px_rgb(139_224_78/0.25)]" />
             <span class="text-sm">
@@ -122,7 +148,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
           <button
             class="btn btn-primary px-corners h-9"
             disabled={props.locked || isCheckingUpdates(props.instance.id) || isUpdatingAll(props.instance.id)}
-            onClick={() => void run(updateContent(props.instance.id))}
+            onClick={() => void updateAll()}
           >
             <Icon name="download" size={12} />
             {isUpdatingAll(props.instance.id) ? "Mise à jour…" : "Tout mettre à jour"}
@@ -130,6 +156,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
         </div>
       </Show>
 
+      <Show when={contentLoaded(props.instance.id)} fallback={<LoadingRows count={4} height={52} label="Chargement du contenu…" />}>
       <Show
         when={items().length > 0}
         fallback={
@@ -151,12 +178,13 @@ export default function ContentList(props: { instance: Instance; locked: boolean
                   {section.label} <span class="font-mono text-muted">{list().length}</span>
                 </h2>
                 <ul class="panel px-corners-md flex flex-col divide-y divide-line">
-                  <For each={list()}>{(item) => <Row instanceId={props.instance.id} item={item} locked={props.locked} run={run} />}</For>
+                  <For each={list()}>{(item) => <Row instanceId={props.instance.id} item={item} locked={props.locked} run={run} onRemove={() => remove(item)} />}</For>
                 </ul>
               </section>
             );
           }}
         </For>
+      </Show>
       </Show>
     </div>
   );
@@ -167,6 +195,7 @@ function Row(props: {
   item: InstalledContent;
   locked: boolean;
   run: (action: Promise<string | null>) => Promise<void>;
+  onRemove: () => void;
 }) {
   const busy = () => isBusy(props.instanceId, props.item.projectId);
   const update = () => updateFor(props.instanceId, props.item.projectId);
@@ -220,7 +249,7 @@ function Row(props: {
         aria-label={`Retirer ${props.item.title}`}
         title="Retirer"
         disabled={frozen()}
-        onClick={() => void props.run(removeContent(props.instanceId, props.item.projectId))}
+        onClick={props.onRemove}
       >
         <Icon name="trash" size={12} />
       </button>

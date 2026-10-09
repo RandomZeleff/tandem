@@ -14,7 +14,7 @@ import ScreenshotsTab from "../components/ScreenshotsTab";
 import Select from "../components/Select";
 import Tabs, { tabPanel } from "../components/Tabs";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
-import { formatBytes, formatRelative } from "../lib/format";
+import { formatBytes, formatGigabytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { navigate, refetchInstances, remembered } from "../lib/store";
 
@@ -70,7 +70,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
             style={{ "box-shadow": "inset 3px 3px 0 #373737, inset -3px -3px 0 #fff, 0 0 0 4px var(--color-slate-800)" }}
           />
           <div class="flex min-w-0 flex-1 flex-col gap-2">
-            <nav aria-label="Fil d'Ariane" class="text-xs text-[#C9CCD1]">
+            <nav aria-label="Fil d'Ariane" class="text-xs text-chalk-3">
               <button class="hover:text-chalk" onClick={() => navigate({ page: "instances" })}>
                 Instances
               </button>
@@ -215,9 +215,6 @@ export default function InstanceDetail(props: { instance: Instance }) {
 
 const MEMORY_STEPS_GB = [1, 2, 3, 4, 6, 8, 10, 12, 16, 24, 32];
 
-function gigabytes(mb: number): string {
-  return `${Number((mb / 1024).toFixed(1))} Go`;
-}
 
 /** "Automatique" follows the machine and the mod count; fixed sizes stay as chosen. */
 function MemoryPicker(props: { instance: Instance; onError: (message: string) => void }) {
@@ -245,15 +242,15 @@ function MemoryPicker(props: { instance: Instance; onError: (message: string) =>
         class="h-8 w-56 px-2.5 text-sm"
         value={String(props.instance.memoryMb ?? "auto")}
         options={[
-          { value: "auto", label: "Automatique", hint: info() ? gigabytes(info()!.autoMb) : undefined },
-          ...steps().map((mb) => ({ value: String(mb), label: gigabytes(mb) })),
+          { value: "auto", label: "Automatique", hint: info() ? formatGigabytes(info()!.autoMb) : undefined },
+          ...steps().map((mb) => ({ value: String(mb), label: formatGigabytes(mb) })),
         ]}
         onChange={(value) => void choose(value)}
       />
       <Show when={info()}>
         {(i) => (
           <span class="text-xs text-muted">
-            {gigabytes(i().totalMb)} sur cette machine. En automatique, la mémoire suit le nombre de mods.
+            {formatGigabytes(i().totalMb)} sur cette machine. En automatique, la mémoire suit le nombre de mods.
           </span>
         )}
       </Show>

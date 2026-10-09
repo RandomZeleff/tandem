@@ -1,3 +1,7 @@
+const oneDecimal = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 });
+const integer = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
+
+/** French decimal comma: `2,6 Mo`, `12 Mo`. */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   const units = ["Ko", "Mo", "Go"];
@@ -7,7 +11,12 @@ export function formatBytes(bytes: number): string {
     value /= 1024;
     unit++;
   }
-  return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`;
+  return `${(value < 10 ? oneDecimal : integer).format(value)} ${units[unit]}`;
+}
+
+/** `1536` → `1,5 Go`. */
+export function formatGigabytes(mb: number): string {
+  return `${oneDecimal.format(mb / 1024)} Go`;
 }
 
 const relative = new Intl.RelativeTimeFormat("fr", { numeric: "auto" });

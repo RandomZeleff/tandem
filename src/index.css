@@ -20,22 +20,32 @@
   --color-slate-600: #1f2328;
   --color-line: #23272c;
   --color-line-strong: #343941;
+  --color-divider: #1e2125;
 
   --color-chalk: #ece9e2;
   --color-chalk-2: #d9d5cc;
   --color-muted: #a9adb4;
   --color-faint: #868b93;
+  --color-chalk-3: #c9ccd1;
 
   --color-grass: #3c8527;
   --color-grass-light: #5dbb3f;
   --color-xp: #8be04e;
   --color-xp-text: #8fd16a;
+  --color-xp-deep: #4e9a1e;
   --color-gold: #f2c744;
   --color-gold-deep: #6b5518;
   --color-amethyst: #b99cf2;
   --color-diamond: #4fd6d0;
   --color-redstone: #e0483a;
   --color-redstone-text: #f28a80;
+
+  /* Message surfaces (alerts, toasts, warning panels). */
+  --color-danger: #2a1414;
+  --color-danger-line: #6e2a26;
+  --color-warning: #2a1f0e;
+  --color-success: #16240f;
+  --color-success-line: #2e5a1a;
 }
 
 html,
@@ -182,9 +192,9 @@ button {
 
   .btn-danger {
     color: var(--color-redstone-text);
-    background: #2a1414;
+    background: var(--color-danger);
     box-shadow:
-      inset 0 0 0 1px #6e2a26,
+      inset 0 0 0 1px var(--color-danger-line),
       inset 0 -3px 0 rgb(0 0 0 / 0.35);
   }
 
@@ -244,5 +254,35 @@ button {
   .dither {
     background-image: repeating-conic-gradient(rgb(255 255 255 / 0.012) 0% 25%, transparent 0% 50%);
     background-size: 4px 4px;
+  }
+}
+
+/* Toasts slide up from the corner; without motion they simply appear. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.toast-in {
+  animation: toast-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Loading placeholders breathe slowly; still when motion is reduced. */
+@keyframes skeleton {
+  50% {
+    opacity: 0.55;
+  }
+}
+.skeleton {
+  background: var(--color-slate-700);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+  animation: skeleton 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-in,
+  .skeleton {
+    animation: none;
   }
 }

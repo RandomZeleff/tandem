@@ -37,7 +37,7 @@ export default function PlayButton(props: { id: string; size?: "lg" | "md" | "ic
       </Match>
       <Match when={state().status === "preparing"}>
         <button class={`btn ${sizeClass()}`} disabled aria-label="Installation en cours">
-          <Icon name="download" size={size() === "lg" ? 16 : 12} color="#8BE04E" />
+          <Icon name="download" size={size() === "lg" ? 16 : 12} color="var(--color-xp)" />
           {size() === "icon" ? null : <span class="font-mono text-[0.75em]">{Math.round(ratio() * 100)} %</span>}
         </button>
       </Match>

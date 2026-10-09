@@ -3,7 +3,9 @@ import Alert from "./Alert";
 import { api, errorMessage, type BackupKind, type GameMode, type World, type WorldBackup } from "../lib/api";
 import { formatBytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
+import { toast } from "../lib/toast";
 import Dialog from "./Dialog";
+import LoadingRows from "./LoadingRows";
 import { Icon, Toggle } from "./pixel";
 
 const MODES: Record<GameMode, string> = {
@@ -61,6 +63,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
     await run(backup.fileName, async () => {
       await api.restoreWorldBackup(props.instanceId, backup.world, backup.fileName);
       await Promise.all([refetchWorlds(), refetchBackups()]);
+      toast("Monde restauré. Son état précédent est gardé dans les sauvegardes.");
     });
   }
 
@@ -68,7 +71,11 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
     <div class="flex h-full flex-col gap-4 overflow-y-auto">
       <div class="flex items-center justify-between gap-3">
         <span class="text-[13px] text-muted">
-          {(worlds() ?? []).length === 0 ? "Aucun monde." : `${worlds()!.length} monde${worlds()!.length > 1 ? "s" : ""}`}
+          {worlds() === undefined
+            ? "Chargement…"
+            : worlds()!.length === 0
+              ? "Aucun monde."
+              : `${worlds()!.length} monde${worlds()!.length > 1 ? "s" : ""}`}
           <Show when={props.locked}> · arrête le jeu pour sauvegarder ou restaurer</Show>
         </span>
         <label class="flex items-center gap-2.5 text-[13px] text-chalk-2">
@@ -85,6 +92,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
         <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
+      <Show when={worlds() !== undefined || worlds.error} fallback={<LoadingRows count={2} height={76} label="Chargement des mondes…" />}>
       <Show
         when={(worlds() ?? []).length > 0}
         fallback={
@@ -105,6 +113,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
                 onBackup={() =>
                   run(world.folder, async () => {
                     await api.backupWorld(props.instanceId, world.folder);
+                    toast(`« ${world.name} » sauvegardé`);
                     await refetchBackups();
                   })
                 }
@@ -114,6 +123,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
             )}
           </For>
         </ul>
+      </Show>
       </Show>
       <p class="text-xs text-faint">Les 5 dernières sauvegardes automatiques de chaque monde sont gardées ; les manuelles, toutes.</p>
 

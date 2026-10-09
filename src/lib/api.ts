@@ -244,6 +244,7 @@ export const api = {
   /** `null` goes back to automatic memory. */
   setInstanceMemory: (id: string, memoryMb: number | null) =>
     invoke<void>("set_instance_memory", { id, memoryMb }),
+  openDataFolder: () => invoke<void>("open_data_folder"),
   openInstanceFolder: (id: string) => invoke<void>("open_instance_folder", { id }),
   launchInstance: (id: string) => invoke<void>("launch_instance", { id }),
   stopInstance: (id: string) => invoke<boolean>("stop_instance", { id }),

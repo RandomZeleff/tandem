@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
   api,
   errorMessage,
@@ -47,6 +48,27 @@ export function gameState(id: string): GameState {
   return games[id] ?? { status: "idle" };
 }
 
+/** Setting: what the launcher does when a game starts. */
+export const ON_GAME_START_SETTING = "on_game_start";
+export type OnGameStart = "keep" | "minimize";
+
+/** Games whose start minimized the launcher: it comes back when the last one exits. */
+const minimizedFor = new Set<string>();
+
+async function onGameStarted(id: string) {
+  const choice = (await api.getSetting<OnGameStart>(ON_GAME_START_SETTING).catch(() => null)) ?? "keep";
+  if (choice !== "minimize") return;
+  minimizedFor.add(id);
+  await getCurrentWindow().minimize();
+}
+
+async function onGameExited(id: string) {
+  if (!minimizedFor.delete(id) || minimizedFor.size > 0) return;
+  const window = getCurrentWindow();
+  await window.unminimize();
+  await window.setFocus();
+}
+
 let onPlayedCallback: () => void = () => {};
 /** Called when a game starts or instances change in the background, so the list can refresh. */
 export function onGamePlayed(cb: () => void) {
@@ -64,6 +86,7 @@ export async function startGameEvents() {
   await listen<string>(EVENTS.started, ({ payload: id }) => {
     setGames(id, { status: "running", progress: undefined });
     onPlayedCallback();
+    void onGameStarted(id).catch(() => {});
   });
   // Modpack installs reuse the progress events but end without a game.
   await listen<string>(EVENTS.installFinished, ({ payload: id }) => {
@@ -94,6 +117,7 @@ export async function startGameEvents() {
   await listen<GameExited>(EVENTS.exited, ({ payload }) => {
     setGames(payload.instanceId, { status: "idle", lastExit: payload, progress: undefined });
     setStats(payload.instanceId, []);
+    void onGameExited(payload.instanceId).catch(() => {});
   });
 
   for (const id of await api.runningInstances()) {

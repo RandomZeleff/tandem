@@ -4,9 +4,9 @@ import { Icon } from "./pixel";
 export type AlertTone = "error" | "warning" | "success";
 
 const TONES: Record<AlertTone, string> = {
-  error: "bg-[#2A1414] text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]",
-  warning: "bg-[#2A1F0E] text-gold shadow-[inset_0_0_0_1px_var(--color-gold-deep)]",
-  success: "bg-[#16240F] text-xp-text shadow-[inset_0_0_0_1px_#2E5A1A]",
+  error: "bg-danger text-redstone-text shadow-[inset_0_0_0_1px_var(--color-danger-line)]",
+  warning: "bg-warning text-gold shadow-[inset_0_0_0_1px_var(--color-gold-deep)]",
+  success: "bg-success text-xp-text shadow-[inset_0_0_0_1px_var(--color-success-line)]",
 };
 
 /** Inline message under a toolbar or a form; closable when `onClose` is given. */

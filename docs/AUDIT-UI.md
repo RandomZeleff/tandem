@@ -94,3 +94,4 @@ Audit technique de l'interface (`src/`), écran par écran, avant la v0.1. Lectu
 
 - 2026-10-09 (D26) : P1 1 (focus : anneau retiré à la demande, focus clavier = état de survol), 2, 3, 4 et 6 traités ; P2 9, 11, 12 et 15 traités. Restent P1 5 (historique) et le reste des P2/P3.
 - 2026-10-09 (D27) : P1 5 (historique de navigation) traité. Tous les P1 sont traités.
+- 2026-10-09 (D28) : P2 7, 8, 10, 13, 14, 16 et 17 traités. Tous les P1 et P2 sont traités ; restent les P3 (18 en partie : animations coupées si mouvement réduit).

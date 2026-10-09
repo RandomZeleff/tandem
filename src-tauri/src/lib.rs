@@ -104,6 +104,7 @@ pub fn run() {
             commands::import_modpack,
             commands::export_modpack,
             commands::open_instance_folder,
+            commands::open_data_folder,
             commands::launch_instance,
             commands::stop_instance,
             commands::install_rosetta,
