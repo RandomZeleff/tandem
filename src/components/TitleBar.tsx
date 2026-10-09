@@ -4,6 +4,9 @@ import { games } from "../lib/games";
 import { instances, navigate } from "../lib/store";
 import { Icon, XpBar } from "./pixel";
 
+// macOS draws its own traffic lights over the bar (titleBarStyle: Overlay).
+const isMac = navigator.userAgent.includes("Mac");
+
 function Logo() {
   return (
     <svg width="24" height="16" viewBox="0 0 12 8" shape-rendering="crispEdges" aria-hidden="true">
@@ -42,18 +45,20 @@ export default function TitleBar() {
       data-tauri-drag-region
       class="flex h-10 shrink-0 items-center bg-slate-900 shadow-[inset_0_-1px_0_#1E2125]"
     >
-      <div
-        data-tauri-drag-region
-        class="flex h-full w-60 shrink-0 items-center gap-2.5 px-[22px] shadow-[inset_-1px_0_0_#1E2125]"
-      >
-        <Logo />
-        <span
+      <Show when={!isMac}>
+        <div
           data-tauri-drag-region
-          class="font-pixel text-lg font-bold tracking-[0.5px] [text-shadow:2px_2px_0_rgb(0_0_0/0.5)]"
+          class="flex h-full w-60 shrink-0 items-center gap-2.5 px-[22px] shadow-[inset_-1px_0_0_#1E2125]"
         >
-          Tandem
-        </span>
-      </div>
+          <Logo />
+          <span
+            data-tauri-drag-region
+            class="font-pixel text-lg font-bold tracking-[0.5px] [text-shadow:2px_2px_0_rgb(0_0_0/0.5)]"
+          >
+            Tandem
+          </span>
+        </div>
+      </Show>
 
       <div data-tauri-drag-region class="flex h-full flex-1 items-center justify-end gap-2 px-3">
         <Show when={installing()}>
@@ -73,25 +78,27 @@ export default function TitleBar() {
         </Show>
       </div>
 
-      <div class="flex h-full">
-        <button class={control} aria-label="Réduire" onClick={() => appWindow.minimize()}>
-          <svg width="10" height="10" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true">
-            <path d="M0 5h10v1H0z" fill="currentColor" />
-          </svg>
-        </button>
-        <button class={control} aria-label="Agrandir" onClick={() => appWindow.toggleMaximize()}>
-          <svg width="10" height="10" viewBox="0 0 10 10" shape-rendering="crispEdges" fill-rule="evenodd" aria-hidden="true">
-            <path d="M0 0h10v10H0zM1 1v8h8V1z" fill="currentColor" />
-          </svg>
-        </button>
-        <button
-          class={`${control} hover:!bg-redstone hover:!text-white`}
-          aria-label="Fermer"
-          onClick={() => appWindow.close()}
-        >
-          <Icon name="close" size={10} />
-        </button>
-      </div>
+      <Show when={!isMac}>
+        <div class="flex h-full">
+          <button class={control} aria-label="Réduire" onClick={() => appWindow.minimize()}>
+            <svg width="10" height="10" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true">
+              <path d="M0 5h10v1H0z" fill="currentColor" />
+            </svg>
+          </button>
+          <button class={control} aria-label="Agrandir" onClick={() => appWindow.toggleMaximize()}>
+            <svg width="10" height="10" viewBox="0 0 10 10" shape-rendering="crispEdges" fill-rule="evenodd" aria-hidden="true">
+              <path d="M0 0h10v10H0zM1 1v8h8V1z" fill="currentColor" />
+            </svg>
+          </button>
+          <button
+            class={`${control} hover:!bg-redstone hover:!text-white`}
+            aria-label="Fermer"
+            onClick={() => appWindow.close()}
+          >
+            <Icon name="close" size={10} />
+          </button>
+        </div>
+      </Show>
     </header>
   );
 }

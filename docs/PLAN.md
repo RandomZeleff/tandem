@@ -81,7 +81,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 - [ ] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
 - [ ] Apple Silicon : Mojang ne fournit ni `jre-legacy` (Java 8) ni `java-runtime-alpha` (16) en `mac-os-arm64` → versions ≤ 1.17 (et 1.18/1.19 sans natives LWJGL arm64) à lancer en mode Intel via Rosetta (runtime `mac-os` + natives x86_64)
-- [ ] Fenêtre : `titleBarStyle: Overlay` + boutons natifs sur Mac, masquer nos boutons de fenêtre façon Windows
+- [x] Fenêtre : `titleBarStyle: Overlay` + boutons natifs sur Mac, masquer nos boutons de fenêtre façon Windows
 - [ ] CI : job macOS (`.dmg` universel x86_64 + arm64)
 - [ ] Signature + notarisation Apple (compte Apple Developer requis)
 - [ ] Phase 2 : tokens dans le Trousseau macOS (crate `keyring`), en plus du gestionnaire Windows (D9)
