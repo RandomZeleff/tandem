@@ -209,9 +209,10 @@ export default function Discover(props: { instanceId?: string }) {
             <Icon name="search" size={13} />
           </span>
           <input
+            id="discover-search"
             type="search"
             class="field w-full pl-9 text-sm"
-            placeholder="Rechercher sur Modrinth…"
+            placeholder={`Rechercher sur Modrinth… (${navigator.userAgent.includes("Mac") ? "⌘K" : "Ctrl+K"})`}
             aria-label="Rechercher"
             value={query()}
             onInput={(e) => setQuery(e.currentTarget.value)}

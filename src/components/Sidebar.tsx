@@ -13,12 +13,16 @@ interface NavItem {
   icon: IconName;
   to: Route;
   soon?: boolean;
+  /** Shown in the tooltip. */
+  shortcut?: string;
 }
+
+const MOD = navigator.userAgent.includes("Mac") ? "⌘" : "Ctrl+";
 
 const NAV: NavItem[] = [
   { label: "Accueil", icon: "home", to: { page: "home" } },
   { label: "Instances", icon: "grid", to: { page: "instances" } },
-  { label: "Découvrir", icon: "search", to: { page: "discover" } },
+  { label: "Découvrir", icon: "search", to: { page: "discover" }, shortcut: "K" },
   { label: "Jouer à deux", icon: "duo", to: { page: "multi" }, soon: true },
 ];
 
@@ -202,6 +206,7 @@ export default function Sidebar() {
                 "text-muted hover:bg-slate-750 hover:text-chalk focus-visible:bg-slate-750 focus-visible:text-chalk": !isActive(item),
               }}
               aria-current={isActive(item) ? "page" : undefined}
+              title={item.shortcut ? `${item.label} (${MOD}${item.shortcut})` : undefined}
               onClick={() => navigate(item.to)}
             >
               <Icon name={item.icon} size={18} color={isActive(item) ? "var(--color-xp)" : undefined} />
@@ -263,6 +268,7 @@ export default function Sidebar() {
           "text-chalk": route().page === "settings",
           "text-muted hover:text-chalk focus-visible:text-chalk": route().page !== "settings",
         }}
+        title={`Réglages (${MOD},)`}
         onClick={() => navigate({ page: "settings" })}
       >
         <Icon name="gear" size={18} color={route().page === "settings" ? "var(--color-xp)" : undefined} />

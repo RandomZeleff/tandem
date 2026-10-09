@@ -1,4 +1,4 @@
-import { For, type JSX } from "solid-js";
+import { For, Index, type JSX } from "solid-js";
 import type { Loader } from "../lib/api";
 import { loaderLabel } from "../lib/format";
 import type { BlockLook, SkinLook } from "../lib/look";
@@ -295,17 +295,18 @@ export function XpBar(props: { value: number; segments?: number; height?: number
         "grid-template-columns": `repeat(${count()}, minmax(0, 1fr))`,
       }}
     >
-      <For each={Array.from({ length: count() }, (_, i) => i < filled())}>
+      {/* Index: segments keep their node, only their colour changes as progress moves. */}
+      <Index each={Array.from({ length: count() }, (_, i) => i < filled())}>
         {(on) => (
           <span
             style={
-              on
+              on()
                 ? { background: "var(--color-xp)", "box-shadow": "inset 0 -3px 0 var(--color-xp-deep), inset 0 1px 0 #C8F59A" }
                 : { background: "#1A2416" }
             }
           />
         )}
-      </For>
+      </Index>
     </div>
   );
 }

@@ -66,7 +66,7 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - [x] Composants de base — D26 : `Select`, `Checkbox`, `Alert`, `Tabs`, `Dialog` avec focus piégé/restauré, fermeture Échap + clic extérieur (`lib/ui.ts`)
 - [x] Navigation avec historique — D27 : retour/avant, boutons 4/5 de la souris, Alt+←/→ (⌘[ / ⌘] sur Mac), flèches dans la barre de titre ; onglet, recherche, filtres et défilement retrouvés
 - [x] Menus déroulants maison : les 5 `<select>` et la case « Snapshots » natifs remplacés
-- [~] Corrections issues de l'audit : P1 et P2 traités (D28), restent les P3
+- [x] Corrections issues de l'audit : P1, P2 (D28) et P3 traités
 - [ ] Tests sous charge sur 2-3 vrais modpacks (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
 - [ ] Optimisations issues des tests sous charge
 - [ ] Version 0.1 (build installable Windows + Mac)
@@ -201,4 +201,5 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - Pas vérifié : les boutons de souris et ⌘[ dans la vraie fenêtre Tauri (WebView2 / WKWebView).
 - P2 de l'audit (D28) : notifications (`lib/toast.ts`, `Toaster`), retrait d'un mod ou d'un compte annulable ~6 s, squelettes de chargement dans Contenu / Mondes / Captures, vraie page Réglages (comportement au lancement du jeu, sauvegarde auto des mondes, dossier des données avec bouton « Ouvrir » via la nouvelle commande `open_data_folder`), nombres au format français (`2,6 Mo`), couleurs d'interface en tokens (`--color-danger`, `--color-xp-deep`…), accueil à 2 cartes sous 1280 px. Vérifié dans le navigateur (backend simulé) : retrait → Annuler → retrait confirmé, squelettes, réglage enregistré, accueil à 1100 px sans débordement.
 - Pas vérifié : la réduction/réouverture du launcher au lancement du jeu dans la vraie fenêtre Tauri.
-- Prochaine étape : P3 de l'audit, puis tests sous charge avec de gros modpacks.
+- P3 de l'audit : raccourcis Ctrl/⌘+K ou F (chercher sur Modrinth), Ctrl/⌘+N (nouvelle instance), Ctrl/⌘+, (réglages), rappelés dans les infobulles ; `Index` au lieu de `For` pour la barre d'XP et les graphes RAM/CPU (segments réutilisés, vérifié sur un faux lancement). Mouvement réduit : animations des notifications et des squelettes coupées.
+- Prochaine étape : tests sous charge avec de gros modpacks (à faire par Raphaël sur son PC), puis build installable de la v0.1.

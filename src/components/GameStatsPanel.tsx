@@ -1,4 +1,4 @@
-import { For, Show } from "solid-js";
+import { Index, Show } from "solid-js";
 import { formatBytes } from "../lib/format";
 import { stats } from "../lib/games";
 
@@ -64,12 +64,12 @@ function Metric(props: { label: string; value: string; detail: string; values: n
         class="h-8 w-full bg-bedrock"
         aria-hidden="true"
       >
-        <For each={bars()}>
+        <Index each={bars()}>
           {(v, i) => {
-            const h = () => (props.max > 0 ? Math.max(v > 0 ? 1 : 0, Math.round((v / props.max) * 24)) : 0);
-            return <rect x={i() * 2} y={24 - h()} width={1.5} height={h()} fill="var(--color-xp)" />;
+            const h = () => (props.max > 0 ? Math.max(v() > 0 ? 1 : 0, Math.round((v() / props.max) * 24)) : 0);
+            return <rect x={i * 2} y={24 - h()} width={1.5} height={h()} fill="var(--color-xp)" />;
           }}
-        </For>
+        </Index>
       </svg>
     </div>
   );

@@ -25,6 +25,23 @@ import Instances from "./pages/Instances";
 import Settings from "./pages/Settings";
 import Soon from "./pages/Soon";
 
+const isMac = navigator.userAgent.includes("Mac");
+
+/** Ctrl/Cmd + key. */
+const SHORTCUTS: Record<string, () => void> = {
+  k: searchModrinth,
+  f: searchModrinth,
+  n: () => setNewInstanceDialog({}),
+  ",": () => navigate({ page: "settings" }),
+};
+
+function searchModrinth() {
+  navigate({ page: "discover" });
+  const input = document.getElementById("discover-search") as HTMLInputElement | null;
+  input?.focus();
+  input?.select();
+}
+
 function App() {
   onMount(() => {
     void startLogStream();
@@ -38,6 +55,16 @@ function App() {
       if (e.type === "mouseup") (e.button === 3 ? goBack : goForward)();
     };
     const onKey = (e: KeyboardEvent) => {
+      // Ctrl on Windows, Cmd on macOS.
+      const mod = isMac ? e.metaKey : e.ctrlKey;
+      if (mod && !e.altKey && !e.shiftKey) {
+        const shortcut = SHORTCUTS[e.key.toLowerCase()];
+        if (shortcut) {
+          e.preventDefault();
+          shortcut();
+          return;
+        }
+      }
       const back = (e.altKey && e.key === "ArrowLeft") || (e.metaKey && e.key === "[");
       const forward = (e.altKey && e.key === "ArrowRight") || (e.metaKey && e.key === "]");
       if (!back && !forward) return;
