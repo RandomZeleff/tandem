@@ -79,7 +79,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 ## Portage macOS
 
-- [ ] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
+- [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
 - [ ] Apple Silicon : Mojang ne fournit ni `jre-legacy` (Java 8) ni `java-runtime-alpha` (16) en `mac-os-arm64` → versions ≤ 1.17 (et 1.18/1.19 sans natives LWJGL arm64) à lancer en mode Intel via Rosetta (runtime `mac-os` + natives x86_64)
 - [x] Fenêtre : `titleBarStyle: Overlay` + boutons natifs sur Mac, masquer nos boutons de fenêtre façon Windows
 - [ ] CI : job macOS (`.dmg` universel x86_64 + arm64)
@@ -155,3 +155,5 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 ### 2026-10-09
 - Fait : audit de compatibilité macOS (voir section « Portage macOS ») ; tout est poussé sur `origin/master` pour reprendre le dev sur Mac.
 - Prochaine étape : sur le Mac, `pnpm install` puis `pnpm tauri dev`, corriger ce qui casse, puis le mode Rosetta pour les vieilles versions sur Apple Silicon.
+- Sur le Mac (Apple Silicon) : build et tests OK après un correctif (`safe_relative` laissait passer `C:/…` hors Windows) ; barre de titre native (feux tricolores, logo masqué). Vanilla 1.21.4 atteint le menu en natif arm64 ; 1.16.5 échoue comme prévu (`JavaUnavailable { jre-legacy, mac-os-arm64 }`).
+- Prochaine étape : mode Rosetta pour les versions sans Java/natives arm64.
