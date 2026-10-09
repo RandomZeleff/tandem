@@ -33,7 +33,7 @@ La mémoire automatique (D18) a donné ~8 Go à Prominence ; le jeu en utilise ~
 ## Pistes (pas encore faites)
 
 - ~~**Dépendances manquantes**~~ (fait, D30) : désactiver une bibliothèque (ex. Architectury dans Create+) ne fait pas planter le jeu : Forge affiche son propre écran d'erreur et reste ouvert, donc l'analyse de crash ne se déclenche pas. Le log est pourtant très clair (« Missing or unsupported mandatory dependencies… requested by pandalib »). Deux améliorations possibles : prévenir **avant** de désactiver un mod dont d'autres dépendent, et détecter ce message pendant le lancement pour proposer « Réactiver Architectury ».
-- **Choix de la version d'un modpack** : Create+ apparaît dans Découvrir avec le filtre NeoForge 1.21.1, mais Tandem installe la dernière version *stable* (Forge 1.19.2). Montrer la version qui sera installée, et permettre d'en choisir une autre (alpha/bêta, autre version du jeu).
+- ~~**Choix de la version d'un modpack**~~ (fait) : Create+ apparaît dans Découvrir avec le filtre NeoForge 1.21.1, mais Tandem installe la dernière version *stable* (Forge 1.19.2). Montrer la version qui sera installée, et permettre d'en choisir une autre (alpha/bêta, autre version du jeu).
 - **Temps de chargement** : 80 s pour 678 mods (Prominence), c'est le jeu lui-même ; les suggestions de mods de perf (D19) sont la bonne réponse côté Tandem (ModernFix réduit nettement ce temps).
 
 ## Reste à tester par un humain
