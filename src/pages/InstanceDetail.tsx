@@ -17,6 +17,7 @@ import Tabs, { tabPanel } from "../components/Tabs";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
 import { formatBytes, formatGigabytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
+import { openProject } from "../lib/projects";
 import { navigate, refetchInstances, remembered } from "../lib/store";
 
 type Tab = "console" | "content" | "worlds" | "screenshots" | "info";
@@ -174,7 +175,12 @@ export default function InstanceDetail(props: { instance: Instance }) {
                 <Show when={props.instance.packProjectId}>
                   <dt class="text-muted">Modpack</dt>
                   <dd>
-                    Modrinth
+                    <button
+                      class="text-xp-text hover:underline focus-visible:underline"
+                      onClick={() => openProject(props.instance.packProjectId!)}
+                    >
+                      Voir la fiche du modpack
+                    </button>
                     <span class="font-mono text-xs text-muted"> {props.instance.packVersion}</span>
                   </dd>
                 </Show>

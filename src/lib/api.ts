@@ -141,6 +141,96 @@ export interface PackVersion {
   recommended: boolean;
 }
 
+export interface ProjectLink {
+  kind: "source" | "issues" | "wiki" | "discord" | "donation";
+  /** Donation platform, empty otherwise. */
+  label: string;
+  url: string;
+}
+
+export interface GalleryImage {
+  thumbUrl: string;
+  url: string;
+  title: string | null;
+  description: string | null;
+}
+
+export interface ProjectAuthor {
+  name: string;
+  avatarUrl: string | null;
+  role: string;
+  url: string;
+}
+
+export type ProjectSide = "required" | "optional" | "unsupported" | "unknown";
+
+/** Everything a project page shows. */
+export interface ProjectDetails {
+  id: string;
+  slug: string;
+  projectType: ProjectType | "datapack" | "plugin";
+  title: string;
+  summary: string;
+  /** Sanitized by the backend. */
+  bodyHtml: string;
+  iconUrl: string | null;
+  color: number | null;
+  downloads: number;
+  followers: number;
+  published: string;
+  updated: string;
+  categories: string[];
+  loaders: string[];
+  /** Oldest first, snapshots included. */
+  gameVersions: string[];
+  clientSide: ProjectSide;
+  serverSide: ProjectSide;
+  license: { id: string; name: string; url: string | null } | null;
+  links: ProjectLink[];
+  gallery: GalleryImage[];
+  organization: { name: string; iconUrl: string | null; url: string } | null;
+  authors: ProjectAuthor[];
+  url: string;
+}
+
+export interface VersionSummary {
+  id: string;
+  name: string;
+  versionNumber: string;
+  versionType: "release" | "beta" | "alpha" | string;
+  gameVersions: string[];
+  loaders: string[];
+  datePublished: string;
+  downloads: number;
+  fileName: string | null;
+  size: number;
+  hasChangelog: boolean;
+  /** Installable: in the given instance for content, by Tandem for a modpack. */
+  compatible: boolean;
+}
+
+export interface ProjectVersions {
+  versions: VersionSummary[];
+  /** What "Install" picks. */
+  recommended: string | null;
+}
+
+export interface ProjectSummary {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  projectType: string;
+  iconUrl: string | null;
+  downloads: number;
+}
+
+export interface DependencyItem {
+  /** `embedded`: shipped inside (the mods of a modpack). */
+  kind: "required" | "optional" | "incompatible" | "embedded";
+  project: ProjectSummary;
+}
+
 /** An enabled mod that needs another one to start. */
 export interface Dependent {
   name: string;
@@ -282,8 +372,16 @@ export const api = {
   searchContent: (query: string, kind: ProjectType, instanceId: string | null, offset = 0) =>
     invoke<SearchResults>("search_content", { query, kind, instanceId, offset }),
   listContent: (instanceId: string) => invoke<InstalledContent[]>("list_content", { instanceId }),
-  installContent: (instanceId: string, projectId: string) =>
-    invoke<InstalledContent[]>("install_content", { instanceId, projectId }),
+  /** The best compatible version when `versionId` is omitted. */
+  installContent: (instanceId: string, projectId: string, versionId?: string) =>
+    invoke<InstalledContent[]>("install_content", { instanceId, projectId, versionId: versionId ?? null }),
+  projectDetails: (id: string) => invoke<ProjectDetails>("project_details", { id }),
+  projectVersions: (projectId: string, instanceId: string | null) =>
+    invoke<ProjectVersions>("project_versions", { projectId, instanceId }),
+  versionChangelog: (projectId: string, versionId: string) =>
+    invoke<string>("version_changelog", { projectId, versionId }),
+  versionDependencies: (projectId: string, versionId: string) =>
+    invoke<DependencyItem[]>("version_dependencies", { projectId, versionId }),
   removeContent: (instanceId: string, projectId: string) =>
     invoke<void>("remove_content", { instanceId, projectId }),
   listWorlds: (instanceId: string) => invoke<World[]>("list_worlds", { instanceId }),
@@ -324,6 +422,9 @@ export const api = {
 
 /** Launch error meaning the version needs Rosetta 2, which is not installed. */
 export const ROSETTA_MISSING = "rosetta-missing";
+
+/** Error meaning Modrinth does not know the project. */
+export const PROJECT_NOT_FOUND = "project-not-found";
 
 /** Tauri rejects with the serialized CommandError string; normalise anything else. */
 export function errorMessage(err: unknown): string {

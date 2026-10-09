@@ -19,6 +19,7 @@ import type {
   World,
   WorldBackup,
 } from "../lib/api";
+import { projectMocks } from "./mockProjects";
 
 const now = Date.now();
 const iso = (hoursAgo: number) => new Date(now - hoursAgo * 3_600_000).toISOString();
@@ -239,9 +240,12 @@ export function installMocks() {
   mockWindows("main");
   const w = window as unknown as { __TAURI_INTERNALS__?: Record<string, unknown> };
   (w.__TAURI_INTERNALS__ ??= {}).convertFileSrc = fakeScreenshot;
+  const projects = projectMocks(CATALOGUE, instances);
   mockIPC(
     async (cmd, payload) => {
       const args = (payload ?? {}) as Record<string, unknown>;
+      const project = await projects(cmd, args);
+      if (project !== undefined) return project;
       switch (cmd) {
         case "app_info":
           return { version: "0.1.0", dataDir: "C:\\Users\\you\\AppData\\Roaming\\Tandem" };

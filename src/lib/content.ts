@@ -88,10 +88,10 @@ export async function loadContent(instanceId: string) {
   state.setContent(instanceId, await api.listContent(instanceId));
 }
 
-/** Installs a project (and its dependencies). */
-export function installContent(instanceId: string, projectId: string): Promise<string | null> {
+/** Installs a project (and its dependencies), in `versionId` or the best compatible version. */
+export function installContent(instanceId: string, projectId: string, versionId?: string): Promise<string | null> {
   return track(instanceId, [projectId], async () => {
-    await api.installContent(instanceId, projectId);
+    await api.installContent(instanceId, projectId, versionId);
     await loadContent(instanceId);
   });
 }

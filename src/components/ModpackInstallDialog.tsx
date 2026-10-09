@@ -18,6 +18,8 @@ function target(v: PackVersion): string {
 export default function ModpackInstallDialog(props: {
   projectId: string;
   title: string;
+  /** Preselected instead of the recommended version. */
+  initialVersionId?: string;
   onClose: () => void;
   onInstall: (versionId: string) => void;
 }) {
@@ -25,7 +27,10 @@ export default function ModpackInstallDialog(props: {
   const [chosen, setChosen] = createSignal("");
   createEffect(() => {
     const list = versions();
-    if (list && !chosen()) setChosen((list.find((v) => v.recommended) ?? list[0])?.id ?? "");
+    if (list && !chosen()) {
+      const initial = list.find((v) => v.id === props.initialVersionId) ?? list.find((v) => v.recommended) ?? list[0];
+      setChosen(initial?.id ?? "");
+    }
   });
   const version = () => versions()?.find((v) => v.id === chosen());
 

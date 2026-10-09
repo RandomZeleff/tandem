@@ -8,8 +8,9 @@ import Tabs, { tabPanel } from "../components/Tabs";
 import { api, errorMessage, type ProjectType, type SearchHit } from "../lib/api";
 import { installContent, isBusy, isInstalled, loadContent } from "../lib/content";
 import { formatCount, loaderLabel } from "../lib/format";
-import { importModpackFile } from "../lib/modpacks";
-import { instances, navigate, refetchInstances, remembered, setNewInstanceDialog } from "../lib/store";
+import { importModpackFile, installPack, isInstallingPack } from "../lib/modpacks";
+import { categoryLabel, isLoaderCategory, openProject } from "../lib/projects";
+import { instances, navigate, remembered, setNewInstanceDialog } from "../lib/store";
 
 const KINDS: { id: ProjectType; label: string }[] = [
   { id: "mod", label: "Mods" },
@@ -34,7 +35,6 @@ export default function Discover(props: { instanceId?: string; query?: string })
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const [actionError, setActionError] = createSignal<string | null>(null);
-  const [packBusy, setPackBusy] = createSignal<Record<string, boolean>>({});
   const [importing, setImporting] = createSignal(false);
 
   const modpacks = () => kind() === "modpack";
@@ -98,19 +98,10 @@ export default function Discover(props: { instanceId?: string; query?: string })
   /** Modpack whose version picker is open. */
   const [picking, setPicking] = createSignal<SearchHit | null>(null);
 
-  async function installPack(projectId: string, versionId: string) {
+  async function installModpack(projectId: string, versionId: string) {
     setPicking(null);
-    setPackBusy((b) => ({ ...b, [projectId]: true }));
     setActionError(null);
-    try {
-      const created = await api.installModpack(projectId, versionId);
-      await refetchInstances();
-      navigate({ page: "instance", id: created.id });
-    } catch (err) {
-      setActionError(errorMessage(err));
-    } finally {
-      setPackBusy((b) => ({ ...b, [projectId]: false }));
-    }
+    setActionError(await installPack(projectId, versionId));
   }
 
   async function importFile() {
@@ -140,11 +131,11 @@ export default function Discover(props: { instanceId?: string; query?: string })
         >
           <button
             class="btn btn-primary px-corners h-9 shrink-0"
-            disabled={packBusy()[hit.projectId]}
+            disabled={isInstallingPack(hit.projectId)}
             onClick={() => setPicking(hit)}
           >
             <Icon name="download" size={12} />
-            {packBusy()[hit.projectId] ? "Installation…" : "Installer"}
+            {isInstallingPack(hit.projectId) ? "Installation…" : "Installer"}
           </button>
         </Show>
       );
@@ -301,23 +292,35 @@ export default function Discover(props: { instanceId?: string; query?: string })
           <For each={hits()}>
             {(hit) => (
               <li class="panel px-corners-md flex items-start gap-4 p-3.5">
-                <ProjectIcon url={hit.iconUrl} size={56} />
-                <div class="flex min-w-0 flex-1 flex-col gap-1">
-                  <div class="flex items-baseline gap-2">
-                    <h2 class="truncate text-[15px] font-semibold">{hit.title}</h2>
-                    <span class="shrink-0 text-xs text-muted">par {hit.author}</span>
+                <button
+                  class="group/card flex min-w-0 flex-1 items-start gap-4 text-left"
+                  aria-label={`Voir la fiche de ${hit.title}`}
+                  onClick={() => openProject(hit.slug || hit.projectId, modpacks() ? undefined : instanceId() || undefined)}
+                >
+                  <ProjectIcon url={hit.iconUrl} size={56} />
+                  <div class="flex min-w-0 flex-1 flex-col gap-1">
+                    <div class="flex items-baseline gap-2">
+                      <h2 class="truncate text-[15px] font-semibold group-hover/card:text-xp-text group-focus-visible/card:text-xp-text">
+                        {hit.title}
+                      </h2>
+                      <span class="shrink-0 text-xs text-muted">par {hit.author}</span>
+                    </div>
+                    <p class="line-clamp-2 text-[13px] text-chalk-2">{hit.description}</p>
+                    <div class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                      <span class="flex items-center gap-1">
+                        <Icon name="download" size={10} />
+                        {formatCount(hit.downloads)}
+                      </span>
+                      <For each={hit.displayCategories.slice(0, 3)}>
+                        {(category) => (
+                          <span class="chip h-5 px-1.5 text-[11px]">
+                            {isLoaderCategory(category) ? loaderLabel(category) : categoryLabel(category)}
+                          </span>
+                        )}
+                      </For>
+                    </div>
                   </div>
-                  <p class="line-clamp-2 text-[13px] text-chalk-2">{hit.description}</p>
-                  <div class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                    <span class="flex items-center gap-1">
-                      <Icon name="download" size={10} />
-                      {formatCount(hit.downloads)}
-                    </span>
-                    <For each={hit.displayCategories.slice(0, 3)}>
-                      {(category) => <span class="chip h-5 px-1.5 text-[11px]">{category}</span>}
-                    </For>
-                  </div>
-                </div>
+                </button>
                 {action(hit)}
               </li>
             )}
@@ -336,7 +339,7 @@ export default function Discover(props: { instanceId?: string; query?: string })
             projectId={hit.projectId}
             title={hit.title}
             onClose={() => setPicking(null)}
-            onInstall={(versionId) => void installPack(hit.projectId, versionId)}
+            onInstall={(versionId) => void installModpack(hit.projectId, versionId)}
           />
         )}
       </Show>

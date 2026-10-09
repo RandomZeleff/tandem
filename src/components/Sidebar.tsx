@@ -28,7 +28,11 @@ const NAV: NavItem[] = [
 
 function isActive(item: NavItem): boolean {
   const current = route().page;
-  return current === item.to.page || (item.to.page === "instances" && current === "instance");
+  return (
+    current === item.to.page ||
+    (item.to.page === "instances" && current === "instance") ||
+    (item.to.page === "discover" && current === "project")
+  );
 }
 
 function AccountMenu(props: { anchor: () => HTMLElement | undefined; onClose: () => void; children: JSX.Element }) {

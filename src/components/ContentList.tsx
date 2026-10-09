@@ -16,6 +16,7 @@ import {
   updateFor,
 } from "../lib/content";
 import { exportModpackFile } from "../lib/modpacks";
+import { openProject } from "../lib/projects";
 import { navigate } from "../lib/store";
 import { removeWithUndo, toast } from "../lib/toast";
 import Dialog from "./Dialog";
@@ -277,7 +278,13 @@ function Row(props: {
       </span>
       <div class="flex min-w-0 flex-1 flex-col" classList={{ "opacity-60": !props.item.enabled }}>
         <span class="flex items-center gap-2">
-          <span class="truncate text-sm font-medium">{props.item.title}</span>
+          <button
+            class="truncate text-left text-sm font-medium hover:text-xp-text hover:underline focus-visible:text-xp-text"
+            title={`Voir la fiche de ${props.item.title}`}
+            onClick={() => openProject(props.item.projectId, props.instanceId)}
+          >
+            {props.item.title}
+          </button>
           <Show when={props.item.isDependency}>
             <span class="chip h-5 px-1.5 text-[11px] text-muted">dépendance</span>
           </Show>

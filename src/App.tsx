@@ -1,4 +1,4 @@
-import { Match, onCleanup, onMount, Show, Switch } from "solid-js";
+import { lazy, Match, onCleanup, onMount, Show, Switch } from "solid-js";
 import NewInstanceDialog from "./components/NewInstanceDialog";
 import RosettaDialog from "./components/RosettaDialog";
 import Sidebar from "./components/Sidebar";
@@ -24,6 +24,9 @@ import InstanceDetail from "./pages/InstanceDetail";
 import Instances from "./pages/Instances";
 import Settings from "./pages/Settings";
 import Soon from "./pages/Soon";
+
+/** Loaded on first visit: keeps it out of the startup bundle. */
+const Project = lazy(() => import("./pages/Project"));
 
 const isMac = navigator.userAgent.includes("Mac");
 
@@ -116,6 +119,9 @@ function App() {
             </Match>
             <Match when={route().page === "discover"}>
               <Discover {...(route() as { instanceId?: string; query?: string })} />
+            </Match>
+            <Match when={route().page === "project"}>
+              <Project {...(route() as { id: string; instanceId?: string })} />
             </Match>
             <Match when={route().page === "multi"}>
               <Soon feature="multi" />

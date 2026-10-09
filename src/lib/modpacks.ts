@@ -1,6 +1,36 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { api, type Instance } from "./api";
+import { createSignal } from "solid-js";
+import { api, errorMessage, type Instance } from "./api";
 import { navigate, refetchInstances } from "./store";
+
+/** Modpacks being installed, by project id (shared by Discover and project pages). */
+const [installing, setInstalling] = createSignal<ReadonlySet<string>>(new Set());
+
+export const isInstallingPack = (projectId: string) => installing().has(projectId);
+
+function mark(projectId: string, on: boolean) {
+  setInstalling((set) => {
+    const next = new Set(set);
+    if (on) next.add(projectId);
+    else next.delete(projectId);
+    return next;
+  });
+}
+
+/** Installs a modpack version into a new instance, then opens it. Resolves to an error message, or null. */
+export async function installPack(projectId: string, versionId: string): Promise<string | null> {
+  mark(projectId, true);
+  try {
+    const created = await api.installModpack(projectId, versionId);
+    await refetchInstances();
+    navigate({ page: "instance", id: created.id });
+    return null;
+  } catch (err) {
+    return errorMessage(err);
+  } finally {
+    mark(projectId, false);
+  }
+}
 
 const MRPACK_FILTER = { name: "Modpack Modrinth", extensions: ["mrpack"] };
 
