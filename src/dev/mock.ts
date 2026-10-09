@@ -267,6 +267,11 @@ export function installMocks() {
         case "list_loader_versions":
           await new Promise((r) => setTimeout(r, 300));
           return fakeLoaderVersions(args.loader as Loader, args.gameVersion as string);
+        case "delete_instance": {
+          const index = instances.findIndex((i) => i.id === args.id);
+          if (index >= 0) instances.splice(index, 1);
+          return null;
+        }
         case "create_instance": {
           const input = args.instance as NewInstance;
           const created: Instance = {

@@ -16,7 +16,7 @@ import Tabs, { tabPanel } from "../components/Tabs";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
 import { formatBytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
-import { navigate, refetchInstances } from "../lib/store";
+import { navigate, refetchInstances, remembered } from "../lib/store";
 
 type Tab = "console" | "content" | "worlds" | "screenshots" | "info";
 
@@ -29,7 +29,7 @@ function stageLabel(p: InstallProgress | undefined): string {
 }
 
 export default function InstanceDetail(props: { instance: Instance }) {
-  const [tab, setTab] = createSignal<Tab>("console");
+  const [tab, setTab] = remembered<Tab>("tab", "console");
   const [confirmDelete, setConfirmDelete] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const state = () => gameState(props.instance.id);

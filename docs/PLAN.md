@@ -64,7 +64,7 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 
 - [x] Audit de l'UI écran par écran → [AUDIT-UI.md](AUDIT-UI.md) (13/20, 6 P1, 11 P2, 3 P3)
 - [x] Composants de base — D26 : `Select`, `Checkbox`, `Alert`, `Tabs`, `Dialog` avec focus piégé/restauré, fermeture Échap + clic extérieur (`lib/ui.ts`)
-- [ ] Navigation avec historique : retour/avant, boutons 4/5 de la souris, Alt+←/→, bouton retour dans la barre de titre ; onglet et position de défilement conservés
+- [x] Navigation avec historique — D27 : retour/avant, boutons 4/5 de la souris, Alt+←/→ (⌘[ / ⌘] sur Mac), flèches dans la barre de titre ; onglet, recherche, filtres et défilement retrouvés
 - [x] Menus déroulants maison : les 5 `<select>` et la case « Snapshots » natifs remplacés
 - [ ] Corrections issues de l'audit
 - [ ] Tests sous charge sur 2-3 vrais modpacks (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
@@ -197,4 +197,6 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - Pas encore vérifié dans la vraie app : lancer un modpack Forge et regarder la console défiler (le panneau navigateur était masqué, donc mesures de calcul et de mise en page, pas d’images par seconde).
 - Phase 4 terminée. Prochaine étape : Phase 5 (traduction IA de modpacks), en commençant par l’extraction des `lang/en_us.json`.
 - Finitions (D26) : anneau de focus jaune retiré à la demande ; le focus clavier reprend l'apparence du survol. Composants `Select` (liste dans un portail, flèches, Début/Fin, recherche par frappe, Échap qui ne ferme que la liste), `Checkbox`, `Alert` (refermable, remplace 6 bandeaux copiés), `Tabs` (un seul arrêt Tab, flèches, `tabpanel` relié), focus piégé dans les dialogues et la visionneuse (pile pour les dialogues imbriqués), menu du compte fermé par Échap/clic extérieur, cartes d'instance ouvrables au clavier, erreurs de « Ouvrir le dossier » affichées, état « rien trouvé » dans Découvrir. Vérifié dans le navigateur (backend simulé) : clavier, Échap, boucle Tab, rendu des menus.
-- Prochaine étape : navigation avec historique.
+- Historique (D27) : pile en mémoire (50 pages) dans `lib/store.ts`, `remembered()` pour l'état d'une page (onglet d'instance, type/recherche/instance de Découvrir, filtre des instances), défilement sauvé par page, pages d'instances supprimées sautées. Vérifié dans le navigateur (backend simulé, qui gère maintenant la suppression d'instance) : Alt+←, bouton 4 de la souris, boutons de la barre, avance, avance effacée par une nouvelle navigation, défilement restauré, instance supprimée sautée.
+- Pas vérifié : les boutons de souris et ⌘[ dans la vraie fenêtre Tauri (WebView2 / WKWebView).
+- Prochaine étape : P2 de l'audit (états de chargement, suppressions avec filet, notifications, réglages, format des nombres).

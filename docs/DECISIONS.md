@@ -162,3 +162,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Contrôles natifs du webview remplacés par des composants maison, identiques sur Windows et Mac : `Select` (liste rendue dans un portail en position fixe, fermée si la page défile ou la fenêtre change de taille), `Checkbox`, `Alert`, `Tabs`.
 - Fenêtres modales : focus initial sur l'élément `autofocus` sinon le premier contrôle, Tab bouclé dedans, focus rendu à la fermeture ; seule la modale du dessus gère Tab. Menus et listes : Échap et clic extérieur, en phase de capture pour qu'un menu ouvert dans un dialogue se ferme sans fermer le dialogue.
 - Statut : validé
+
+### D27 · 2026-10-09 · Historique de navigation en mémoire
+- Pile d'historique dans le store (50 pages max), pas l'API History du navigateur : WebView2 traite déjà lui-même les boutons de souris et Alt+← sur ses propres entrées, ce qui aurait déclenché deux retours. Tandem intercepte ces gestes (`preventDefault`) et gère seul sa pile, identique sur Windows et Mac.
+- Gestes : boutons latéraux de la souris, Alt+←/→, ⌘[ / ⌘] sur Mac, flèches dans la barre de titre.
+- Chaque entrée garde l'état de sa page via `remembered(clé, défaut)` et la position de défilement de la zone principale. La page est recréée à chaque navigation (même entre deux pages du même type) et repart de cet état.
+- Une page d'instance supprimée depuis est sautée par Retour/Avance.
+- Statut : validé

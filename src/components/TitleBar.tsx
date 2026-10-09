@@ -1,7 +1,7 @@
 import { createMemo, Show } from "solid-js";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { games } from "../lib/games";
-import { instances, navigate } from "../lib/store";
+import { canGoBack, canGoForward, goBack, goForward, instances, navigate } from "../lib/store";
 import { Icon, XpBar } from "./pixel";
 
 // macOS draws its own traffic lights over the bar (titleBarStyle: Overlay).
@@ -59,6 +59,31 @@ export default function TitleBar() {
           </span>
         </div>
       </Show>
+
+      <div
+        data-tauri-drag-region
+        class="flex h-full items-center gap-0.5 px-2"
+        classList={{ "pl-[84px]": isMac }}
+      >
+        <button
+          class="flex size-7 items-center justify-center text-muted hover:bg-slate-700 hover:text-chalk focus-visible:bg-slate-700 focus-visible:text-chalk disabled:pointer-events-none disabled:opacity-30"
+          aria-label="Page précédente"
+          title={isMac ? "Page précédente (⌘[)" : "Page précédente (Alt+←)"}
+          disabled={!canGoBack()}
+          onClick={goBack}
+        >
+          <Icon name="arrow" size={12} class="-scale-x-100" />
+        </button>
+        <button
+          class="flex size-7 items-center justify-center text-muted hover:bg-slate-700 hover:text-chalk focus-visible:bg-slate-700 focus-visible:text-chalk disabled:pointer-events-none disabled:opacity-30"
+          aria-label="Page suivante"
+          title={isMac ? "Page suivante (⌘])" : "Page suivante (Alt+→)"}
+          disabled={!canGoForward()}
+          onClick={goForward}
+        >
+          <Icon name="arrow" size={12} />
+        </button>
+      </div>
 
       <div data-tauri-drag-region class="flex h-full flex-1 items-center justify-end gap-2 px-3">
         <Show when={installing()}>

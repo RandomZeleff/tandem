@@ -8,7 +8,7 @@ import { api, errorMessage, type ProjectType, type SearchHit } from "../lib/api"
 import { installContent, isBusy, isInstalled, loadContent } from "../lib/content";
 import { formatCount, loaderLabel } from "../lib/format";
 import { importModpackFile } from "../lib/modpacks";
-import { instances, navigate, refetchInstances, setNewInstanceDialog } from "../lib/store";
+import { instances, navigate, refetchInstances, remembered, setNewInstanceDialog } from "../lib/store";
 
 const KINDS: { id: ProjectType; label: string }[] = [
   { id: "mod", label: "Mods" },
@@ -22,11 +22,12 @@ const SEARCH_DELAY_MS = 300;
 export default function Discover(props: { instanceId?: string }) {
   const pickDefault = () =>
     props.instanceId ?? (instances().find((i) => i.loader !== "vanilla") ?? instances()[0])?.id ?? "";
-  const [instanceId, setInstanceId] = createSignal(pickDefault());
+  const [instanceId, setInstanceId] = remembered("instance", pickDefault());
   // Without any instance, only modpacks make sense: they create one.
-  const [kind, setKind] = createSignal<ProjectType>(instances().length > 0 ? "mod" : "modpack");
-  const [query, setQuery] = createSignal("");
-  const [debounced, setDebounced] = createSignal("");
+  const [kind, setKind] = remembered<ProjectType>("kind", instances().length > 0 ? "mod" : "modpack");
+  const [query, setQuery] = remembered("query", "");
+  // A remembered query searches right away, without waiting for the debounce.
+  const [debounced, setDebounced] = createSignal(query());
   const [hits, setHits] = createSignal<SearchHit[]>([]);
   const [total, setTotal] = createSignal(0);
   const [loading, setLoading] = createSignal(false);

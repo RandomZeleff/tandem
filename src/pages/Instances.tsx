@@ -5,7 +5,7 @@ import Tabs, { tabPanel } from "../components/Tabs";
 import { Icon } from "../components/pixel";
 import { errorMessage } from "../lib/api";
 import { importModpackFile } from "../lib/modpacks";
-import { instances, setNewInstanceDialog } from "../lib/store";
+import { instances, remembered, setNewInstanceDialog } from "../lib/store";
 
 type Filter = "all" | "modded" | "vanilla";
 
@@ -16,7 +16,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 export default function Instances() {
-  const [filter, setFilter] = createSignal<Filter>("all");
+  const [filter, setFilter] = remembered<Filter>("filter", "all");
   const [importing, setImporting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
