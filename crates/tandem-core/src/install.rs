@@ -13,7 +13,7 @@ use crate::java;
 use crate::meta::forge;
 use crate::meta::loader::{self, Loader};
 use crate::meta::rules::Environment;
-use crate::meta::version::{Artifact, LibraryDownloads, LibraryFile, VersionJson};
+use crate::meta::version::{Artifact, JavaVersion, LibraryDownloads, LibraryFile, VersionJson};
 use crate::meta::{self, AssetIndex, ASSETS_BASE_URL};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -111,6 +111,9 @@ where
         };
         tracing::info!(profile = %profile.id, "applying loader profile");
         version.apply_loader(profile);
+    }
+    if needs_arm64_backport(&version) {
+        backport_arm64(ctx, &mut version).await?;
     }
     let env = environment_for(&version);
     if env.os_name == "osx" {
@@ -245,20 +248,62 @@ where
     })
 }
 
-/// On Apple Silicon, versions before 1.19 ship no arm64 LWJGL natives (and most no
-/// arm64 Java either), so they run as an Intel Mac through Rosetta 2.
-fn environment_for(version: &VersionJson) -> Environment {
+fn has_arm64_natives(version: &VersionJson) -> bool {
+    version
+        .libraries
+        .iter()
+        .any(|l| l.name.ends_with(":natives-macos-arm64"))
+}
+
+fn is_apple_silicon() -> bool {
     let env = Environment::current();
-    let needs_rosetta = env.os_name == "osx"
-        && env.arch == "arm64"
-        && !version
+    env.os_name == "osx" && env.arch == "arm64"
+}
+
+/// 1.18.x wants Java 17 and LWJGL 3.2, which Mojang only ships for Intel Macs. Java 17
+/// arm64 exists, though, and LWJGL 3.3 runs these versions. Not 1.17: it sets a
+/// window icon, which LWJGL 3.3 refuses on macOS with a fatal error.
+fn needs_arm64_backport(version: &VersionJson) -> bool {
+    is_apple_silicon()
+        && !has_arm64_natives(version)
+        && version
+            .java_version
+            .as_ref()
+            .is_some_and(|j| j.component == "java-runtime-beta")
+}
+
+/// Runs the version natively: Java 17 arm64, with the LWJGL and objc-bridge
+/// libraries of 1.19.2 (the first release shipping them for arm64).
+async fn backport_arm64(ctx: &Context, version: &mut VersionJson) -> Result<()> {
+    const DONOR: &str = "1.19.2";
+    let swapped = |name: &str| {
+        name.starts_with("org.lwjgl:") || name.starts_with("ca.weblite:java-objc-bridge:")
+    };
+    let donor = meta::load_version(ctx, DONOR).await?;
+    version.libraries.retain(|l| !swapped(&l.name));
+    // Intel natives left out: both native jars are the `org.lwjgl.natives` module, and
+    // Forge's module layer keeps only one of them.
+    version.libraries.extend(
+        donor
             .libraries
-            .iter()
-            .any(|l| l.name.ends_with(":natives-macos-arm64"));
-    if needs_rosetta {
+            .into_iter()
+            .filter(|l| swapped(&l.name) && !l.name.ends_with(":natives-macos")),
+    );
+    version.java_version = Some(JavaVersion {
+        component: "java-runtime-gamma".into(),
+        major_version: 17,
+    });
+    tracing::info!(version = %version.id, "running natively on Apple Silicon with LWJGL from {DONOR}");
+    Ok(())
+}
+
+/// On Apple Silicon, versions with no arm64 LWJGL natives left (before 1.18) run as
+/// an Intel Mac through Rosetta 2: Mojang ships no arm64 Java 8 either.
+fn environment_for(version: &VersionJson) -> Environment {
+    if is_apple_silicon() && !has_arm64_natives(version) {
         Environment::rosetta()
     } else {
-        env
+        Environment::current()
     }
 }
 

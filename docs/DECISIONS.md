@@ -115,3 +115,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Un seul moteur de rendu par instance : Sodium, Embeddium et Rubidium s’excluent, et rien n’est proposé si l’un d’eux ou un jar OptiFine est déjà là.
 - Panneau dans l’onglet Contenu (installation à l’unité ou « Tout installer », dépendances comprises) ; « Masquer » est retenu par instance (réglage `perf_suggestions_hidden.<id>`). Hors ligne, le panneau ne s’affiche pas.
 - Statut : validé
+
+### D20 · 2026-10-09 · Apple Silicon : 1.18.x en natif, le reste avant 1.19 sous Rosetta
+- 1.19+ : natif (Mojang fournit Java et LWJGL arm64).
+- 1.18.x : natif en remplaçant LWJGL 3.2 et `java-objc-bridge` par ceux de la 1.19.2 (LWJGL 3.3.1, natives arm64 seulement : Forge ne garde qu’un module `org.lwjgl.natives`), sur le Java 17 arm64 de Mojang (`java-runtime-gamma`). Chargement ≈ 4-7 s au lieu de ≈ 19 s sous Rosetta.
+- 1.17.x : reste sous Rosetta. Avec LWJGL 3.3, macOS refuse l’icône de fenêtre et 1.17 en fait une erreur fatale (1.18 ne pose pas d’icône sur Mac).
+- ≤ 1.16 : Rosetta (aucun Java 8 arm64 chez Mojang ; un Java tiers comme Azul Zulu reste possible plus tard).
+- Statut : validé
