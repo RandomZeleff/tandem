@@ -77,6 +77,15 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [ ] Indicateurs : ping, type de connexion (direct/relais)
 - [ ] (plus tard) Synchro du monde / « host migration »
 
+## Portage macOS
+
+- [ ] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
+- [ ] Apple Silicon : Mojang ne fournit ni `jre-legacy` (Java 8) ni `java-runtime-alpha` (16) en `mac-os-arm64` → versions ≤ 1.17 (et 1.18/1.19 sans natives LWJGL arm64) à lancer en mode Intel via Rosetta (runtime `mac-os` + natives x86_64)
+- [ ] Fenêtre : `titleBarStyle: Overlay` + boutons natifs sur Mac, masquer nos boutons de fenêtre façon Windows
+- [ ] CI : job macOS (`.dmg` universel x86_64 + arm64)
+- [ ] Signature + notarisation Apple (compte Apple Developer requis)
+- [ ] Phase 2 : tokens dans le Trousseau macOS (crate `keyring`), en plus du gestionnaire Windows (D9)
+
 ---
 
 ## Journal des sessions
@@ -142,3 +151,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Vérifié de bout en bout (exemple CLI `play`) : NeoForge 21.1.256 (1.21.1), Forge 47.4.10 (1.20.1), Forge 36.2.34 (1.16.5, Java 8), Forge 14.23.5.2859 (1.12.2, launchwrapper) atteignent le menu ; relancement sans processors (< 1 s de préparation). Modpack « Cobblemon Official Modpack [NeoForge] » installé depuis Modrinth et lancé jusqu’à l’écran titre.
 - Prochaine étape : mises à jour de modpack (nouvelle version du pack), puis Phase 4 (presets JVM, RAM auto).
 - Blocages : Phase 2 toujours en attente de la validation Mojang.
+
+### 2026-10-09
+- Fait : audit de compatibilité macOS (voir section « Portage macOS ») ; tout est poussé sur `origin/master` pour reprendre le dev sur Mac.
+- Prochaine étape : sur le Mac, `pnpm install` puis `pnpm tauri dev`, corriger ce qui casse, puis le mode Rosetta pour les vieilles versions sur Apple Silicon.
