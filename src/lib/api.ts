@@ -128,6 +128,20 @@ export interface InstallProgress {
   totalBytes: number;
 }
 
+/** An enabled mod that needs another one to start. */
+export interface Dependent {
+  name: string;
+  fileName: string;
+}
+
+/** The jar behind a mod id. `fileName` is without `.disabled`. */
+export interface ModProvider {
+  modId: string;
+  name: string;
+  fileName: string;
+  enabled: boolean;
+}
+
 /** A batch of lines from one stream of a running game. */
 export interface GameOutput {
   instanceId: string;
@@ -268,6 +282,10 @@ export const api = {
   listScreenshots: (instanceId: string) => invoke<Screenshot[]>("list_screenshots", { instanceId }),
   deleteScreenshot: (instanceId: string, fileName: string) => invoke<void>("delete_screenshot", { instanceId, fileName }),
   openScreenshotsFolder: (instanceId: string) => invoke<void>("open_screenshots_folder", { instanceId }),
+  warmModDependencies: (instanceId: string) => invoke<void>("warm_mod_dependencies", { instanceId }),
+  contentDependents: (instanceId: string, projectId: string) =>
+    invoke<Dependent[]>("content_dependents", { instanceId, projectId }),
+  modProviders: (instanceId: string, modIds: string[]) => invoke<ModProvider[]>("mod_providers", { instanceId, modIds }),
   perfSuggestions: (instanceId: string) => invoke<PerfSuggestion[]>("perf_suggestions", { instanceId }),
   checkContentUpdates: (instanceId: string) => invoke<ContentUpdate[]>("check_content_updates", { instanceId }),
   /** Every outdated project when `projectIds` is omitted. */

@@ -115,7 +115,7 @@ function App() {
               </Show>
             </Match>
             <Match when={route().page === "discover"}>
-              <Discover instanceId={(route() as { instanceId?: string }).instanceId} />
+              <Discover {...(route() as { instanceId?: string; query?: string })} />
             </Match>
             <Match when={route().page === "multi"}>
               <Soon feature="multi" />

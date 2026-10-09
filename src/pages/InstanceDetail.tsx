@@ -6,6 +6,7 @@ import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
 import GameStatsPanel from "../components/GameStatsPanel";
 import InstanceSlot from "../components/InstanceSlot";
+import MissingDepsPanel from "../components/MissingDepsPanel";
 import { Icon, LoaderTag, XpBar } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
 import WorldsTab from "../components/WorldsTab";
@@ -129,6 +130,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
             />
           )}
         </Show>
+        <MissingDepsPanel instanceId={props.instance.id} />
         <Show when={state().status === "preparing"}>
           <div class="panel px-corners-md flex flex-col gap-2.5 p-4">
             <div class="flex items-center justify-between">

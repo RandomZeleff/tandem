@@ -91,6 +91,7 @@ pub async fn delete(ctx: &Context, id: &str) -> Result<()> {
         _ => {}
     }
     crate::screenshots::clear_thumbnails(&ctx.data, id);
+    let _ = tokio::fs::remove_file(ctx.data.cache().join("deps").join(format!("{id}.json"))).await;
     tracing::info!(%id, "instance deleted");
     Ok(())
 }

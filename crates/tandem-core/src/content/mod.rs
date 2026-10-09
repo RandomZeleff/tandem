@@ -2,6 +2,7 @@
 //! Modrinth with required dependencies, files kept in the shared store and hardlinked
 //! into instances. Disabled content keeps its file, renamed with a `.disabled` suffix.
 
+pub mod deps;
 pub mod modrinth;
 pub mod mrpack;
 pub mod perf;

@@ -19,13 +19,13 @@ const KINDS: { id: ProjectType; label: string }[] = [
 
 const SEARCH_DELAY_MS = 300;
 
-export default function Discover(props: { instanceId?: string }) {
+export default function Discover(props: { instanceId?: string; query?: string }) {
   const pickDefault = () =>
     props.instanceId ?? (instances().find((i) => i.loader !== "vanilla") ?? instances()[0])?.id ?? "";
   const [instanceId, setInstanceId] = remembered("instance", pickDefault());
   // Without any instance, only modpacks make sense: they create one.
   const [kind, setKind] = remembered<ProjectType>("kind", instances().length > 0 ? "mod" : "modpack");
-  const [query, setQuery] = remembered("query", "");
+  const [query, setQuery] = remembered("query", props.query ?? "");
   // A remembered query searches right away, without waiting for the debounce.
   const [debounced, setDebounced] = createSignal(query());
   const [hits, setHits] = createSignal<SearchHit[]>([]);

@@ -1,6 +1,6 @@
 import { createSignal, For, onMount, Show } from "solid-js";
 import Alert from "./Alert";
-import { errorMessage, type ContentKind, type InstalledContent, type Instance } from "../lib/api";
+import { api, errorMessage, type ContentKind, type Dependent, type InstalledContent, type Instance } from "../lib/api";
 import {
   checkUpdates,
   contentLoaded,
@@ -18,6 +18,7 @@ import {
 import { exportModpackFile } from "../lib/modpacks";
 import { navigate } from "../lib/store";
 import { removeWithUndo, toast } from "../lib/toast";
+import Dialog from "./Dialog";
 import LoadingRows from "./LoadingRows";
 import PerfSuggestions from "./PerfSuggestions";
 import { Icon, Toggle } from "./pixel";
@@ -37,7 +38,35 @@ export default function ContentList(props: { instance: Instance; locked: boolean
   const [removing, setRemoving] = createSignal<ReadonlySet<string>>(new Set());
   const items = () => installedContent(props.instance.id).filter((i) => !removing().has(i.projectId));
 
+  /** A disable or removal waiting for confirmation because other mods need the item. */
+  const [needed, setNeeded] = createSignal<{
+    item: InstalledContent;
+    verb: "disable" | "remove";
+    dependents: Dependent[];
+    proceed: () => void;
+  } | null>(null);
+
+  /** Runs `proceed` at once, or after confirmation when enabled mods depend on `item`. */
+  async function checkDependents(item: InstalledContent, verb: "disable" | "remove", proceed: () => void) {
+    const dependents =
+      item.kind === "mod" && item.enabled
+        ? await api.contentDependents(props.instance.id, item.projectId).catch(() => [])
+        : [];
+    if (dependents.length === 0) proceed();
+    else setNeeded({ item, verb, dependents, proceed });
+  }
+
+  function toggle(item: InstalledContent, enabled: boolean) {
+    const apply = () => void run(setContentEnabled(props.instance.id, item.projectId, enabled));
+    if (enabled) apply();
+    else void checkDependents(item, "disable", apply);
+  }
+
   function remove(item: InstalledContent) {
+    void checkDependents(item, "remove", () => removeNow(item));
+  }
+
+  function removeNow(item: InstalledContent) {
     const toggle = (on: boolean) =>
       setRemoving((set) => {
         const next = new Set(set);
@@ -87,6 +116,8 @@ export default function ContentList(props: { instance: Instance; locked: boolean
   onMount(async () => {
     try {
       await loadContent(props.instance.id);
+      // Mod metadata read in the background, so dependency checks are instant later.
+      void api.warmModDependencies(props.instance.id).catch(() => {});
     } catch (err) {
       setError(errorMessage(err));
       return;
@@ -178,13 +209,50 @@ export default function ContentList(props: { instance: Instance; locked: boolean
                   {section.label} <span class="font-mono text-muted">{list().length}</span>
                 </h2>
                 <ul class="panel px-corners-md flex flex-col divide-y divide-line">
-                  <For each={list()}>{(item) => <Row instanceId={props.instance.id} item={item} locked={props.locked} run={run} onRemove={() => remove(item)} />}</For>
+                  <For each={list()}>{(item) => <Row instanceId={props.instance.id} item={item} locked={props.locked} run={run} onToggle={(on) => toggle(item, on)} onRemove={() => remove(item)} />}</For>
                 </ul>
               </section>
             );
           }}
         </For>
       </Show>
+      </Show>
+
+      <Show when={needed()}>
+        {(n) => {
+          const shown = () => n().dependents.slice(0, 5);
+          const more = () => n().dependents.length - shown().length;
+          const close = () => setNeeded(null);
+          return (
+            <Dialog title={n().verb === "disable" ? `Désactiver ${n().item.title} ?` : `Retirer ${n().item.title} ?`} onClose={close}>
+              <p class="text-chalk-2">
+                {n().dependents.length === 1 ? "Un mod en a besoin" : `${n().dependents.length} mods en ont besoin`} pour
+                démarrer. Sans lui, le jeu s'arrêtera sur une erreur au lancement.
+              </p>
+              <ul class="flex flex-col gap-1 text-sm">
+                <For each={shown()}>{(d) => <li class="truncate text-chalk-2">· {d.name}</li>}</For>
+                <Show when={more() > 0}>
+                  <li class="text-muted">et {more()} autre{more() > 1 ? "s" : ""}</li>
+                </Show>
+              </ul>
+              <div class="flex justify-end gap-2">
+                <button class="btn btn-ghost" onClick={close}>
+                  Annuler
+                </button>
+                <button
+                  class="btn btn-danger px-corners"
+                  onClick={() => {
+                    const proceed = n().proceed;
+                    close();
+                    proceed();
+                  }}
+                >
+                  {n().verb === "disable" ? "Désactiver quand même" : "Retirer quand même"}
+                </button>
+              </div>
+            </Dialog>
+          );
+        }}
       </Show>
     </div>
   );
@@ -195,6 +263,7 @@ function Row(props: {
   item: InstalledContent;
   locked: boolean;
   run: (action: Promise<string | null>) => Promise<void>;
+  onToggle: (enabled: boolean) => void;
   onRemove: () => void;
 }) {
   const busy = () => isBusy(props.instanceId, props.item.projectId);
@@ -242,7 +311,7 @@ function Row(props: {
         checked={props.item.enabled}
         label={props.item.enabled ? `Désactiver ${props.item.title}` : `Activer ${props.item.title}`}
         disabled={frozen()}
-        onChange={(enabled) => void props.run(setContentEnabled(props.instanceId, props.item.projectId, enabled))}
+        onChange={props.onToggle}
       />
       <button
         class="btn btn-ghost h-8 w-8 px-0 hover:text-redstone-text"

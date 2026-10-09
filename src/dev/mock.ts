@@ -355,6 +355,19 @@ export function installMocks() {
           for (const c of changed) Object.assign(c, { versionId: "v2", versionNumber: "1.2.0+1.21.4" });
           return changed.map((c) => ({ ...c }));
         }
+        case "warm_mod_dependencies":
+          return null;
+        // The first mod of an instance is a library the others need.
+        case "content_dependents": {
+          const list = content[args.instanceId as string] ?? [];
+          if (list[0]?.projectId !== args.projectId) return [];
+          return list.slice(1).filter((c) => c.kind === "mod" && c.enabled).map((c) => ({ name: c.title, fileName: c.fileName }));
+        }
+        case "mod_providers":
+          return (args.modIds as string[]).flatMap((id) => {
+            const item = (content[args.instanceId as string] ?? []).find((c) => c.title.toLowerCase().startsWith(id));
+            return item ? [{ modId: id, name: item.title, fileName: item.fileName, enabled: item.enabled }] : [];
+          });
         case "set_content_enabled": {
           const item = (content[args.instanceId as string] ?? []).find((c) => c.projectId === args.projectId)!;
           item.enabled = args.enabled as boolean;

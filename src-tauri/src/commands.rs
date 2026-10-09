@@ -1,6 +1,7 @@
 use serde::Serialize;
 use serde_json::Value;
 use tandem_core::account::Account;
+use tandem_core::content::deps::{self, Dependent, Provider};
 use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
 use tandem_core::content::{self, mrpack, perf, ContentUpdate, InstalledContent};
 use tandem_core::install;
@@ -322,6 +323,72 @@ pub async fn update_content(
     }
     let instance = state.ctx.db.get_instance(&instance_id).await?;
     Ok(content::update(&state.ctx, &instance, project_ids.as_deref()).await?)
+}
+
+/// Reads the instance's mod metadata ahead of time, so the checks below are instant.
+#[tauri::command]
+pub async fn warm_mod_dependencies(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<()> {
+    let (data, dir) = (
+        state.ctx.data.clone(),
+        state.ctx.data.instance_dir(&instance_id),
+    );
+    blocking(move || {
+        deps::scan_cached(&data, &instance_id, &dir);
+        Ok(())
+    })
+    .await
+}
+
+/// Enabled mods that need this content item and would stop the game from starting
+/// without it.
+#[tauri::command]
+pub async fn content_dependents(
+    state: State<'_, AppState>,
+    instance_id: String,
+    project_id: String,
+) -> CommandResult<Vec<Dependent>> {
+    let Some(item) = state
+        .ctx
+        .db
+        .list_content(&instance_id)
+        .await?
+        .into_iter()
+        .find(|c| c.project_id == project_id)
+    else {
+        return Ok(Vec::new());
+    };
+    let (data, dir) = (
+        state.ctx.data.clone(),
+        state.ctx.data.instance_dir(&instance_id),
+    );
+    blocking(move || {
+        let mods = deps::scan_cached(&data, &instance_id, &dir);
+        Ok(deps::dependents(&mods, &item.file_name))
+    })
+    .await
+}
+
+/// The jar behind each mod id (to offer re-enabling a missing dependency).
+#[tauri::command]
+pub async fn mod_providers(
+    state: State<'_, AppState>,
+    instance_id: String,
+    mod_ids: Vec<String>,
+) -> CommandResult<Vec<Provider>> {
+    let (data, dir) = (
+        state.ctx.data.clone(),
+        state.ctx.data.instance_dir(&instance_id),
+    );
+    blocking(move || {
+        Ok(deps::providers(
+            &deps::scan_cached(&data, &instance_id, &dir),
+            &mod_ids,
+        ))
+    })
+    .await
 }
 
 #[tauri::command]

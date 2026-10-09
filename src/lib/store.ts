@@ -5,7 +5,7 @@ export type Route =
   | { page: "home" }
   | { page: "instances" }
   | { page: "instance"; id: string }
-  | { page: "discover"; instanceId?: string }
+  | { page: "discover"; instanceId?: string; query?: string }
   | { page: "multi" }
   | { page: "settings" };
 
