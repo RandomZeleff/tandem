@@ -173,9 +173,57 @@ pub struct DownloadedPack {
     pub version: modrinth::Version,
 }
 
-/// Downloads the newest release (else newest version) of a Modrinth modpack that
-/// Tandem can launch.
-pub async fn download(ctx: &Context, project_id: &str) -> Result<DownloadedPack> {
+/// A version of a modpack that Tandem can install, for the player to choose from.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PackVersion {
+    pub id: String,
+    pub version_number: String,
+    /// `release`, `beta` or `alpha`.
+    pub version_type: String,
+    pub game_versions: Vec<String>,
+    pub loaders: Vec<String>,
+    pub date_published: String,
+    pub size: u64,
+    /// The one installed when the player does not choose: newest release, else newest.
+    pub recommended: bool,
+}
+
+/// Index of the version installed by default: the newest release, else the newest.
+fn default_version(versions: &[modrinth::Version]) -> usize {
+    versions
+        .iter()
+        .position(|v| v.version_type == "release")
+        .unwrap_or(0)
+}
+
+/// Every version of a modpack with a loader Tandem can launch, newest first.
+pub async fn versions(ctx: &Context, project_id: &str) -> Result<Vec<PackVersion>> {
+    let versions = modrinth::pack_versions(ctx, project_id, modrinth::MODPACK_LOADERS).await?;
+    let recommended = default_version(&versions);
+    Ok(versions
+        .into_iter()
+        .enumerate()
+        .map(|(i, v)| PackVersion {
+            size: v.primary_file().map_or(0, |f| f.size),
+            id: v.id,
+            version_number: v.version_number,
+            version_type: v.version_type,
+            game_versions: v.game_versions,
+            loaders: v.loaders,
+            date_published: v.date_published,
+            recommended: i == recommended,
+        })
+        .collect())
+}
+
+/// Downloads a modpack version: `version_id`, or by default the newest release (else the
+/// newest version) that Tandem can launch.
+pub async fn download(
+    ctx: &Context,
+    project_id: &str,
+    version_id: Option<&str>,
+) -> Result<DownloadedPack> {
     let project = modrinth::project(ctx, project_id).await?;
     if project.project_type != "modpack" {
         return Err(Error::InvalidInput(format!(
@@ -184,10 +232,15 @@ pub async fn download(ctx: &Context, project_id: &str) -> Result<DownloadedPack>
         )));
     }
     let versions = modrinth::pack_versions(ctx, &project.id, modrinth::MODPACK_LOADERS).await?;
-    let release = versions.iter().position(|v| v.version_type == "release");
+    let index = match version_id {
+        Some(id) => versions.iter().position(|v| v.id == id).ok_or_else(|| {
+            Error::InvalidInput(format!("{} has no installable version {id}", project.title))
+        })?,
+        None => default_version(&versions),
+    };
     let version = versions
         .into_iter()
-        .nth(release.unwrap_or(0))
+        .nth(index)
         .ok_or_else(|| Error::InvalidInput(format!("{} has no version", project.title)))?;
     let file = version
         .primary_file()

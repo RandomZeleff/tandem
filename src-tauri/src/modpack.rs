@@ -22,8 +22,9 @@ pub async fn install_from_modrinth(
     ctx: &Context,
     games: &Games,
     project_id: &str,
+    version_id: Option<&str>,
 ) -> CommandResult<Instance> {
-    let pack = mrpack::download(ctx, project_id).await?;
+    let pack = mrpack::download(ctx, project_id, version_id).await?;
     let index = mrpack::read_index(&pack.path).await?;
     let origin = PackOrigin {
         project_id: pack.project.id.clone(),

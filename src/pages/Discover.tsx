@@ -1,6 +1,7 @@
 import { createEffect, createMemo, createSignal, For, type JSX, on, onCleanup, Show } from "solid-js";
 import { Icon, LoaderIcon } from "../components/pixel";
 import Alert from "../components/Alert";
+import ModpackInstallDialog from "../components/ModpackInstallDialog";
 import ProjectIcon from "../components/ProjectIcon";
 import Select from "../components/Select";
 import Tabs, { tabPanel } from "../components/Tabs";
@@ -94,11 +95,15 @@ export default function Discover(props: { instanceId?: string; query?: string })
     setActionError(await installContent(instanceId(), projectId));
   }
 
-  async function installPack(projectId: string) {
+  /** Modpack whose version picker is open. */
+  const [picking, setPicking] = createSignal<SearchHit | null>(null);
+
+  async function installPack(projectId: string, versionId: string) {
+    setPicking(null);
     setPackBusy((b) => ({ ...b, [projectId]: true }));
     setActionError(null);
     try {
-      const created = await api.installModpack(projectId);
+      const created = await api.installModpack(projectId, versionId);
       await refetchInstances();
       navigate({ page: "instance", id: created.id });
     } catch (err) {
@@ -136,7 +141,7 @@ export default function Discover(props: { instanceId?: string; query?: string })
           <button
             class="btn btn-primary px-corners h-9 shrink-0"
             disabled={packBusy()[hit.projectId]}
-            onClick={() => void installPack(hit.projectId)}
+            onClick={() => setPicking(hit)}
           >
             <Icon name="download" size={12} />
             {packBusy()[hit.projectId] ? "Installation…" : "Installer"}
@@ -323,6 +328,17 @@ export default function Discover(props: { instanceId?: string; query?: string })
             {loading() ? "Chargement…" : "Voir plus"}
           </button>
         </Show>
+      </Show>
+      {/* Keyed: the dialog keeps its pack while it closes. */}
+      <Show when={picking()} keyed>
+        {(hit) => (
+          <ModpackInstallDialog
+            projectId={hit.projectId}
+            title={hit.title}
+            onClose={() => setPicking(null)}
+            onInstall={(versionId) => void installPack(hit.projectId, versionId)}
+          />
+        )}
       </Show>
     </div>
   );

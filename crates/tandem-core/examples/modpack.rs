@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (path, name, origin) = if source.ends_with(".mrpack") {
         (PathBuf::from(&source), None, None)
     } else {
-        let pack = mrpack::download(&ctx, &source).await?;
+        let pack = mrpack::download(&ctx, &source, None).await?;
         let origin = PackOrigin {
             project_id: pack.project.id.clone(),
             version_id: pack.version.id.clone(),

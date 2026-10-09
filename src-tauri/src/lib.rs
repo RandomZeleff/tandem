@@ -104,6 +104,7 @@ pub fn run() {
             commands::content_dependents,
             commands::mod_providers,
             commands::install_modpack,
+            commands::modpack_versions,
             commands::import_modpack,
             commands::export_modpack,
             commands::open_instance_folder,

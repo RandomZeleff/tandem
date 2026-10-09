@@ -104,6 +104,10 @@ pub struct Version {
     #[serde(default)]
     pub date_published: String,
     #[serde(default)]
+    pub game_versions: Vec<String>,
+    #[serde(default)]
+    pub loaders: Vec<String>,
+    #[serde(default)]
     pub files: Vec<VersionFile>,
     #[serde(default)]
     pub dependencies: Vec<Dependency>,

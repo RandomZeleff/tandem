@@ -128,6 +128,19 @@ export interface InstallProgress {
   totalBytes: number;
 }
 
+/** A modpack version Tandem can install. */
+export interface PackVersion {
+  id: string;
+  versionNumber: string;
+  versionType: "release" | "beta" | "alpha" | string;
+  gameVersions: string[];
+  loaders: string[];
+  datePublished: string;
+  size: number;
+  /** Installed when the player does not choose. */
+  recommended: boolean;
+}
+
 /** An enabled mod that needs another one to start. */
 export interface Dependent {
   name: string;
@@ -295,7 +308,10 @@ export const api = {
     invoke<InstalledContent>("set_content_enabled", { instanceId, projectId, enabled }),
 
   /** Resolves once the whole pack is installed; progress arrives as install events. */
-  installModpack: (projectId: string) => invoke<Instance>("install_modpack", { projectId }),
+  /** The recommended version when `versionId` is omitted. */
+  installModpack: (projectId: string, versionId?: string) =>
+    invoke<Instance>("install_modpack", { projectId, versionId: versionId ?? null }),
+  modpackVersions: (projectId: string) => invoke<PackVersion[]>("modpack_versions", { projectId }),
   importModpack: (path: string) => invoke<Instance>("import_modpack", { path }),
   exportModpack: (instanceId: string, path: string, version: string) =>
     invoke<void>("export_modpack", { instanceId, path, version }),

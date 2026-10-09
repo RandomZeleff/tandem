@@ -376,6 +376,13 @@ export function installMocks() {
         case "remove_content":
           content[args.instanceId as string] = (content[args.instanceId as string] ?? []).filter((c) => c.projectId !== args.projectId);
           return null;
+        case "modpack_versions":
+          await new Promise((r) => setTimeout(r, 300));
+          return [
+            { id: "v6a", versionNumber: "6.0.0-alpha", versionType: "alpha", gameVersions: ["1.21.1"], loaders: ["neoforge"], datePublished: "2026-06-15T00:00:00Z", size: 31_000_000, recommended: false },
+            { id: "v52", versionNumber: "5.2.1b", versionType: "release", gameVersions: ["1.19.2"], loaders: ["forge"], datePublished: "2025-08-27T00:00:00Z", size: 27_209_112, recommended: true },
+            { id: "v51", versionNumber: "5.1.0c", versionType: "beta", gameVersions: ["1.19.2"], loaders: ["forge"], datePublished: "2024-05-11T00:00:00Z", size: 26_000_000, recommended: false },
+          ];
         case "install_modpack": {
           const pack = CATALOGUE.modpack.find((h) => h.projectId === args.projectId)!;
           const created: Instance = {

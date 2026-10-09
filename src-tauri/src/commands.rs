@@ -424,8 +424,25 @@ pub async fn install_modpack(
     app: AppHandle,
     state: State<'_, AppState>,
     project_id: String,
+    version_id: Option<String>,
 ) -> CommandResult<Instance> {
-    modpack::install_from_modrinth(&app, &state.ctx, &state.games, &project_id).await
+    modpack::install_from_modrinth(
+        &app,
+        &state.ctx,
+        &state.games,
+        &project_id,
+        version_id.as_deref(),
+    )
+    .await
+}
+
+/// Installable versions of a modpack, for the version picker.
+#[tauri::command]
+pub async fn modpack_versions(
+    state: State<'_, AppState>,
+    project_id: String,
+) -> CommandResult<Vec<mrpack::PackVersion>> {
+    Ok(mrpack::versions(&state.ctx, &project_id).await?)
 }
 
 /// Creates an instance from a `.mrpack` file.
