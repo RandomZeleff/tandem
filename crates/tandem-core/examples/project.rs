@@ -1,6 +1,8 @@
 //! Dev tool: read a Modrinth project page the way the launcher does, and time it.
 //!
-//! cargo run -p tandem-core --example project -- <project-slug | id>
+//! cargo run -p tandem-core --example project -- <project-slug | id> [description.html]
+//!
+//! The optional path receives the sanitized description, to check how it renders.
 //!
 //! Uses `TANDEM_DATA_DIR` if set (nothing is written there).
 
@@ -36,6 +38,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         page.body_html.len(),
         started.elapsed()
     );
+
+    if let Some(path) = std::env::args().nth(2) {
+        std::fs::write(&path, &page.body_html)?;
+        println!("description written to {path}");
+    }
 
     let started = Instant::now();
     let versions = project::versions(&ctx, &cache, &page.id, None).await?;
