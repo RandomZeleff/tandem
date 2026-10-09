@@ -29,6 +29,10 @@ pub const AUTO_BACKUP_SETTING: &str = "auto_backup_worlds";
 
 const PROGRESS_INTERVAL: Duration = Duration::from_millis(100);
 const STATS_INTERVAL: Duration = Duration::from_secs(2);
+/// Game output is sent in batches: a modded start prints thousands of lines a second,
+/// and one event per line would freeze the UI.
+const OUTPUT_BATCH_DELAY: Duration = Duration::from_millis(50);
+const OUTPUT_BATCH_MAX: usize = 500;
 
 enum Slot {
     Preparing,
@@ -104,7 +108,7 @@ struct ProgressPayload<'a> {
 struct OutputPayload<'a> {
     instance_id: &'a str,
     stream: &'static str,
-    line: String,
+    lines: &'a [String],
 }
 
 #[derive(Clone, Serialize)]
@@ -346,28 +350,55 @@ async fn report_stats(app: AppHandle, id: String, pid: u32) {
     }
 }
 
-/// Streams lines to the UI. Reads raw bytes: the game may print non-UTF-8 text, and
-/// a reader that stops on bad input would let the pipe fill up and freeze the game.
+/// Streams lines to the UI, in batches sent at most [`OUTPUT_BATCH_DELAY`] after their
+/// first line. Reads raw bytes: the game may print non-UTF-8 text, and a reader that
+/// stops on bad input would let the pipe fill up and freeze the game.
 async fn forward(app: AppHandle, id: String, stream: &'static str, output: impl AsyncRead + Unpin) {
     let mut reader = BufReader::new(output);
     let mut buf = Vec::new();
+    let mut batch: Vec<String> = Vec::new();
+    let mut deadline: Option<tokio::time::Instant> = None;
+    let send = |batch: &mut Vec<String>| {
+        if !batch.is_empty() {
+            let _ = app.emit(
+                OUTPUT_EVENT,
+                OutputPayload {
+                    instance_id: &id,
+                    stream,
+                    lines: batch,
+                },
+            );
+            batch.clear();
+        }
+    };
     loop {
-        buf.clear();
-        match reader.read_until(b'\n', &mut buf).await {
-            Ok(0) | Err(_) => break,
-            Ok(_) => {
-                let line = String::from_utf8_lossy(&buf).trim_end().to_owned();
-                let _ = app.emit(
-                    OUTPUT_EVENT,
-                    OutputPayload {
-                        instance_id: &id,
-                        stream,
-                        line,
-                    },
-                );
+        let due = async {
+            match deadline {
+                Some(at) => tokio::time::sleep_until(at).await,
+                None => std::future::pending().await,
+            }
+        };
+        // `read_until` is cancel safe: bytes read before the deadline stay in `buf`.
+        tokio::select! {
+            read = reader.read_until(b'\n', &mut buf) => match read {
+                Ok(0) | Err(_) => break,
+                Ok(_) => {
+                    batch.push(String::from_utf8_lossy(&buf).trim_end().to_owned());
+                    buf.clear();
+                    deadline.get_or_insert_with(|| tokio::time::Instant::now() + OUTPUT_BATCH_DELAY);
+                    if batch.len() >= OUTPUT_BATCH_MAX {
+                        send(&mut batch);
+                        deadline = None;
+                    }
+                }
+            },
+            () = due => {
+                send(&mut batch);
+                deadline = None;
             }
         }
     }
+    send(&mut batch);
 }
 
 async fn latest_crash_report(game_dir: &Path, since: SystemTime) -> Option<PathBuf> {

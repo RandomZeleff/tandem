@@ -38,7 +38,10 @@ const [consoleInstance, setConsoleInstance] = createSignal<string | null>(null);
 /** Instance whose launch is waiting for Rosetta to be installed. */
 const [rosettaPrompt, setRosettaPrompt] = createSignal<string | null>(null);
 
-export { games, output, stats, consoleInstance, setConsoleInstance, rosettaPrompt, setRosettaPrompt };
+/** The latest batch of game output, for views that react to specific lines. */
+const [lastOutput, setLastOutput] = createSignal<GameOutput | null>(null, { equals: false });
+
+export { games, output, lastOutput, stats, consoleInstance, setConsoleInstance, rosettaPrompt, setRosettaPrompt };
 
 export function gameState(id: string): GameState {
   return games[id] ?? { status: "idle" };
@@ -68,13 +71,16 @@ export async function startGameEvents() {
   });
   await listen(EVENTS.instancesChanged, () => onPlayedCallback());
   await listen<GameOutput>(EVENTS.output, ({ payload }) => {
+    const fresh = payload.lines.slice(-MAX_OUTPUT_LINES).map((line) => ({ stream: payload.stream, line }));
     setOutput(
       produce((all) => {
         const lines = (all[payload.instanceId] ??= []);
-        lines.push({ stream: payload.stream, line: payload.line });
-        if (lines.length > MAX_OUTPUT_LINES) lines.splice(0, lines.length - MAX_OUTPUT_LINES);
+        const overflow = lines.length + fresh.length - MAX_OUTPUT_LINES;
+        if (overflow > 0) lines.splice(0, overflow);
+        lines.push(...fresh);
       }),
     );
+    setLastOutput(payload);
   });
   await listen<GameStats>(EVENTS.stats, ({ payload }) => {
     setStats(

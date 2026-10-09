@@ -2,7 +2,7 @@ import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { createEffect, createResource, createSignal, For, on, onCleanup, onMount, Show } from "solid-js";
 import { api, errorMessage, screenshotUrl, type Screenshot } from "../lib/api";
 import { formatBytes } from "../lib/format";
-import { gameState, output } from "../lib/games";
+import { gameState, lastOutput } from "../lib/games";
 import Dialog from "./Dialog";
 import { Icon } from "./pixel";
 
@@ -19,11 +19,8 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
   const [shots, { refetch, mutate }] = createResource(source, ({ id }) => api.listScreenshots(id));
   createEffect(
     on(
-      () => {
-        const lines = output[props.instanceId];
-        return lines?.[lines.length - 1]?.line;
-      },
-      (line) => line?.includes(SAVED_LINE) && void refetch(),
+      lastOutput,
+      (batch) => batch?.instanceId === props.instanceId && batch.lines.some((l) => l.includes(SAVED_LINE)) && void refetch(),
       { defer: true },
     ),
   );

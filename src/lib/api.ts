@@ -128,10 +128,11 @@ export interface InstallProgress {
   totalBytes: number;
 }
 
+/** A batch of lines from one stream of a running game. */
 export interface GameOutput {
   instanceId: string;
   stream: "stdout" | "stderr";
-  line: string;
+  lines: string[];
 }
 
 export interface GameExited {

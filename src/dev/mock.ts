@@ -116,6 +116,11 @@ const content: Record<string, InstalledContent[]> = {
     make(CATALOGUE.mod[0], "mod", true, "old"),
     { ...make(CATALOGUE.shader[0], "shader", false), enabled: false },
   ],
+  // A big modpack, to keep long lists honest.
+  "pack-create": Array.from({ length: 250 }, (_, i) => {
+    const h = CATALOGUE.mod[i % CATALOGUE.mod.length];
+    return { ...make({ ...h, projectId: `${h.projectId}-${i}`, title: `${h.title} ${i + 1}` }, "mod", i % 3 === 0), enabled: i % 17 !== 0 };
+  }),
 };
 
 function fakeInstall(instanceId: string, projectId: string): InstalledContent[] {
@@ -223,9 +228,11 @@ async function fakeLaunch(id: string) {
       });
     }, 5000);
   }
-  for (const line of ["[Render thread/INFO]: Setting user: Zeleff", "[Render thread/INFO]: Backend library: LWJGL", "[Render thread/INFO]: Sound engine started"]) {
-    await emit("game://output", { instanceId: id, stream: "stdout", line });
-  }
+  await emit("game://output", {
+    instanceId: id,
+    stream: "stdout",
+    lines: ["[Render thread/INFO]: Setting user: Zeleff", "[Render thread/INFO]: Backend library: LWJGL", "[Render thread/INFO]: Sound engine started"],
+  });
 }
 
 export function installMocks() {

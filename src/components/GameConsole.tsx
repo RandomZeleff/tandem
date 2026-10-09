@@ -8,7 +8,8 @@ export default function GameConsole(props: { instanceId: string }) {
   let stickToBottom = true;
   createEffect(
     on(
-      () => lines().length,
+      // The last line, not the length: a full console keeps its length as old lines drop.
+      () => lines()[lines().length - 1],
       () => {
         if (scroller && stickToBottom) scroller.scrollTop = scroller.scrollHeight;
       },
