@@ -31,7 +31,7 @@ pub async fn install_from_modrinth(
         version: pack.version.version_number.clone(),
         icon: pack.project.icon_url.clone(),
     };
-    install(
+    let installed = install(
         app,
         ctx,
         games,
@@ -40,7 +40,13 @@ pub async fn install_from_modrinth(
         Some(&pack.project.title),
         Some(origin),
     )
-    .await
+    .await?;
+    // Everything it holds now lives in the instance (some packs weigh 400+ MB). Kept after
+    // a failure: named by its hash, a retry reuses it instead of downloading it again.
+    if let Err(err) = tokio::fs::remove_file(&pack.path).await {
+        tracing::warn!(path = %pack.path.display(), error = %err, "could not remove the downloaded pack");
+    }
+    Ok(installed)
 }
 
 /// Installs a `.mrpack` file chosen by the player.
