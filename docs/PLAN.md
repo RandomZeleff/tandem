@@ -84,7 +84,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] JNA < 5.13 plante au démarrage sur macOS récent (assertion `snprintf` dans `dispatch.c` quand oshi charge IOKit) → 1.17 à 1.20.2 reçoivent JNA 5.13.0 sur Mac
 - [x] UI : si Rosetta manque (`RosettaMissing`), fenêtre qui propose de l’installer (`softwareupdate --install-rosetta` derrière l’invite administrateur de macOS), puis relance l’instance
 - [x] Fenêtre : `titleBarStyle: Overlay` + boutons natifs sur Mac, masquer nos boutons de fenêtre façon Windows
-- [ ] CI : job macOS (`.dmg` universel x86_64 + arm64)
+- [~] CI : job macOS (`.dmg` universel x86_64 + arm64, non signé) + lint/tests aussi sur macOS
 - [ ] Signature + notarisation Apple (compte Apple Developer requis)
 - [ ] Phase 2 : tokens dans le Trousseau macOS (crate `keyring`), en plus du gestionnaire Windows (D9)
 
