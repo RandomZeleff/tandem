@@ -1,4 +1,5 @@
 import { createEffect, createMemo, createSignal, For, on } from "solid-js";
+import Select from "./Select";
 import type { LogLevel } from "../lib/api";
 import { logEntries } from "../lib/logs";
 
@@ -37,16 +38,13 @@ export default function LogView() {
     <div class="flex h-full flex-col gap-2">
       <div class="flex items-center justify-end gap-2 text-xs text-muted">
         <label for="log-level">Niveau minimum</label>
-        <select
+        <Select
           id="log-level"
-          class="field h-8 px-2 text-xs"
+          class="h-8 w-28 px-2.5 text-xs"
           value={minLevel()}
-          onChange={(e) => setMinLevel(e.currentTarget.value as LogLevel)}
-        >
-          <For each={Object.keys(LEVEL_RANK) as LogLevel[]}>
-            {(level) => <option value={level}>{level}</option>}
-          </For>
-        </select>
+          options={(Object.keys(LEVEL_RANK) as LogLevel[]).map((level) => ({ value: level, label: level }))}
+          onChange={(value) => setMinLevel(value as LogLevel)}
+        />
       </div>
       <div
         ref={scroller}

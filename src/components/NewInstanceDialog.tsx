@@ -2,7 +2,8 @@ import { createEffect, createMemo, createResource, createSignal, For, Show } fro
 import { api, errorMessage, type Instance, type Loader } from "../lib/api";
 import { loaderLabel } from "../lib/format";
 import Dialog from "./Dialog";
-import { LoaderIcon } from "./pixel";
+import { Checkbox, LoaderIcon } from "./pixel";
+import Select from "./Select";
 
 interface Props {
   onClose: () => void;
@@ -91,39 +92,20 @@ export default function NewInstanceDialog(props: Props) {
             <label class="text-xs text-muted" for="instance-version">
               Version
             </label>
-            <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
-              <input
-                type="checkbox"
-                class="accent-grass"
-                checked={showSnapshots()}
-                onChange={(e) => setShowSnapshots(e.currentTarget.checked)}
-              />
-              Snapshots
-            </label>
+            <Checkbox checked={showSnapshots()} label="Snapshots" onChange={setShowSnapshots} />
           </div>
           <Show
             when={!versions.error}
             fallback={<p class="text-sm text-redstone-text">Impossible de charger les versions : {errorMessage(versions.error)}</p>}
           >
-            <select
+            <Select
               id="instance-version"
-              class="field text-sm"
               value={version()}
-              onChange={(e) => setVersion(e.currentTarget.value)}
+              placeholder={versions.loading ? "Chargement…" : "Choisir une version"}
+              options={choices().map((v) => ({ value: v.id, label: v.id, hint: v.type === "snapshot" ? "snapshot" : undefined }))}
+              onChange={setVersion}
               disabled={versions.loading}
-            >
-              <Show when={versions.loading}>
-                <option>Chargement…</option>
-              </Show>
-              <For each={choices()}>
-                {(v) => (
-                  <option value={v.id}>
-                    {v.id}
-                    {v.type === "snapshot" ? " (snapshot)" : ""}
-                  </option>
-                )}
-              </For>
-            </select>
+            />
           </Show>
         </div>
 
@@ -178,27 +160,18 @@ export default function NewInstanceDialog(props: Props) {
                   </p>
                 }
               >
-                <select
+                <Select
                   id="instance-loader-version"
-                  class="field text-sm"
-                  value={loaderVersion()}
-                  onChange={(e) => setLoaderVersion(e.currentTarget.value)}
+                  value={loaderVersions.loading ? "" : loaderVersion()}
+                  placeholder="Chargement…"
+                  options={(loaderVersions.loading ? [] : (loaderVersions.latest ?? [])).map((v) => ({
+                    value: v.version,
+                    label: v.version,
+                    hint: v.recommended ? "recommandée" : v.stable ? undefined : "bêta",
+                  }))}
+                  onChange={setLoaderVersion}
                   disabled={loaderVersions.loading}
-                >
-                  <Show when={loaderVersions.loading}>
-                    <option>Chargement…</option>
-                  </Show>
-                  <Show when={!loaderVersions.loading}>
-                    <For each={loaderVersions.latest}>
-                      {(v) => (
-                        <option value={v.version}>
-                          {v.version}
-                          {v.recommended ? " (recommandée)" : v.stable ? "" : " (bêta)"}
-                        </option>
-                      )}
-                    </For>
-                  </Show>
-                </select>
+                />
               </Show>
             </Show>
           </div>

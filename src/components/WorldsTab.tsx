@@ -1,4 +1,5 @@
 import { createResource, createSignal, For, Show } from "solid-js";
+import Alert from "./Alert";
 import { api, errorMessage, type BackupKind, type GameMode, type World, type WorldBackup } from "../lib/api";
 import { formatBytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
@@ -81,7 +82,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
       </div>
 
       <Show when={error()}>
-        <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">{error()}</p>
+        <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
       <Show

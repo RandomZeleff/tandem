@@ -89,3 +89,7 @@ Audit technique de l'interface (`src/`), écran par écran, avant la v0.1. Lectu
 4. États chargement/vide, suppressions avec filet, toasts, erreurs avalées (P2 7-12).
 5. Réglages, format français des nombres, tokens, accueil à 1100 px (P2 13-17).
 6. P3 si le temps le permet.
+
+## Suivi
+
+- 2026-10-09 (D26) : P1 1 (focus : anneau retiré à la demande, focus clavier = état de survol), 2, 3, 4 et 6 traités ; P2 9, 11, 12 et 15 traités. Restent P1 5 (historique) et le reste des P2/P3.

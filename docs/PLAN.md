@@ -63,9 +63,9 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 Objectif : une version 0.1 propre et solide avant les grosses features (traduction IA, P2P).
 
 - [x] Audit de l'UI écran par écran → [AUDIT-UI.md](AUDIT-UI.md) (13/20, 6 P1, 11 P2, 3 P3)
-- [ ] Composants de base : `Select`, `Alert`, onglets accessibles, `Dialog` avec gestion du focus, popover
+- [x] Composants de base — D26 : `Select`, `Checkbox`, `Alert`, `Tabs`, `Dialog` avec focus piégé/restauré, fermeture Échap + clic extérieur (`lib/ui.ts`)
 - [ ] Navigation avec historique : retour/avant, boutons 4/5 de la souris, Alt+←/→, bouton retour dans la barre de titre ; onglet et position de défilement conservés
-- [ ] Menus déroulants maison (remplacer les 5 `<select>` natifs) : style pixel, clavier, identiques Windows/Mac
+- [x] Menus déroulants maison : les 5 `<select>` et la case « Snapshots » natifs remplacés
 - [ ] Corrections issues de l'audit
 - [ ] Tests sous charge sur 2-3 vrais modpacks (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
 - [ ] Optimisations issues des tests sous charge
@@ -196,3 +196,5 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - UI fluide (D25) : mesuré dans le navigateur (backend simulé). Console pleine (5000 lignes) : 1,5 ms par ligne avec un événement par ligne → 1000 lignes = 1,5 s de gel, un gros modpack Forge (~20 000 lignes) ≈ 30 s. Le backend envoie maintenant la sortie par paquets (≤ 50 ms ou 500 lignes) : 0,12 ms par ligne, gel max ≈ 33 ms. Logs du launcher regroupés côté UI (≤ 50 ms). Bug corrigé : la console ne défilait plus toute seule une fois pleine (longueur constante). Onglet Contenu à 250 mods (nouveau jeu de données du mock « Pack Create ») : 77 ms au premier affichage, 17 ms pour activer/désactiver un mod.
 - Pas encore vérifié dans la vraie app : lancer un modpack Forge et regarder la console défiler (le panneau navigateur était masqué, donc mesures de calcul et de mise en page, pas d’images par seconde).
 - Phase 4 terminée. Prochaine étape : Phase 5 (traduction IA de modpacks), en commençant par l’extraction des `lang/en_us.json`.
+- Finitions (D26) : anneau de focus jaune retiré à la demande ; le focus clavier reprend l'apparence du survol. Composants `Select` (liste dans un portail, flèches, Début/Fin, recherche par frappe, Échap qui ne ferme que la liste), `Checkbox`, `Alert` (refermable, remplace 6 bandeaux copiés), `Tabs` (un seul arrêt Tab, flèches, `tabpanel` relié), focus piégé dans les dialogues et la visionneuse (pile pour les dialogues imbriqués), menu du compte fermé par Échap/clic extérieur, cartes d'instance ouvrables au clavier, erreurs de « Ouvrir le dossier » affichées, état « rien trouvé » dans Découvrir. Vérifié dans le navigateur (backend simulé) : clavier, Échap, boucle Tab, rendu des menus.
+- Prochaine étape : navigation avec historique.

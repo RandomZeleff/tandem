@@ -1,5 +1,7 @@
 import { createSignal, For, Show } from "solid-js";
+import Alert from "../components/Alert";
 import InstanceCard from "../components/InstanceCard";
+import Tabs, { tabPanel } from "../components/Tabs";
 import { Icon } from "../components/pixel";
 import { errorMessage } from "../lib/api";
 import { importModpackFile } from "../lib/modpacks";
@@ -54,27 +56,10 @@ export default function Instances() {
       </div>
 
       <Show when={error()}>
-        <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">{error()}</p>
+        <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
-      <div role="tablist" aria-label="Filtrer" class="flex w-fit gap-0.5 bg-slate-900 p-[3px] shadow-[inset_0_0_0_1px_var(--color-line)]">
-        <For each={FILTERS}>
-          {(f) => (
-            <button
-              role="tab"
-              aria-selected={filter() === f.id}
-              class="h-7 px-3 text-[13px]"
-              classList={{
-                "bg-slate-600 font-medium text-chalk shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]": filter() === f.id,
-                "text-muted hover:text-chalk": filter() !== f.id,
-              }}
-              onClick={() => setFilter(f.id)}
-            >
-              {f.label}
-            </button>
-          )}
-        </For>
-      </div>
+      <Tabs label="Filtrer" idPrefix="instances-filter" variant="segmented" tabClass="h-7" items={FILTERS} value={filter()} onChange={setFilter} />
 
       <Show
         when={visible().length > 0}
@@ -87,7 +72,7 @@ export default function Instances() {
           </div>
         }
       >
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3.5">
+        <div {...tabPanel("instances-filter", filter())} class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3.5">
           <For each={visible()}>{(instance) => <InstanceCard instance={instance} />}</For>
         </div>
       </Show>

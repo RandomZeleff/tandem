@@ -1,9 +1,9 @@
-import { createResource, For, Show } from "solid-js";
+import { createResource, createSignal, For, Show } from "solid-js";
 import InstanceCard from "../components/InstanceCard";
 import { Icon, LoaderTag } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
-import { api, type Instance } from "../lib/api";
+import { api, errorMessage, type Instance } from "../lib/api";
 import { formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { instances, navigate, setNewInstanceDialog } from "../lib/store";
@@ -11,6 +11,7 @@ import { instances, navigate, setNewInstanceDialog } from "../lib/store";
 function Hero(props: { instance: Instance }) {
   const state = () => gameState(props.instance.id);
   const exit = () => state().lastExit;
+  const [error, setError] = createSignal<string | null>(null);
 
   return (
     <section
@@ -39,8 +40,8 @@ function Hero(props: { instance: Instance }) {
         </div>
 
         <div class="flex flex-col gap-3">
-          <Show when={state().error}>
-            <p class="w-fit bg-[#2A1414]/90 px-3 py-1.5 text-sm text-redstone-text">{state().error}</p>
+          <Show when={error() ?? state().error}>
+            <p class="w-fit bg-[#2A1414]/90 px-3 py-1.5 text-sm text-redstone-text">{error() ?? state().error}</p>
           </Show>
           <Show when={exit() && !exit()!.stopped && exit()!.code !== 0}>
             <p class="w-fit bg-[#2A1F0E]/90 px-3 py-1.5 text-sm text-gold">
@@ -59,7 +60,7 @@ function Hero(props: { instance: Instance }) {
             <button
               class="btn px-corners-md h-[54px] w-[54px] bg-slate-700/90 px-0"
               aria-label="Ouvrir le dossier de l'instance"
-              onClick={() => void api.openInstanceFolder(props.instance.id)}
+              onClick={() => api.openInstanceFolder(props.instance.id).catch((err) => setError(errorMessage(err)))}
             >
               <Icon name="folder" size={18} />
             </button>

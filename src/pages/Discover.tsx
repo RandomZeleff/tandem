@@ -1,6 +1,9 @@
 import { createEffect, createMemo, createSignal, For, type JSX, on, onCleanup, Show } from "solid-js";
 import { Icon, LoaderIcon } from "../components/pixel";
+import Alert from "../components/Alert";
 import ProjectIcon from "../components/ProjectIcon";
+import Select from "../components/Select";
+import Tabs, { tabPanel } from "../components/Tabs";
 import { api, errorMessage, type ProjectType, type SearchHit } from "../lib/api";
 import { installContent, isBusy, isInstalled, loadContent } from "../lib/content";
 import { formatCount, loaderLabel } from "../lib/format";
@@ -176,49 +179,29 @@ export default function Discover(props: { instanceId?: string }) {
           <label class="sr-only" for="discover-instance">
             Instance
           </label>
-          <div class="relative">
-            <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2">
-              <LoaderIcon loader={instance()?.loader ?? "vanilla"} size={14} />
-            </span>
-            <select
-              id="discover-instance"
-              class="field w-64 pl-9 text-sm"
-              value={instanceId()}
-              onChange={(e) => setInstanceId(e.currentTarget.value)}
-            >
-              <For each={instances()}>
-                {(i) => (
-                  <option value={i.id}>
-                    {i.name} — {i.gameVersion} · {loaderLabel(i.loader)}
-                  </option>
-                )}
-              </For>
-            </select>
-          </div>
+          <Select
+            id="discover-instance"
+            class="w-64 text-sm"
+            value={instanceId()}
+            options={instances().map((i) => ({
+              value: i.id,
+              label: i.name,
+              hint: `${i.gameVersion} · ${loaderLabel(i.loader)}`,
+              icon: <LoaderIcon loader={i.loader} size={14} />,
+            }))}
+            onChange={setInstanceId}
+          />
         </Show>
 
-        <div
-          role="tablist"
-          aria-label="Type de contenu"
-          class="flex w-fit gap-0.5 bg-slate-900 p-[3px] shadow-[inset_0_0_0_1px_var(--color-line)]"
-        >
-          <For each={KINDS}>
-            {(k) => (
-              <button
-                role="tab"
-                aria-selected={kind() === k.id}
-                class="h-[34px] px-3 text-[13px]"
-                classList={{
-                  "bg-slate-600 font-medium text-chalk shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]": kind() === k.id,
-                  "text-muted hover:text-chalk": kind() !== k.id,
-                }}
-                onClick={() => setKind(k.id)}
-              >
-                {k.label}
-              </button>
-            )}
-          </For>
-        </div>
+        <Tabs
+          label="Type de contenu"
+          idPrefix="discover-kind"
+          variant="segmented"
+          tabClass="h-[34px]"
+          items={KINDS}
+          value={kind()}
+          onChange={setKind}
+        />
 
         <div class="relative min-w-[220px] flex-1">
           <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
@@ -285,16 +268,29 @@ export default function Discover(props: { instanceId?: string }) {
       </Show>
 
       <Show when={actionError() ?? error()}>
-        <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">
-          {actionError() ?? error()}
-        </p>
+        {(message) => (
+          <Alert
+            onClose={() => {
+              setActionError(null);
+              setError(null);
+            }}
+          >
+            {message()}
+          </Alert>
+        )}
       </Show>
 
       <Show when={searchable()}>
         <span class="font-mono text-xs text-muted">
           {loading() && hits().length === 0 ? "Recherche…" : `${formatCount(total())} résultats`}
         </span>
-        <ul class="flex flex-col gap-2">
+        <Show when={!loading() && hits().length === 0 && !error()}>
+          <div class="panel px-corners-md flex flex-col items-center gap-1.5 py-12 text-center">
+            <p class="text-chalk-2">Rien trouvé{debounced() ? ` pour « ${debounced()} »` : ""}.</p>
+            <p class="text-sm text-muted">Essaie un autre mot, ou un autre type de contenu.</p>
+          </div>
+        </Show>
+        <ul {...tabPanel("discover-kind", kind())} class="flex flex-col gap-2">
           <For each={hits()}>
             {(hit) => (
               <li class="panel px-corners-md flex items-start gap-4 p-3.5">

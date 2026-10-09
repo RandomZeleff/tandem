@@ -1,4 +1,5 @@
 import { createSignal, For, onMount, Show } from "solid-js";
+import Alert from "./Alert";
 import { errorMessage, type ContentKind, type InstalledContent, type Instance } from "../lib/api";
 import {
   checkUpdates,
@@ -101,11 +102,11 @@ export default function ContentList(props: { instance: Instance; locked: boolean
       </div>
 
       <Show when={notice()}>
-        <p class="bg-[#16240F] px-3 py-2 text-sm text-xp-text shadow-[inset_0_0_0_1px_#2E5A1A]">{notice()}</p>
+        <Alert tone="success" onClose={() => setNotice(null)}>{notice()}</Alert>
       </Show>
 
       <Show when={error()}>
-        <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">{error()}</p>
+        <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
       <PerfSuggestions instance={props.instance} locked={props.locked} onError={setError} />

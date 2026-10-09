@@ -1,7 +1,9 @@
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import Alert from "./Alert";
 import { createEffect, createResource, createSignal, For, on, onCleanup, onMount, Show } from "solid-js";
 import { api, errorMessage, screenshotUrl, type Screenshot } from "../lib/api";
 import { formatBytes } from "../lib/format";
+import { trapFocus } from "../lib/ui";
 import { gameState, lastOutput } from "../lib/games";
 import Dialog from "./Dialog";
 import { Icon } from "./pixel";
@@ -72,7 +74,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
       </div>
 
       <Show when={error()}>
-        <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">{error()}</p>
+        <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
       <Show
@@ -91,7 +93,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
             {(shot, index) => (
               <li>
                 <button
-                  class="group relative block aspect-video w-full overflow-hidden bg-slate-700 shadow-[inset_0_0_0_1px_var(--color-line)] focus-visible:outline-2 focus-visible:outline-gold"
+                  class="group relative block aspect-video w-full overflow-hidden bg-slate-700 shadow-[inset_0_0_0_1px_var(--color-line)] focus-visible:brightness-110"
                   aria-label={`Capture du ${dateTime(shot.takenAt)}`}
                   onClick={() => setViewing(index())}
                 >
@@ -163,6 +165,8 @@ function Viewer(props: {
   onReveal: () => void;
   onDelete: () => void;
 }) {
+  let root: HTMLDivElement | undefined;
+  trapFocus(() => root);
   onMount(() => {
     const onKey = (e: KeyboardEvent) => {
       if (props.dialogOpen) return;
@@ -177,6 +181,8 @@ function Viewer(props: {
 
   return (
     <div
+      ref={root}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label="Capture d'écran"

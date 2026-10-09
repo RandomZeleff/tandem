@@ -156,3 +156,9 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Côté UI, un paquet = une seule mise à jour du store (lignes en trop retirées d’un coup) et un seul défilement. Les logs du launcher sont regroupés côté UI de la même façon (50 ms).
 - Pas de virtualisation des listes pour l’instant : console plafonnée à 5000 lignes, contenu à 250 mods affiché en ≈ 80 ms. À revoir si une vue dépasse ≈ 100 ms au premier affichage.
 - Statut : validé
+
+### D26 · 2026-10-09 · Pas d'anneau de focus, composants de base maison
+- Pas d'anneau de focus du navigateur (bordure jaune jugée trop « web » pour une app) : `outline: none` partout. Le focus clavier reprend l'état de survol de chaque contrôle (luminosité des boutons, fond des lignes, texte des onglets), pour que la navigation au clavier reste possible.
+- Contrôles natifs du webview remplacés par des composants maison, identiques sur Windows et Mac : `Select` (liste rendue dans un portail en position fixe, fermée si la page défile ou la fenêtre change de taille), `Checkbox`, `Alert`, `Tabs`.
+- Fenêtres modales : focus initial sur l'élément `autofocus` sinon le premier contrôle, Tab bouclé dedans, focus rendu à la fermeture ; seule la modale du dessus gère Tab. Menus et listes : Échap et clic extérieur, en phase de capture pour qu'un menu ouvert dans un dialogue se ferme sans fermer le dialogue.
+- Statut : validé

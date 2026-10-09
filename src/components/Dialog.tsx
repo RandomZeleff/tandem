@@ -1,7 +1,10 @@
 import { onCleanup, onMount, type JSX } from "solid-js";
+import { trapFocus } from "../lib/ui";
 
 /** Modal frame: backdrop click and Escape close it. */
 export default function Dialog(props: { title: string; onClose: () => void; children: JSX.Element; width?: number }) {
+  let panel: HTMLDivElement | undefined;
+  trapFocus(() => panel);
   onMount(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && props.onClose();
     window.addEventListener("keydown", onKey);
@@ -14,6 +17,8 @@ export default function Dialog(props: { title: string; onClose: () => void; chil
       onClick={(e) => e.target === e.currentTarget && props.onClose()}
     >
       <div
+        ref={panel}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={props.title}

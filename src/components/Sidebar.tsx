@@ -1,7 +1,8 @@
-import { createResource, createSignal, For, Show } from "solid-js";
+import { createResource, createSignal, For, type JSX, Show } from "solid-js";
 import { api, errorMessage } from "../lib/api";
 import { gameState } from "../lib/games";
 import { skinLook } from "../lib/look";
+import { onDismiss } from "../lib/ui";
 import InstanceSlot from "./InstanceSlot";
 import { accounts, activeAccount, instances, navigate, refetchAccounts, route, type Route } from "../lib/store";
 import { Icon, type IconName, LoaderTag, SkinHead } from "./pixel";
@@ -25,8 +26,19 @@ function isActive(item: NavItem): boolean {
   return current === item.to.page || (item.to.page === "instances" && current === "instance");
 }
 
+function AccountMenu(props: { anchor: () => HTMLElement | undefined; onClose: () => void; children: JSX.Element }) {
+  let menu: HTMLDivElement | undefined;
+  onDismiss(() => [menu, props.anchor()], props.onClose);
+  return (
+    <div ref={menu} class="panel px-corners-md absolute top-full right-0 left-0 z-20 mt-1 bg-slate-750 p-3 shadow-2xl">
+      {props.children}
+    </div>
+  );
+}
+
 function AccountCard() {
   const [open, setOpen] = createSignal(false);
+  let anchor: HTMLButtonElement | undefined;
   const [username, setUsername] = createSignal("");
   const [error, setError] = createSignal<string | null>(null);
 
@@ -43,7 +55,8 @@ function AccountCard() {
   return (
     <div class="relative mx-3 mt-3.5 mb-1.5">
       <button
-        class="panel px-corners-md flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-600"
+        ref={anchor}
+        class="panel px-corners-md flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-600 focus-visible:bg-slate-600"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open()}
       >
@@ -69,13 +82,12 @@ function AccountCard() {
       </button>
 
       <Show when={open()}>
-        <div class="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-        <div class="panel px-corners-md absolute top-full right-0 left-0 z-20 mt-1 bg-slate-750 p-3 shadow-2xl">
+        <AccountMenu anchor={() => anchor} onClose={() => setOpen(false)}>
           <Show when={accounts().length > 0}>
             <ul class="mb-3 space-y-0.5">
               <For each={accounts()}>
                 {(account) => (
-                  <li class="group flex items-center gap-2 px-1.5 py-1 hover:bg-slate-600">
+                  <li class="group flex items-center gap-2 px-1.5 py-1 hover:bg-slate-600 focus-within:bg-slate-600">
                     <button
                       class="flex flex-1 items-center gap-2.5 text-left text-sm"
                       onClick={() => run(() => api.setActiveAccount(account.id))}
@@ -89,7 +101,7 @@ function AccountCard() {
                       </Show>
                     </button>
                     <button
-                      class="text-faint opacity-0 group-hover:opacity-100 hover:text-redstone-text"
+                      class="text-faint opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-redstone-text focus-visible:text-redstone-text"
                       aria-label={`Retirer ${account.username}`}
                       onClick={() => run(() => api.removeAccount(account.id))}
                     >
@@ -131,7 +143,7 @@ function AccountCard() {
           <Show when={error()}>
             <p class="mt-2 text-xs text-redstone-text">{error()}</p>
           </Show>
-        </div>
+        </AccountMenu>
       </Show>
     </div>
   );
@@ -156,7 +168,7 @@ export default function Sidebar() {
               classList={{
                 "px-corners bg-slate-600 font-semibold text-chalk shadow-[inset_0_1px_0_rgb(255_255_255/0.05),inset_0_-2px_0_rgb(0_0_0/0.3)]":
                   isActive(item),
-                "text-muted hover:bg-slate-750 hover:text-chalk": !isActive(item),
+                "text-muted hover:bg-slate-750 hover:text-chalk focus-visible:bg-slate-750 focus-visible:text-chalk": !isActive(item),
               }}
               aria-current={isActive(item) ? "page" : undefined}
               onClick={() => navigate(item.to)}
@@ -185,7 +197,7 @@ export default function Sidebar() {
               };
               return (
                 <button
-                  class="flex h-[46px] items-center gap-2.5 px-2.5 text-left hover:bg-slate-750"
+                  class="flex h-[46px] items-center gap-2.5 px-2.5 text-left hover:bg-slate-750 focus-visible:bg-slate-750"
                   classList={{
                     "bg-slate-750":
                       route().page === "instance" && (route() as { id: string }).id === instance.id,
@@ -218,7 +230,7 @@ export default function Sidebar() {
         class="flex h-[46px] items-center gap-3 px-6 text-left shadow-[inset_0_1px_0_#1E2125]"
         classList={{
           "text-chalk": route().page === "settings",
-          "text-muted hover:text-chalk": route().page !== "settings",
+          "text-muted hover:text-chalk focus-visible:text-chalk": route().page !== "settings",
         }}
         onClick={() => navigate({ page: "settings" })}
       >

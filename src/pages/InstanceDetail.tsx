@@ -1,4 +1,5 @@
-import { createResource, createSignal, For, Match, Show, Switch } from "solid-js";
+import { createResource, createSignal, Match, Show, Switch } from "solid-js";
+import Alert from "../components/Alert";
 import ContentList from "../components/ContentList";
 import CrashPanel from "../components/CrashPanel";
 import Dialog from "../components/Dialog";
@@ -10,6 +11,8 @@ import PlayButton from "../components/PlayButton";
 import WorldsTab from "../components/WorldsTab";
 import Scene from "../components/Scene";
 import ScreenshotsTab from "../components/ScreenshotsTab";
+import Select from "../components/Select";
+import Tabs, { tabPanel } from "../components/Tabs";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
 import { formatBytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
@@ -93,7 +96,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
             <button
               class="btn px-corners-md h-[50px] w-12 bg-slate-700/90 px-0"
               aria-label="Ouvrir le dossier"
-              onClick={() => void api.openInstanceFolder(props.instance.id)}
+              onClick={() => api.openInstanceFolder(props.instance.id).catch((err) => setError(errorMessage(err)))}
             >
               <Icon name="folder" size={16} />
             </button>
@@ -102,30 +105,18 @@ export default function InstanceDetail(props: { instance: Instance }) {
         </div>
       </section>
 
-      <div role="tablist" aria-label="Sections" class="flex shrink-0 gap-1 px-6 shadow-[inset_0_-1px_0_var(--color-line)]">
-        <For each={tabs}>
-          {(t) => (
-            <button
-              role="tab"
-              aria-selected={tab() === t.id}
-              class="h-11 px-3.5"
-              classList={{
-                "font-semibold text-chalk shadow-[inset_0_-3px_0_#8BE04E]": tab() === t.id,
-                "font-medium text-muted hover:text-chalk": tab() !== t.id,
-              }}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          )}
-        </For>
-      </div>
+      <Tabs
+        label="Sections"
+        idPrefix="instance"
+        class="shrink-0 px-6 shadow-[inset_0_-1px_0_var(--color-line)]"
+        items={tabs}
+        value={tab()}
+        onChange={setTab}
+      />
 
       <div class="flex min-h-0 flex-1 flex-col gap-4 px-6 pt-4 pb-5">
         <Show when={error() ?? state().error}>
-          <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">
-            {error() ?? state().error}
-          </p>
+          {(message) => <Alert onClose={() => setError(null)}>{message()}</Alert>}
         </Show>
         <Show when={state().status === "idle" && state().lastExit?.analysis ? state().lastExit : undefined}>
           {(exit) => (
@@ -153,7 +144,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
           <GameStatsPanel instanceId={props.instance.id} />
         </Show>
 
-        <div class="min-h-0 flex-1">
+        <div {...tabPanel("instance", tab())} class="min-h-0 flex-1">
           <Switch>
             <Match when={tab() === "console"}>
               <GameConsole instanceId={props.instance.id} />
@@ -249,15 +240,16 @@ function MemoryPicker(props: { instance: Instance; onError: (message: string) =>
 
   return (
     <div class="flex flex-col gap-1.5">
-      <select
-        aria-label="Mémoire allouée"
-        class="field h-8 w-56 px-2 text-sm"
-        value={props.instance.memoryMb ?? "auto"}
-        onChange={(e) => void choose(e.currentTarget.value)}
-      >
-        <option value="auto">Automatique{info() ? ` (${gigabytes(info()!.autoMb)})` : ""}</option>
-        <For each={steps()}>{(mb) => <option value={mb}>{gigabytes(mb)}</option>}</For>
-      </select>
+      <Select
+        label="Mémoire allouée"
+        class="h-8 w-56 px-2.5 text-sm"
+        value={String(props.instance.memoryMb ?? "auto")}
+        options={[
+          { value: "auto", label: "Automatique", hint: info() ? gigabytes(info()!.autoMb) : undefined },
+          ...steps().map((mb) => ({ value: String(mb), label: gigabytes(mb) })),
+        ]}
+        onChange={(value) => void choose(value)}
+      />
       <Show when={info()}>
         {(i) => (
           <span class="text-xs text-muted">

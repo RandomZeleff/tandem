@@ -59,9 +59,15 @@ button {
   cursor: pointer;
 }
 
+/* No browser focus ring: keyboard focus reuses each control's hover look instead. */
+:focus,
 :focus-visible {
-  outline: 2px solid var(--color-gold);
-  outline-offset: 2px;
+  outline: none;
+}
+
+::selection {
+  background: rgb(139 224 78 / 0.3);
+  color: var(--color-chalk);
 }
 
 ::-webkit-scrollbar {
@@ -139,7 +145,8 @@ button {
       inset 0 -3px 0 rgb(0 0 0 / 0.35);
     transition: filter 80ms, transform 80ms;
   }
-  .btn:hover:not(:disabled) {
+  .btn:hover:not(:disabled),
+  .btn:focus-visible:not(:disabled) {
     filter: brightness(1.15);
   }
   .btn:active:not(:disabled) {
@@ -186,7 +193,8 @@ button {
     background: transparent;
     box-shadow: none;
   }
-  .btn-ghost:hover:not(:disabled) {
+  .btn-ghost:hover:not(:disabled),
+  .btn-ghost:focus-visible:not(:disabled) {
     color: var(--color-chalk);
     background: var(--color-slate-600);
     filter: none;

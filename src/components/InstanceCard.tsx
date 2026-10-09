@@ -18,8 +18,16 @@ export default function InstanceCard(props: { instance: Instance }) {
 
   return (
     <article
-      class="panel px-corners-md group flex cursor-pointer flex-col transition-[filter] hover:brightness-110"
+      tabIndex={0}
+      aria-label={`Ouvrir ${props.instance.name}`}
+      class="panel px-corners-md group flex cursor-pointer flex-col transition-[filter] hover:brightness-110 focus-visible:brightness-110"
       onClick={() => navigate({ page: "instance", id: props.instance.id })}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          navigate({ page: "instance", id: props.instance.id });
+        }
+      }}
     >
       <div class="relative h-[70px]">
         <svg

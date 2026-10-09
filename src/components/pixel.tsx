@@ -206,6 +206,31 @@ export function Toggle(props: { checked: boolean; label: string; disabled?: bool
   );
 }
 
+/** Checkbox in the inventory style, with its label. */
+export function Checkbox(props: { checked: boolean; label: JSX.Element; disabled?: boolean; onChange: (value: boolean) => void; class?: string }) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={props.checked}
+      disabled={props.disabled}
+      class={`group flex items-center gap-1.5 disabled:cursor-default disabled:opacity-50 ${props.class ?? "text-xs text-muted"}`}
+      onClick={() => props.onChange(!props.checked)}
+    >
+      <span
+        class="flex size-3.5 shrink-0 items-center justify-center group-hover:brightness-125 group-focus-visible:brightness-125"
+        classList={{
+          "bg-grass shadow-[inset_0_-2px_0_rgb(0_0_0/0.3)]": props.checked,
+          "bg-slate-900 shadow-[inset_0_0_0_1px_var(--color-line-strong)]": !props.checked,
+        }}
+      >
+        {props.checked && <Icon name="check" size={10} color="#fff" />}
+      </span>
+      <span class="group-hover:text-chalk group-focus-visible:text-chalk">{props.label}</span>
+    </button>
+  );
+}
+
 /** Front face of a block, used as an instance icon. */
 export function BlockIcon(props: { look: BlockLook; size?: number }) {
   return (
