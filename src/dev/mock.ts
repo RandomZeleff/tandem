@@ -166,6 +166,25 @@ async function fakeLaunch(id: string) {
     memory = Math.min(3.2e9, memory + Math.random() * 120e6);
     void emit("game://stats", { instanceId: id, memoryBytes: memory, cpuPercent: 15 + Math.random() * 30 });
   }, 2000);
+  // "Survie avec Léo" crashes shortly after starting, blaming Sodium.
+  if (id === "survie-avec-leo") {
+    setTimeout(() => {
+      clearInterval(statsTimers[id]);
+      void emit("game://exited", {
+        instanceId: id,
+        code: 1,
+        stopped: false,
+        crashReport: "/mock/crash-reports/crash-client.txt",
+        analysis: {
+          description: "Rendering overlay",
+          exception: 'java.lang.NullPointerException: Cannot invoke "Object.hashCode()" because "key" is null',
+          suspects: [{ name: "Sodium", fileName: "AANobbMI.jar", reason: "stackTrace" }],
+          hint: null,
+          source: "/mock/crash-reports/crash-client.txt",
+        },
+      });
+    }, 5000);
+  }
   for (const line of ["[Render thread/INFO]: Setting user: Zeleff", "[Render thread/INFO]: Backend library: LWJGL", "[Render thread/INFO]: Sound engine started"]) {
     await emit("game://output", { instanceId: id, stream: "stdout", line });
   }
@@ -325,7 +344,7 @@ export function installMocks() {
           return true;
         case "stop_instance":
           clearInterval(statsTimers[args.id as string]);
-          await emit("game://exited", { instanceId: args.id, code: null, stopped: true, crashReport: null });
+          await emit("game://exited", { instanceId: args.id, code: null, stopped: true, crashReport: null, analysis: null });
           return true;
         case "add_offline_account": {
           const account: Account = { id: crypto.randomUUID(), kind: "offline", username: args.username as string, mcUuid: "", isActive: true };

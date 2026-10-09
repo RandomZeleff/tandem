@@ -122,3 +122,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - 1.17.x : reste sous Rosetta. Avec LWJGL 3.3, macOS refuse l’icône de fenêtre et 1.17 en fait une erreur fatale (1.18 ne pose pas d’icône sur Mac).
 - ≤ 1.16 : Rosetta (aucun Java 8 arm64 chez Mojang ; un Java tiers comme Azul Zulu reste possible plus tard).
 - Statut : validé
+
+### D21 · 2026-10-09 · Analyse de crash locale, par heuristiques
+- À chaque crash, Tandem lit le rapport de crash, sinon le log de crash de la JVM (`hs_err_pid*.log`), sinon `logs/latest.log`, et en tire : description, première exception, cause connue et mods suspects. Tout reste local, aucun envoi.
+- Suspects, par ordre de confiance : mods nommés par Forge/NeoForge (`Suspected Mods`, frames `TRANSFORMER/modid@…`), Mixins en échec (`from mod x`), mods refusés par Fabric (« incompatible »), sinon le premier mod rencontré dans la pile d’appels, reconnu par les packages de ses classes (jars de `mods/` lus avec leurs métadonnées `fabric.mod.json` / `quilt.mod.json` / `mods.toml`). Le jeu, la JVM et les loaders ne sont jamais accusés.
+- Causes connues : manque de mémoire (lien vers le réglage), mauvaise version de Java, pilote graphique / OpenGL, mods incompatibles, plantage natif de la JVM.
+- Un suspect installé via Tandem peut être désactivé en un clic depuis le panneau ; « Voir le rapport » l’ouvre dans le Finder / l’Explorateur.
+- Statut : validé

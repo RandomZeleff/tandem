@@ -139,6 +139,20 @@ export interface GameExited {
   code: number | null;
   stopped: boolean;
   crashReport: string | null;
+  /** Present when the game crashed. */
+  analysis: CrashAnalysis | null;
+}
+
+export type SuspectReason = "namedByLoader" | "mixin" | "incompatible" | "stackTrace";
+export type CrashHint = "outOfMemory" | "wrongJava" | "graphics" | "incompatibleMods" | "nativeCrash";
+
+export interface CrashAnalysis {
+  description: string | null;
+  exception: string | null;
+  suspects: { name: string; fileName: string | null; reason: SuspectReason }[];
+  hint: CrashHint | null;
+  /** File the analysis was read from (crash report, JVM crash log or latest.log). */
+  source: string | null;
 }
 
 /** Sampled every 2 s while a game runs. */

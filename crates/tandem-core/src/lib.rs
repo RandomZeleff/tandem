@@ -4,6 +4,7 @@ pub mod account;
 pub mod auth;
 pub mod content;
 pub mod context;
+pub mod crash;
 pub mod db;
 pub mod download;
 pub mod error;

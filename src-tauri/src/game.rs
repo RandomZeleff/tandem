@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 
 use serde::Serialize;
+use tandem_core::crash::{self, CrashAnalysis};
 use tandem_core::install::{self, InstallProgress, Stage};
 use tandem_core::jvm;
 use tandem_core::launch::{self, LaunchSpec};
@@ -119,6 +120,7 @@ struct ExitedPayload {
     code: Option<i32>,
     stopped: bool,
     crash_report: Option<String>,
+    analysis: Option<CrashAnalysis>,
 }
 
 /// Forwards install progress to the UI, throttled except on stage changes and completion.
@@ -269,8 +271,23 @@ async fn supervise(
     } else {
         None
     };
+    let analysis = if crashed {
+        let dir = game_dir.clone();
+        let report = crash_report.clone();
+        tauri::async_runtime::spawn_blocking(move || crash::analyze_exit(&dir, report.as_deref()))
+            .await
+            .ok()
+    } else {
+        None
+    };
     if crashed {
-        tracing::warn!(instance = %id, ?code, crash_report = ?crash_report, "game crashed");
+        tracing::warn!(
+            instance = %id,
+            ?code,
+            crash_report = ?crash_report,
+            suspects = ?analysis.as_ref().map(|a| &a.suspects),
+            "game crashed"
+        );
     } else {
         tracing::info!(instance = %id, ?code, "game exited");
     }
@@ -281,6 +298,7 @@ async fn supervise(
             code,
             stopped,
             crash_report: crash_report.map(|p| p.display().to_string()),
+            analysis,
         },
     );
 }

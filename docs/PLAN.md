@@ -52,7 +52,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Presets JVM (RAM auto selon machine, GC flags) — D18 ; mémoire réglable par instance dans l’onglet Informations
 - [x] Suggestion de mods de perf selon loader (Sodium, Lithium, FerriteCore, ModernFix…) — D19
 - [x] Gestion des instances en cours : RAM/CPU (panneau au-dessus de la console, échantillon toutes les 2 s, 2 min d’historique), logs live, kill, plusieurs instances simultanées
-- [ ] Analyse de crash (lecture du crash report, mod coupable probable)
+- [x] Analyse de crash (lecture du crash report, mod coupable probable) — D21
 - [ ] Gestion des mondes (liste, sauvegardes, backup auto)
 - [ ] Captures d'écran par instance
 - [ ] Démarrage du launcher < 1 s, UI fluide
@@ -167,4 +167,5 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - CPU sous Rosetta, creusé : ce n’est pas le menu (≈ 5 % une fois au menu, les FPS y sont plafonnés à 60) mais le chargement, ~4× plus lent car Rosetta doit traduire en continu le code généré par le JIT. « Setting user » → « Sound engine started » : 1.16.5 / 1.17.1 / 1.18.2 sous Rosetta ≈ 20-23 s, contre 3-6 s en natif (1.19.2, 1.20.1, 1.21.4) ; 1.12.2 reste rapide (3 s).
 - Piste pour aller plus loin : Mojang fournit Java 17 arm64 (`java-runtime-gamma`) mais ni 8 ni 16 → 1.17 à 1.18.2 pourraient tourner en natif avec Java 17 arm64 et LWJGL 3.3.x arm64 à la place de 3.2.x (approche de Prism) ; ≤ 1.16 demanderait un Java 8 arm64 tiers (Azul Zulu).
 - 1.18.x en natif sur Apple Silicon (D20) : vanilla 1.18.2 ≈ 4 s de chargement, Fabric 1.18.2 ≈ 5 s, Forge 40.x (1.18.2) ≈ 7 s, contre ≈ 19 s sous Rosetta. 1.17.1 essayé en natif mais l’icône de fenêtre fait planter LWJGL 3.3 → laissé sous Rosetta.
-- Prochaine étape : analyse de crash (Phase 4).
+- Analyse de crash (D21) : `tandem_core::crash`, panneau dans la page de l’instance (cause, exception, suspects, « Désactiver », « Voir le rapport »). Vrai crash testé : Sodium 1.20.1 sur Fabric 1.21.4 → Sodium désigné « incompatible », bon fichier retrouvé. Formats Forge/NeoForge, Mixin et pile d’appels couverts par des tests unitaires ; panneau testé avec le backend simulé.
+- Prochaine étape : suite de la Phase 4 (gestion des mondes, captures d’écran).

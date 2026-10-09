@@ -12,7 +12,7 @@ use tandem_core::launch::{self, LaunchSpec};
 use tandem_core::meta::{self, loader::Loader};
 use tandem_core::paths::DataDir;
 use tandem_core::stats::ProcessSampler;
-use tandem_core::{install, jvm, Context};
+use tandem_core::{crash, install, jvm, Context};
 use tokio::io::{AsyncBufReadExt, BufReader};
 
 #[tokio::main]
@@ -128,7 +128,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match seconds {
         Some(s) => {
             tokio::select! {
-                status = child.wait() => println!("game exited early: {:?}", status?),
+                status = child.wait() => {
+                    let status = status?;
+                    println!("game exited early: {status:?}");
+                    if !status.success() {
+                        let report = newest_crash_report(&game_dir);
+                        let analysis = crash::analyze_exit(&game_dir, report.as_deref());
+                        println!("{analysis:#?}");
+                    }
+                }
                 _ = tokio::time::sleep(Duration::from_secs(s)) => {
                     println!("still running after {s}s, stopping");
                     child.kill().await?;
@@ -138,4 +146,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => println!("game exited: {:?}", child.wait().await?),
     }
     Ok(())
+}
+
+fn newest_crash_report(game_dir: &std::path::Path) -> Option<std::path::PathBuf> {
+    std::fs::read_dir(game_dir.join("crash-reports"))
+        .ok()?
+        .filter_map(|e| e.ok())
+        .filter_map(|e| Some((e.metadata().ok()?.modified().ok()?, e.path())))
+        .max_by_key(|(t, _)| *t)
+        .map(|(_, p)| p)
 }

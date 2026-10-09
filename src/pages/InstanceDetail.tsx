@@ -1,5 +1,6 @@
 import { createResource, createSignal, For, Match, Show, Switch } from "solid-js";
 import ContentList from "../components/ContentList";
+import CrashPanel from "../components/CrashPanel";
 import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
 import GameStatsPanel from "../components/GameStatsPanel";
@@ -122,11 +123,16 @@ export default function InstanceDetail(props: { instance: Instance }) {
             {error() ?? state().error}
           </p>
         </Show>
-        <Show when={state().lastExit && !state().lastExit!.stopped && state().lastExit!.code !== 0}>
-          <p class="bg-[#2A1F0E] px-3 py-2 text-sm text-gold shadow-[inset_0_0_0_1px_var(--color-gold-deep)]">
-            Le jeu s'est arrêté avec le code {state().lastExit!.code ?? "?"}.
-            <Show when={state().lastExit!.crashReport}> Un rapport de crash a été écrit dans le dossier crash-reports.</Show>
-          </p>
+        <Show when={state().status === "idle" && state().lastExit?.analysis ? state().lastExit : undefined}>
+          {(exit) => (
+            <CrashPanel
+              instanceId={props.instance.id}
+              exit={exit()}
+              locked={state().status !== "idle"}
+              onShowMemory={() => setTab("info")}
+              onError={setError}
+            />
+          )}
         </Show>
         <Show when={state().status === "preparing"}>
           <div class="panel px-corners-md flex flex-col gap-2.5 p-4">
