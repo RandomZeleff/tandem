@@ -67,7 +67,7 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - [x] Navigation avec historique — D27 : retour/avant, boutons 4/5 de la souris, Alt+←/→ (⌘[ / ⌘] sur Mac), flèches dans la barre de titre ; onglet, recherche, filtres et défilement retrouvés
 - [x] Menus déroulants maison : les 5 `<select>` et la case « Snapshots » natifs remplacés
 - [x] Corrections issues de l'audit : P1, P2 (D28) et P3 traités
-- [ ] Tests sous charge sur 2-3 vrais modpacks (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
+- [ ] Tests sous charge ([fiche](TEST-CHARGE.md)) sur 2-3 vrais modpacks (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
 - [ ] Optimisations issues des tests sous charge
 - [ ] Version 0.1 (build installable Windows + Mac)
 - [ ] Discussion traduction : s'inspirer des mods existants (AutoTranslation-Next, AutoTranslator, autotranslator-cn) → décision avant la Phase 5
