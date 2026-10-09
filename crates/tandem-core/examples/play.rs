@@ -11,6 +11,7 @@ use std::time::Duration;
 use tandem_core::launch::{self, LaunchSpec};
 use tandem_core::meta::{self, loader::Loader};
 use tandem_core::paths::DataDir;
+use tandem_core::stats::ProcessSampler;
 use tandem_core::{install, jvm, Context};
 use tokio::io::{AsyncBufReadExt, BufReader};
 
@@ -95,6 +96,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         extra_jvm_args: Vec::new(),
     });
     let mut child = launch::spawn(&command)?;
+    if let Some(pid) = child.id() {
+        tokio::spawn(async move {
+            let mut sampler = ProcessSampler::new(pid);
+            loop {
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                let Some(stats) = sampler.sample() else { break };
+                println!(
+                    "[stats] {} MB, {:.0} % CPU",
+                    stats.memory_bytes / 1_000_000,
+                    stats.cpu_percent
+                );
+            }
+        });
+    }
     let stdout = child.stdout.take().ok_or("no stdout")?;
     let stderr = child.stderr.take().ok_or("no stderr")?;
     tokio::spawn(async move {

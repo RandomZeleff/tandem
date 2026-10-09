@@ -141,6 +141,8 @@ const logs: LogEntry[] = [
   { seq: 2, timestampMs: now - 4000, level: "DEBUG", target: "tandem_core::db", message: "database ready" },
 ];
 
+const statsTimers: Record<string, ReturnType<typeof setInterval>> = {};
+
 /** The 1.12.2 instance asks for Rosetta until it is "installed" once. */
 let rosettaInstalled = false;
 
@@ -159,6 +161,11 @@ async function fakeLaunch(id: string) {
     });
   }
   await emit("game://started", id);
+  let memory = 900e6;
+  statsTimers[id] = setInterval(() => {
+    memory = Math.min(3.2e9, memory + Math.random() * 120e6);
+    void emit("game://stats", { instanceId: id, memoryBytes: memory, cpuPercent: 15 + Math.random() * 30 });
+  }, 2000);
   for (const line of ["[Render thread/INFO]: Setting user: Zeleff", "[Render thread/INFO]: Backend library: LWJGL", "[Render thread/INFO]: Sound engine started"]) {
     await emit("game://output", { instanceId: id, stream: "stdout", line });
   }
@@ -317,6 +324,7 @@ export function installMocks() {
           rosettaInstalled = true;
           return true;
         case "stop_instance":
+          clearInterval(statsTimers[args.id as string]);
           await emit("game://exited", { instanceId: args.id, code: null, stopped: true, crashReport: null });
           return true;
         case "add_offline_account": {

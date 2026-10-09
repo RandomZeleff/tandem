@@ -2,6 +2,7 @@ import { createResource, createSignal, For, Match, Show, Switch } from "solid-js
 import ContentList from "../components/ContentList";
 import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
+import GameStatsPanel from "../components/GameStatsPanel";
 import InstanceSlot from "../components/InstanceSlot";
 import { Icon, LoaderTag, XpBar } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
@@ -136,6 +137,10 @@ export default function InstanceDetail(props: { instance: Instance }) {
             <XpBar value={ratio()} segments={32} height={14} label="Installation de l'instance" />
             <span class="font-mono text-xs text-muted">{stageLabel(state().progress)}</span>
           </div>
+        </Show>
+
+        <Show when={state().status === "running"}>
+          <GameStatsPanel instanceId={props.instance.id} />
         </Show>
 
         <div class="min-h-0 flex-1">

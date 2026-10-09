@@ -7,11 +7,14 @@ import {
   EVENTS,
   ROSETTA_MISSING,
   type GameExited,
+  type GameStats,
   type GameOutput,
   type InstallProgress,
 } from "./api";
 
 const MAX_OUTPUT_LINES = 5000;
+/** Two minutes of samples at one every 2 s. */
+const MAX_STATS_SAMPLES = 60;
 
 export type GameStatus = "idle" | "preparing" | "running";
 
@@ -29,12 +32,13 @@ export interface OutputLine {
 
 const [games, setGames] = createStore<Record<string, GameState>>({});
 const [output, setOutput] = createStore<Record<string, OutputLine[]>>({});
+const [stats, setStats] = createStore<Record<string, GameStats[]>>({});
 /** Instance whose console the bottom panel shows (the last one launched). */
 const [consoleInstance, setConsoleInstance] = createSignal<string | null>(null);
 /** Instance whose launch is waiting for Rosetta to be installed. */
 const [rosettaPrompt, setRosettaPrompt] = createSignal<string | null>(null);
 
-export { games, output, consoleInstance, setConsoleInstance, rosettaPrompt, setRosettaPrompt };
+export { games, output, stats, consoleInstance, setConsoleInstance, rosettaPrompt, setRosettaPrompt };
 
 export function gameState(id: string): GameState {
   return games[id] ?? { status: "idle" };
@@ -72,8 +76,18 @@ export async function startGameEvents() {
       }),
     );
   });
+  await listen<GameStats>(EVENTS.stats, ({ payload }) => {
+    setStats(
+      produce((all) => {
+        const samples = (all[payload.instanceId] ??= []);
+        samples.push(payload);
+        if (samples.length > MAX_STATS_SAMPLES) samples.splice(0, samples.length - MAX_STATS_SAMPLES);
+      }),
+    );
+  });
   await listen<GameExited>(EVENTS.exited, ({ payload }) => {
     setGames(payload.instanceId, { status: "idle", lastExit: payload, progress: undefined });
+    setStats(payload.instanceId, []);
   });
 
   for (const id of await api.runningInstances()) {
@@ -84,6 +98,7 @@ export async function startGameEvents() {
 export async function launch(id: string) {
   setGames(id, { status: "preparing", error: undefined, lastExit: undefined, progress: undefined });
   setOutput(id, []);
+  setStats(id, []);
   setConsoleInstance(id);
   try {
     await api.launchInstance(id);

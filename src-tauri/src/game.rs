@@ -9,6 +9,7 @@ use serde::Serialize;
 use tandem_core::install::{self, InstallProgress, Stage};
 use tandem_core::jvm;
 use tandem_core::launch::{self, LaunchSpec};
+use tandem_core::stats::{ProcessSampler, ProcessStats};
 use tandem_core::{Context, Error};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
@@ -21,8 +22,10 @@ pub const PROGRESS_EVENT: &str = "install://progress";
 pub const OUTPUT_EVENT: &str = "game://output";
 pub const STARTED_EVENT: &str = "game://started";
 pub const EXITED_EVENT: &str = "game://exited";
+pub const STATS_EVENT: &str = "game://stats";
 
 const PROGRESS_INTERVAL: Duration = Duration::from_millis(100);
+const STATS_INTERVAL: Duration = Duration::from_secs(2);
 
 enum Slot {
     Preparing,
@@ -99,6 +102,14 @@ struct OutputPayload<'a> {
     instance_id: &'a str,
     stream: &'static str,
     line: String,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StatsPayload<'a> {
+    instance_id: &'a str,
+    #[serde(flatten)]
+    stats: ProcessStats,
 }
 
 #[derive(Clone, Serialize)]
@@ -231,6 +242,10 @@ async fn supervise(
         )));
     }
 
+    let sampler = child
+        .id()
+        .map(|pid| tauri::async_runtime::spawn(report_stats(app.clone(), id.clone(), pid)));
+
     let (status, stopped) = tokio::select! {
         status = child.wait() => (status, false),
         _ = stop_rx => {
@@ -239,6 +254,9 @@ async fn supervise(
             (child.wait().await, true)
         }
     };
+    if let Some(sampler) = sampler {
+        sampler.abort();
+    }
     for reader in readers {
         let _ = reader.await;
     }
@@ -265,6 +283,26 @@ async fn supervise(
             crash_report: crash_report.map(|p| p.display().to_string()),
         },
     );
+}
+
+/// Emits the game's memory and CPU use every few seconds until the process is gone.
+async fn report_stats(app: AppHandle, id: String, pid: u32) {
+    let mut sampler = ProcessSampler::new(pid);
+    let mut ticks = tokio::time::interval(STATS_INTERVAL);
+    ticks.tick().await;
+    loop {
+        ticks.tick().await;
+        let Some(stats) = sampler.sample() else {
+            break;
+        };
+        let _ = app.emit(
+            STATS_EVENT,
+            StatsPayload {
+                instance_id: &id,
+                stats,
+            },
+        );
+    }
 }
 
 /// Streams lines to the UI. Reads raw bytes: the game may print non-UTF-8 text, and

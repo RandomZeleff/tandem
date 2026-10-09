@@ -141,6 +141,15 @@ export interface GameExited {
   crashReport: string | null;
 }
 
+/** Sampled every 2 s while a game runs. */
+export interface GameStats {
+  instanceId: string;
+  /** Resident memory of the Java process (heap and native). */
+  memoryBytes: number;
+  /** Share of the whole machine, 0–100. */
+  cpuPercent: number;
+}
+
 export interface PerfSuggestion {
   projectId: string;
   title: string;
@@ -159,6 +168,7 @@ export const EVENTS = {
   output: "game://output",
   started: "game://started",
   exited: "game://exited",
+  stats: "game://stats",
   installFinished: "install://finished",
   instancesChanged: "instances://changed",
 } as const;

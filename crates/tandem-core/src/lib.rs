@@ -15,6 +15,7 @@ pub mod launch;
 pub mod logging;
 pub mod meta;
 pub mod paths;
+pub mod stats;
 pub mod store;
 
 pub use context::Context;
