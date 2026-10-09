@@ -125,7 +125,11 @@ impl PackIndex {
 }
 
 /// Relative path made only of normal components (no `..`, root or drive prefix).
+/// `:` and `\` are refused on every OS so a pack is judged the same everywhere.
 fn safe_relative(path: &str) -> Option<PathBuf> {
+    if path.contains([':', '\\']) {
+        return None;
+    }
     let path = Path::new(path);
     let ok = !path.as_os_str().is_empty()
         && path.components().all(|c| matches!(c, Component::Normal(_)));
