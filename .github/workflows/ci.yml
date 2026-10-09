@@ -41,10 +41,12 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
 
+  # Installers are paused until Mojang answers the App ID request (D9, D31): without
+  # Microsoft sign-in, a build would let anyone play without owning the game.
   build:
     name: Build Windows bundle
     needs: check
-    if: github.event_name == 'push'
+    if: false && github.event_name == 'push'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +71,7 @@ jobs:
   build-macos:
     name: Build macOS bundle
     needs: check
-    if: github.event_name == 'push'
+    if: false && github.event_name == 'push'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4

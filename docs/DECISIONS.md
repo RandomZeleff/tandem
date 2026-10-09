@@ -191,3 +191,9 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Lecture coûteuse sur les gros packs (1-3 s à chaud, 20+ s disque froid) : lecture parallèle et cache par jar (taille + date), préchauffé en arrière-plan à l'ouverture de l'onglet Contenu ; ensuite ~10 ms.
 - Forge et NeoForge ne plantent pas quand une dépendance manque (écran d'erreur dans le jeu) : Tandem lit leur rapport dans la sortie du jeu et propose de réactiver le mod (arrêt, réactivation, relance) ou de le chercher sur Modrinth. Fabric quitte, le panneau de crash (D21) couvre déjà ce cas.
 - Statut : validé
+
+### D31 · 2026-10-09 · Pas d'installeur avant la connexion Microsoft
+- Sans connexion Microsoft, Tandem ne fonctionne qu'en comptes hors ligne : distribuer un installeur reviendrait à laisser jouer sans posséder le jeu, contraire à D9.
+- Donc : aucun build distribuable (jobs de build de la CI désactivés, aucun tag `v*`) tant que Mojang n'a pas répondu à la demande d'App ID et que la Phase 2 n'est pas faite. La CI continue le lint et les tests sur Windows et macOS.
+- À la reprise : comptes hors ligne permis seulement après un compte Microsoft qui possède le jeu (comme Prism Launcher), réactiver les jobs de build, compléter la section « Comptes » de `docs/releases/v0.1.0.md`, puis pousser le tag `v0.1.0` (brouillon de Release à relire et publier à la main).
+- Statut : validé
