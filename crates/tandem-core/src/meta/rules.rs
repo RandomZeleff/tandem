@@ -61,6 +61,20 @@ impl Environment {
         }
     }
 
+    /// An Intel Mac: what Apple Silicon runs through Rosetta 2 for versions with no
+    /// arm64 Java or LWJGL natives.
+    pub fn rosetta() -> Self {
+        Self {
+            os_name: "osx",
+            arch: "x86_64",
+            features: HashMap::new(),
+        }
+    }
+
+    pub fn is_rosetta(&self) -> bool {
+        cfg!(all(target_os = "macos", target_arch = "aarch64")) && self.arch == "x86_64"
+    }
+
     pub fn is_64bit(&self) -> bool {
         self.arch != "x86"
     }

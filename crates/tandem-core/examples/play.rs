@@ -96,10 +96,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
     let mut child = launch::spawn(&command)?;
     let stdout = child.stdout.take().ok_or("no stdout")?;
+    let stderr = child.stderr.take().ok_or("no stderr")?;
     tokio::spawn(async move {
         let mut lines = BufReader::new(stdout).lines();
         while let Ok(Some(line)) = lines.next_line().await {
             println!("[game] {line}");
+        }
+    });
+    tokio::spawn(async move {
+        let mut lines = BufReader::new(stderr).lines();
+        while let Ok(Some(line)) = lines.next_line().await {
+            eprintln!("[game:err] {line}");
         }
     });
 

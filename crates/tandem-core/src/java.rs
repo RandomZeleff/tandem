@@ -8,6 +8,7 @@ use serde::Deserialize;
 use crate::context::Context;
 use crate::download::{fetch_bytes, DownloadTask};
 use crate::error::{Error, Result};
+use crate::meta::rules::Environment;
 
 const RUNTIME_INDEX_URL: &str = "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
 
@@ -70,13 +71,13 @@ pub struct RuntimePlan {
     pub links: Vec<(PathBuf, String)>,
 }
 
-fn platform_key() -> Result<&'static str> {
-    let key = match (std::env::consts::OS, std::env::consts::ARCH) {
+fn platform_key(env: &Environment) -> Result<&'static str> {
+    let key = match (env.os_name, env.arch) {
         ("windows", "x86_64") => "windows-x64",
         ("windows", "x86") => "windows-x86",
-        ("windows", "aarch64") => "windows-arm64",
-        ("macos", "aarch64") => "mac-os-arm64",
-        ("macos", _) => "mac-os",
+        ("windows", "arm64") => "windows-arm64",
+        ("osx", "arm64") => "mac-os-arm64",
+        ("osx", _) => "mac-os",
         ("linux", "x86") => "linux-i386",
         ("linux", _) => "linux",
         (os, arch) => return Err(Error::UnsupportedPlatform(format!("{os}-{arch}"))),
@@ -98,11 +99,21 @@ pub fn java_executable(runtime_dir: &Path) -> PathBuf {
 
 /// Lists the files needed for `component`. If Mojang is unreachable but the runtime is
 /// already installed, returns an empty plan so the game can still start offline.
-pub async fn plan_runtime(ctx: &Context, component: &str) -> Result<RuntimePlan> {
-    let runtime_dir = ctx.data.java().join(component);
+pub async fn plan_runtime(
+    ctx: &Context,
+    component: &str,
+    env: &Environment,
+) -> Result<RuntimePlan> {
+    // Intel runtimes get their own folder so they never clash with arm64 ones.
+    let folder = if env.is_rosetta() {
+        format!("{component}-x86_64")
+    } else {
+        component.to_owned()
+    };
+    let runtime_dir = ctx.data.java().join(folder);
     let java_executable = java_executable(&runtime_dir);
 
-    let manifest = match fetch_runtime_manifest(ctx, component).await {
+    let manifest = match fetch_runtime_manifest(ctx, component, env).await {
         Ok(manifest) => manifest,
         Err(err) if java_executable.is_file() => {
             tracing::warn!(error = %err, component, "runtime manifest unreachable, using installed runtime");
@@ -149,8 +160,12 @@ pub async fn plan_runtime(ctx: &Context, component: &str) -> Result<RuntimePlan>
     Ok(plan)
 }
 
-async fn fetch_runtime_manifest(ctx: &Context, component: &str) -> Result<RuntimeManifest> {
-    let platform = platform_key()?;
+async fn fetch_runtime_manifest(
+    ctx: &Context,
+    component: &str,
+    env: &Environment,
+) -> Result<RuntimeManifest> {
+    let platform = platform_key(env)?;
     let index: RuntimeIndex =
         serde_json::from_slice(&fetch_bytes(&ctx.http, RUNTIME_INDEX_URL, None).await?)?;
     let entry = index

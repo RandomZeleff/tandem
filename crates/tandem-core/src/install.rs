@@ -13,7 +13,7 @@ use crate::java;
 use crate::meta::forge;
 use crate::meta::loader::{self, Loader};
 use crate::meta::rules::Environment;
-use crate::meta::version::{LibraryFile, VersionJson};
+use crate::meta::version::{Artifact, LibraryDownloads, LibraryFile, VersionJson};
 use crate::meta::{self, AssetIndex, ASSETS_BASE_URL};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -43,6 +43,8 @@ pub struct PreparedVersion {
     pub natives_dir: PathBuf,
     /// Directory for `${game_assets}` (legacy virtual / resources layouts).
     pub game_assets: PathBuf,
+    /// Platform the game runs as (an Intel Mac under Rosetta 2 for old versions).
+    pub env: Environment,
 }
 
 /// What to install: a vanilla version, optionally with a mod loader on top.
@@ -88,7 +90,6 @@ where
     };
     stage(Stage::Metadata);
 
-    let env = Environment::current();
     let mut version = meta::load_version(ctx, target.game_version).await?;
     let mut forge_install = None;
     if target.loader != Loader::Vanilla {
@@ -110,6 +111,16 @@ where
         };
         tracing::info!(profile = %profile.id, "applying loader profile");
         version.apply_loader(profile);
+    }
+    let env = environment_for(&version);
+    if env.os_name == "osx" {
+        upgrade_jna(&mut version);
+    }
+    if env.is_rosetta() {
+        tracing::info!(version = %version.id, "no arm64 natives, running through Rosetta 2");
+        if !rosetta_installed() {
+            return Err(Error::RosettaMissing);
+        }
     }
     let version_dir = ctx.data.version_dir(&version.id);
     let libraries_dir = ctx.data.libraries();
@@ -179,7 +190,7 @@ where
         .java_version
         .as_ref()
         .map_or(java::LEGACY_COMPONENT, |j| j.component.as_str());
-    let runtime = java::plan_runtime(ctx, component).await?;
+    let runtime = java::plan_runtime(ctx, component, &env).await?;
     tasks.extend(runtime.downloads.iter().cloned());
 
     download::download_all(&ctx.http, tasks, download::DEFAULT_CONCURRENCY, |p| {
@@ -230,7 +241,75 @@ where
         classpath,
         natives_dir,
         game_assets,
+        env,
     })
+}
+
+/// On Apple Silicon, versions before 1.19 ship no arm64 LWJGL natives (and most no
+/// arm64 Java either), so they run as an Intel Mac through Rosetta 2.
+fn environment_for(version: &VersionJson) -> Environment {
+    let env = Environment::current();
+    let needs_rosetta = env.os_name == "osx"
+        && env.arch == "arm64"
+        && !version
+            .libraries
+            .iter()
+            .any(|l| l.name.ends_with(":natives-macos-arm64"));
+    if needs_rosetta {
+        Environment::rosetta()
+    } else {
+        env
+    }
+}
+
+/// JNA before 5.13 aborts on recent macOS when a `dlopen` error message overflows its
+/// buffer (oshi probing IOKit at startup), which kills 1.17 to 1.20.2 before the
+/// first log line. Those versions get the JNA that Minecraft 1.20.4 ships.
+fn upgrade_jna(version: &mut VersionJson) {
+    const FIXED: &str = "5.13.0";
+    const JARS: [(&str, &str, u64); 2] = [
+        ("jna", "1200e7ebeedbe0d10062093f32925a912020e747", 1_879_325),
+        (
+            "jna-platform",
+            "88e9a306715e9379f3122415ef4ae759a352640d",
+            1_363_209,
+        ),
+    ];
+    for library in &mut version.libraries {
+        let mut parts = library.name.split(':');
+        let (Some("net.java.dev.jna"), Some(artifact), Some(current), None) =
+            (parts.next(), parts.next(), parts.next(), parts.next())
+        else {
+            continue;
+        };
+        let Some(&(artifact, sha1, size)) = JARS.iter().find(|(a, ..)| *a == artifact) else {
+            continue;
+        };
+        if loader::compare_versions(current, FIXED).is_ge() {
+            continue;
+        }
+        tracing::info!(
+            from = current,
+            to = FIXED,
+            artifact,
+            "upgrading JNA for macOS"
+        );
+        let path = format!("net/java/dev/jna/{artifact}/{FIXED}/{artifact}-{FIXED}.jar");
+        library.name = format!("net.java.dev.jna:{artifact}:{FIXED}");
+        library.downloads = Some(LibraryDownloads {
+            artifact: Some(Artifact {
+                url: format!("https://libraries.minecraft.net/{path}"),
+                path: Some(path),
+                sha1: sha1.to_owned(),
+                size,
+            }),
+            classifiers: Default::default(),
+        });
+    }
+}
+
+fn rosetta_installed() -> bool {
+    Path::new("/Library/Apple/usr/libexec/oah/libRosettaRuntime").exists()
 }
 
 fn artifact_task(url: &str, dest: PathBuf, sha1: &str, size: u64) -> DownloadTask {
@@ -313,4 +392,42 @@ fn copy_legacy_assets(assets: &AssetIndex, objects_dir: &Path, dest: &Path) -> R
         std::fs::copy(objects_dir.join(object.relative_path()), &target)?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn upgrades_only_old_jna() {
+        let mut version: VersionJson = serde_json::from_str(
+            r#"{
+                "id": "1.18.2", "type": "release", "mainClass": "M", "assets": "1.18",
+                "assetIndex": {"id": "1.18", "sha1": "a", "size": 1, "url": "u"},
+                "downloads": {"client": {"sha1": "b", "size": 2, "url": "c"}},
+                "libraries": [
+                    {"name": "net.java.dev.jna:jna:5.10.0"},
+                    {"name": "net.java.dev.jna:jna-platform:5.15.0"},
+                    {"name": "com.github.oshi:oshi-core:5.8.5"}
+                ]
+            }"#,
+        )
+        .unwrap();
+        upgrade_jna(&mut version);
+        let names: Vec<_> = version.libraries.iter().map(|l| l.name.as_str()).collect();
+        assert_eq!(
+            names,
+            [
+                "net.java.dev.jna:jna:5.13.0",
+                "net.java.dev.jna:jna-platform:5.15.0",
+                "com.github.oshi:oshi-core:5.8.5"
+            ]
+        );
+        let jar = version.libraries[0].artifact().unwrap();
+        assert_eq!(jar.path, "net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar");
+        assert_eq!(
+            jar.url,
+            "https://libraries.minecraft.net/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar"
+        );
+    }
 }

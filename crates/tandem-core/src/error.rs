@@ -26,6 +26,11 @@ pub enum Error {
     VersionNotFound(String),
     #[error("no Java runtime `{component}` available for {platform}")]
     JavaUnavailable { component: String, platform: String },
+    #[error(
+        "this version runs through Rosetta 2, which is not installed. \
+         Install it with: softwareupdate --install-rosetta --agree-to-license"
+    )]
+    RosettaMissing,
     #[error("unsupported platform: {0}")]
     UnsupportedPlatform(String),
     #[error("instance not found: {0}")]

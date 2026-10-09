@@ -9,7 +9,6 @@ use tokio::process::{Child, Command};
 use crate::account::Account;
 use crate::error::Result;
 use crate::install::PreparedVersion;
-use crate::meta::rules::Environment;
 
 pub const DEFAULT_MEMORY_MB: u32 = 4096;
 
@@ -32,7 +31,7 @@ pub struct GameCommand {
 }
 
 pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
-    let env = Environment::current();
+    let env = &spec.prepared.env;
     let version = &spec.prepared.version;
     let separator = if cfg!(windows) { ";" } else { ":" };
     let classpath = spec
@@ -80,7 +79,7 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
                 arguments
                     .jvm
                     .iter()
-                    .flat_map(|a| a.values(&env))
+                    .flat_map(|a| a.values(env))
                     .map(|v| substitute(v, &vars)),
             );
         }
@@ -102,7 +101,7 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
             arguments
                 .game
                 .iter()
-                .flat_map(|a| a.values(&env))
+                .flat_map(|a| a.values(env))
                 .map(|v| substitute(v, &vars)),
         ),
         (_, Some(legacy)) => args.extend(legacy.split_whitespace().map(|v| substitute(v, &vars))),

@@ -80,7 +80,9 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 ## Portage macOS
 
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
-- [ ] Apple Silicon : Mojang ne fournit ni `jre-legacy` (Java 8) ni `java-runtime-alpha` (16) en `mac-os-arm64` → versions ≤ 1.17 (et 1.18/1.19 sans natives LWJGL arm64) à lancer en mode Intel via Rosetta (runtime `mac-os` + natives x86_64)
+- [x] Apple Silicon : versions sans natives LWJGL `natives-macos-arm64` (≤ 1.18.2) lancées en mode Intel via Rosetta (runtime `mac-os` dans `java/<composant>-x86_64`, règles de libs évaluées en `osx`/`x86_64`) ; 1.19+ restent natives
+- [x] JNA < 5.13 plante au démarrage sur macOS récent (assertion `snprintf` dans `dispatch.c` quand oshi charge IOKit) → 1.17 à 1.20.2 reçoivent JNA 5.13.0 sur Mac
+- [ ] UI : si Rosetta manque (`RosettaMissing`), proposer l’installation au lieu du message brut
 - [x] Fenêtre : `titleBarStyle: Overlay` + boutons natifs sur Mac, masquer nos boutons de fenêtre façon Windows
 - [ ] CI : job macOS (`.dmg` universel x86_64 + arm64)
 - [ ] Signature + notarisation Apple (compte Apple Developer requis)
@@ -156,4 +158,5 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Fait : audit de compatibilité macOS (voir section « Portage macOS ») ; tout est poussé sur `origin/master` pour reprendre le dev sur Mac.
 - Prochaine étape : sur le Mac, `pnpm install` puis `pnpm tauri dev`, corriger ce qui casse, puis le mode Rosetta pour les vieilles versions sur Apple Silicon.
 - Sur le Mac (Apple Silicon) : build et tests OK après un correctif (`safe_relative` laissait passer `C:/…` hors Windows) ; barre de titre native (feux tricolores, logo masqué). Vanilla 1.21.4 atteint le menu en natif arm64 ; 1.16.5 échoue comme prévu (`JavaUnavailable { jre-legacy, mac-os-arm64 }`).
-- Prochaine étape : mode Rosetta pour les versions sans Java/natives arm64.
+- Mode Rosetta + correctif JNA : vérifié jusqu’au menu (exemple `play`, hors ligne) pour 1.12.2, 1.16.5, 1.17.1, 1.18.2 (Rosetta), 1.19.2, 1.20.1, 1.20.4, 1.21.4 (natif) et Forge 47.4.10 (1.20.1). L’exemple `play` affiche maintenant aussi le stderr du jeu.
+- Prochaine étape : proposer l’installation de Rosetta dans l’UI, puis le job CI macOS.
