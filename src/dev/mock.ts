@@ -14,6 +14,7 @@ import type {
   LogEntry,
   NewInstance,
   ProjectType,
+  Screenshot,
   SearchHit,
   World,
   WorldBackup,
@@ -148,6 +149,27 @@ const worldBackups: Record<string, WorldBackup[]> = {
   ],
 };
 
+const SKIES = ["#3E6FB0", "#E58B4B", "#1B2440", "#6FA8DC", "#8E5BB5"];
+const screenshots: Record<string, Screenshot[]> = {
+  "survie-avec-leo": Array.from({ length: 9 }, (_, i) => {
+    const fileName = `2026-10-0${9 - i}_18.2${i}.14.png`;
+    return {
+      fileName,
+      path: `C:\\Users\\you\\AppData\\Roaming\\Tandem\\instances\\survie-avec-leo\\screenshots\\${fileName}`,
+      takenAt: now - i * 31 * 3_600_000,
+      sizeBytes: 2_400_000 + i * 180_000,
+    };
+  }),
+};
+
+/** Fake landscape per screenshot; `#` keeps the URL's `?v=…&thumb` out of the SVG. */
+function fakeScreenshot(path: string): string {
+  const seed = [...path].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const hills = Array.from({ length: 8 }, (_, i) => `<rect x="${i * 20}" y="${50 + ((seed >> i) % 14)}" width="20" height="40" fill="#5DBB3F"/>`).join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90" shape-rendering="crispEdges"><rect width="160" height="90" fill="${SKIES[seed % SKIES.length]}"/><rect x="${20 + (seed % 100)}" y="12" width="12" height="12" fill="#F2C744"/>${hills}<rect y="72" width="160" height="18" fill="#7A5420"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}#`;
+}
+
 let accounts: Account[] = [
   { id: "a1", kind: "offline", username: "Zeleff", mcUuid: "00000000-0000-3000-8000-000000000000", isActive: true },
 ];
@@ -208,6 +230,8 @@ async function fakeLaunch(id: string) {
 
 export function installMocks() {
   mockWindows("main");
+  const w = window as unknown as { __TAURI_INTERNALS__?: Record<string, unknown> };
+  (w.__TAURI_INTERNALS__ ??= {}).convertFileSrc = fakeScreenshot;
   mockIPC(
     async (cmd, payload) => {
       const args = (payload ?? {}) as Record<string, unknown>;
@@ -291,6 +315,13 @@ export function installMocks() {
           await new Promise((r) => setTimeout(r, 1200));
           const before: WorldBackup = { world: args.world as string, fileName: `${Date.now()}-before-restore.zip`, createdAt: Date.now(), kind: "beforeRestore", sizeBytes: 97_000_000 };
           (worldBackups[args.instanceId as string] ??= []).push(before);
+          return null;
+        }
+        case "list_screenshots":
+          return [...(screenshots[args.instanceId as string] ?? [])];
+        case "delete_screenshot": {
+          const list = screenshots[args.instanceId as string] ?? [];
+          screenshots[args.instanceId as string] = list.filter((s) => s.fileName !== args.fileName);
           return null;
         }
         case "get_setting":

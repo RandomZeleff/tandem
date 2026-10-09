@@ -9,12 +9,13 @@ import { Icon, LoaderTag, XpBar } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
 import WorldsTab from "../components/WorldsTab";
 import Scene from "../components/Scene";
+import ScreenshotsTab from "../components/ScreenshotsTab";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
 import { formatBytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { navigate, refetchInstances } from "../lib/store";
 
-type Tab = "console" | "content" | "worlds" | "info";
+type Tab = "console" | "content" | "worlds" | "screenshots" | "info";
 
 function stageLabel(p: InstallProgress | undefined): string {
   if (!p || p.stage === "metadata") return "Lecture des métadonnées Mojang…";
@@ -50,6 +51,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
     { id: "console", label: "Console" },
     { id: "content", label: "Contenu" },
     { id: "worlds", label: "Mondes" },
+    { id: "screenshots", label: "Captures" },
     { id: "info", label: "Informations" },
   ];
 
@@ -161,6 +163,9 @@ export default function InstanceDetail(props: { instance: Instance }) {
             </Match>
             <Match when={tab() === "worlds"}>
               <WorldsTab instanceId={props.instance.id} locked={state().status !== "idle"} />
+            </Match>
+            <Match when={tab() === "screenshots"}>
+              <ScreenshotsTab instanceId={props.instance.id} />
             </Match>
             <Match when={tab() === "info"}>
               <dl class="panel px-corners-md grid max-w-xl grid-cols-[auto_1fr] gap-x-8 gap-y-3 p-5 text-sm">

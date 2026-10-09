@@ -18,6 +18,8 @@ pub enum Error {
     ChecksumMismatch { path: PathBuf },
     #[error("archive error: {0}")]
     Zip(#[from] zip::result::ZipError),
+    #[error("image error: {0}")]
+    Image(#[from] image::ImageError),
     #[error("could not locate the user data directory")]
     NoDataDir,
     #[error("logging setup failed: {0}")]

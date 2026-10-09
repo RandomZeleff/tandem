@@ -16,6 +16,7 @@ tauri-build = { version = "2", features = [] }
 tandem-core = { path = "../crates/tandem-core" }
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+percent-encoding = "2"
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

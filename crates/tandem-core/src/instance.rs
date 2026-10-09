@@ -90,6 +90,7 @@ pub async fn delete(ctx: &Context, id: &str) -> Result<()> {
         Err(err) if err.kind() != std::io::ErrorKind::NotFound => return Err(err.into()),
         _ => {}
     }
+    crate::screenshots::clear_thumbnails(&ctx.data, id);
     tracing::info!(%id, "instance deleted");
     Ok(())
 }

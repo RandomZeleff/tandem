@@ -9,6 +9,7 @@ use tandem_core::jvm;
 use tandem_core::logging::LogEntry;
 use tandem_core::meta::loader::{self, Loader, LoaderVersion};
 use tandem_core::meta::{self, Latest, ManifestEntry};
+use tandem_core::screenshots::{self, Screenshot};
 use tandem_core::worlds::{self, Backup, BackupKind, World};
 use tauri::{AppHandle, State};
 use tauri_plugin_opener::OpenerExt;
@@ -187,6 +188,45 @@ pub async fn open_world_backups(
     world: String,
 ) -> CommandResult<()> {
     let dir = state.ctx.data.backups().join(&instance_id).join(&world);
+    tokio::fs::create_dir_all(&dir).await?;
+    app.opener()
+        .open_path(dir.display().to_string(), None::<&str>)
+        .map_err(|e| CommandError::msg(e.to_string()))
+}
+
+#[tauri::command]
+pub async fn list_screenshots(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<Screenshot>> {
+    let dir = state.ctx.data.instance_dir(&instance_id);
+    blocking(move || Ok(screenshots::list(&dir))).await
+}
+
+#[tauri::command]
+pub async fn delete_screenshot(
+    state: State<'_, AppState>,
+    instance_id: String,
+    file_name: String,
+) -> CommandResult<()> {
+    let (data, dir) = (
+        state.ctx.data.clone(),
+        state.ctx.data.instance_dir(&instance_id),
+    );
+    blocking(move || screenshots::delete(&data, &instance_id, &dir, &file_name)).await
+}
+
+#[tauri::command]
+pub async fn open_screenshots_folder(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<()> {
+    let dir = state
+        .ctx
+        .data
+        .instance_dir(&instance_id)
+        .join("screenshots");
     tokio::fs::create_dir_all(&dir).await?;
     app.opener()
         .open_path(dir.display().to_string(), None::<&str>)

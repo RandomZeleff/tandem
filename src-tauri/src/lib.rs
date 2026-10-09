@@ -2,6 +2,7 @@ mod commands;
 mod error;
 mod game;
 mod modpack;
+mod screenshot_protocol;
 
 use tandem_core::logging::{self, LogBuffer, LogEntry, WorkerGuard};
 use tandem_core::paths::DataDir;
@@ -24,6 +25,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .register_asynchronous_uri_scheme_protocol(
+            screenshot_protocol::SCHEME,
+            screenshot_protocol::handle,
+        )
         .setup(|app| {
             let data_dir = DataDir::from_env()?;
             async_runtime::block_on(data_dir.ensure())?;
@@ -69,6 +74,9 @@ pub fn run() {
             commands::backup_world,
             commands::restore_world_backup,
             commands::open_world_backups,
+            commands::list_screenshots,
+            commands::delete_screenshot,
+            commands::open_screenshots_folder,
             commands::set_instance_memory,
             commands::search_content,
             commands::list_content,

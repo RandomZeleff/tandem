@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 
 export interface AppInfo {
   version: string;
@@ -189,6 +189,20 @@ export interface WorldBackup {
   sizeBytes: number;
 }
 
+export interface Screenshot {
+  /** File in screenshots/, which identifies the screenshot. */
+  fileName: string;
+  path: string;
+  /** Unix milliseconds. */
+  takenAt: number;
+  sizeBytes: number;
+}
+
+/** Image URL served by the backend's `tandem-shot` protocol; `thumb` asks for a small JPEG. */
+export function screenshotUrl(instanceId: string, shot: Screenshot, thumb = false): string {
+  return `${convertFileSrc(`${instanceId}/${shot.fileName}`, "tandem-shot")}?v=${shot.takenAt}${thumb ? "&thumb" : ""}`;
+}
+
 export interface PerfSuggestion {
   projectId: string;
   title: string;
@@ -249,6 +263,9 @@ export const api = {
   restoreWorldBackup: (instanceId: string, world: string, fileName: string) =>
     invoke<void>("restore_world_backup", { instanceId, world, fileName }),
   openWorldBackups: (instanceId: string, world: string) => invoke<void>("open_world_backups", { instanceId, world }),
+  listScreenshots: (instanceId: string) => invoke<Screenshot[]>("list_screenshots", { instanceId }),
+  deleteScreenshot: (instanceId: string, fileName: string) => invoke<void>("delete_screenshot", { instanceId, fileName }),
+  openScreenshotsFolder: (instanceId: string) => invoke<void>("open_screenshots_folder", { instanceId }),
   perfSuggestions: (instanceId: string) => invoke<PerfSuggestion[]>("perf_suggestions", { instanceId }),
   checkContentUpdates: (instanceId: string) => invoke<ContentUpdate[]>("check_content_updates", { instanceId }),
   /** Every outdated project when `projectIds` is omitted. */
