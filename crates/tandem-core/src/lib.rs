@@ -18,6 +18,7 @@ pub mod meta;
 pub mod paths;
 pub mod stats;
 pub mod store;
+pub mod worlds;
 
 pub use context::Context;
 pub use error::{Error, Result};

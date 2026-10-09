@@ -11,7 +11,7 @@ use tandem_core::install::{self, InstallProgress, Stage};
 use tandem_core::jvm;
 use tandem_core::launch::{self, LaunchSpec};
 use tandem_core::stats::{ProcessSampler, ProcessStats};
-use tandem_core::{Context, Error};
+use tandem_core::{worlds, Context, Error};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
 use tokio::process::Child;
@@ -24,6 +24,8 @@ pub const OUTPUT_EVENT: &str = "game://output";
 pub const STARTED_EVENT: &str = "game://started";
 pub const EXITED_EVENT: &str = "game://exited";
 pub const STATS_EVENT: &str = "game://stats";
+/// Setting (bool, on by default): back up played worlds when the game exits.
+pub const AUTO_BACKUP_SETTING: &str = "auto_backup_worlds";
 
 const PROGRESS_INTERVAL: Duration = Duration::from_millis(100);
 const STATS_INTERVAL: Duration = Duration::from_secs(2);
@@ -159,7 +161,7 @@ pub async fn launch(app: AppHandle, ctx: Context, games: Games, id: String) -> C
             games.lock().insert(id.clone(), Slot::Running(stop_tx));
             ctx.db.mark_instance_played(&id).await?;
             let _ = app.emit(STARTED_EVENT, &id);
-            tauri::async_runtime::spawn(supervise(app, games, id, child, game_dir, stop_rx));
+            tauri::async_runtime::spawn(supervise(app, ctx, games, id, child, game_dir, stop_rx));
             Ok(())
         }
         Err(err) => {
@@ -219,6 +221,7 @@ async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathB
 
 async fn supervise(
     app: AppHandle,
+    ctx: Context,
     games: Games,
     id: String,
     mut child: Child,
@@ -262,6 +265,8 @@ async fn supervise(
     for reader in readers {
         let _ = reader.await;
     }
+    // Before freeing the slot, so the game cannot be relaunched mid-backup.
+    backup_played_worlds(&ctx, &id, &game_dir, started).await;
     games.lock().remove(&id);
 
     let code = status.as_ref().ok().and_then(|s| s.code());
@@ -301,6 +306,24 @@ async fn supervise(
             analysis,
         },
     );
+}
+
+/// Zips the worlds this session touched, unless the player turned it off.
+async fn backup_played_worlds(ctx: &Context, id: &str, game_dir: &Path, since: SystemTime) {
+    let enabled = ctx
+        .db
+        .get_setting::<bool>(AUTO_BACKUP_SETTING)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(true);
+    if !enabled {
+        return;
+    }
+    let (data, id, dir) = (ctx.data.clone(), id.to_owned(), game_dir.to_owned());
+    let _ =
+        tauri::async_runtime::spawn_blocking(move || worlds::auto_backup(&data, &id, &dir, since))
+            .await;
 }
 
 /// Emits the game's memory and CPU use every few seconds until the process is gone.

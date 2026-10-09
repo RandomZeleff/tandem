@@ -129,3 +129,11 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Causes connues : manque de mémoire (lien vers le réglage), mauvaise version de Java, pilote graphique / OpenGL, mods incompatibles, plantage natif de la JVM.
 - Un suspect installé via Tandem peut être désactivé en un clic depuis le panneau ; « Voir le rapport » l’ouvre dans le Finder / l’Explorateur.
 - Statut : validé
+
+### D22 · 2026-10-09 · Mondes et sauvegardes
+- Onglet « Mondes » par instance : nom (lu dans `level.dat`, NBT gzip), mode de jeu, version, taille, dernière partie, icône.
+- Sauvegardes en zip dans `backups/<instance>/<monde>/<ms>-<type>.zip`, hors du dossier de l’instance (supprimer une instance ne supprime pas ses sauvegardes) ; `session.lock` exclu.
+- Sauvegarde automatique à la fermeture du jeu des mondes joués pendant la session (`level.dat` modifié), activée par défaut (réglage `auto_backup_worlds`) ; 5 automatiques gardées par monde, les manuelles jamais supprimées. Faite avant de libérer l’instance, pour qu’on ne puisse pas relancer pendant la copie.
+- Restaurer remplace le monde après en avoir sauvegardé l’état actuel (« avant restauration ») : une restauration s’annule toujours. Sauvegarde et restauration refusées pendant que le jeu tourne (fichiers en cours d’écriture).
+- Pas de suppression de monde depuis Tandem pour l’instant (risque de perte, le Finder / l’Explorateur suffit).
+- Statut : validé

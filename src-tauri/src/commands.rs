@@ -9,6 +9,7 @@ use tandem_core::jvm;
 use tandem_core::logging::LogEntry;
 use tandem_core::meta::loader::{self, Loader, LoaderVersion};
 use tandem_core::meta::{self, Latest, ManifestEntry};
+use tandem_core::worlds::{self, Backup, BackupKind, World};
 use tauri::{AppHandle, State};
 use tauri_plugin_opener::OpenerExt;
 
@@ -125,6 +126,80 @@ pub async fn set_instance_memory(
         return Err(CommandError::msg("at least 512 MB of memory is needed"));
     }
     Ok(state.ctx.db.set_instance_memory(&id, memory_mb).await?)
+}
+
+#[tauri::command]
+pub async fn list_worlds(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<World>> {
+    let dir = state.ctx.data.instance_dir(&instance_id);
+    blocking(move || Ok(worlds::list(&dir))).await
+}
+
+#[tauri::command]
+pub async fn list_world_backups(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<Backup>> {
+    let data = state.ctx.data.clone();
+    blocking(move || Ok(worlds::list_backups(&data, &instance_id))).await
+}
+
+#[tauri::command]
+pub async fn backup_world(
+    state: State<'_, AppState>,
+    instance_id: String,
+    world: String,
+) -> CommandResult<Backup> {
+    if state.games.is_busy(&instance_id) {
+        return Err(CommandError::msg("stop the game before backing up a world"));
+    }
+    let (data, dir) = (
+        state.ctx.data.clone(),
+        state.ctx.data.instance_dir(&instance_id),
+    );
+    blocking(move || worlds::backup(&data, &instance_id, &dir, &world, BackupKind::Manual)).await
+}
+
+#[tauri::command]
+pub async fn restore_world_backup(
+    state: State<'_, AppState>,
+    instance_id: String,
+    world: String,
+    file_name: String,
+) -> CommandResult<()> {
+    if state.games.is_busy(&instance_id) {
+        return Err(CommandError::msg("stop the game before restoring a world"));
+    }
+    let (data, dir) = (
+        state.ctx.data.clone(),
+        state.ctx.data.instance_dir(&instance_id),
+    );
+    blocking(move || worlds::restore(&data, &instance_id, &dir, &world, &file_name)).await
+}
+
+#[tauri::command]
+pub async fn open_world_backups(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    world: String,
+) -> CommandResult<()> {
+    let dir = state.ctx.data.backups().join(&instance_id).join(&world);
+    tokio::fs::create_dir_all(&dir).await?;
+    app.opener()
+        .open_path(dir.display().to_string(), None::<&str>)
+        .map_err(|e| CommandError::msg(e.to_string()))
+}
+
+async fn blocking<T: Send + 'static>(
+    f: impl FnOnce() -> tandem_core::Result<T> + Send + 'static,
+) -> CommandResult<T> {
+    tauri::async_runtime::spawn_blocking(f)
+        .await
+        .map_err(|e| CommandError::msg(e.to_string()))?
+        .map_err(Into::into)
 }
 
 #[tauri::command]

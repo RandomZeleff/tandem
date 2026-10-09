@@ -75,6 +75,11 @@ impl DataDir {
         self.root.join("cache")
     }
 
+    /// World backups, one folder per instance.
+    pub fn backups(&self) -> PathBuf {
+        self.root.join("backups")
+    }
+
     pub fn logs(&self) -> PathBuf {
         self.root.join("logs")
     }

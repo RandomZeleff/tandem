@@ -164,6 +164,31 @@ export interface GameStats {
   cpuPercent: number;
 }
 
+export type GameMode = "survival" | "creative" | "adventure" | "spectator" | "hardcore";
+
+export interface World {
+  /** Folder in saves/, which identifies the world. */
+  folder: string;
+  name: string;
+  /** Unix milliseconds. */
+  lastPlayed: number | null;
+  gameMode: GameMode;
+  version: string | null;
+  sizeBytes: number;
+  /** icon.png as a data URL. */
+  icon: string | null;
+}
+
+export type BackupKind = "manual" | "auto" | "beforeRestore";
+
+export interface WorldBackup {
+  world: string;
+  fileName: string;
+  createdAt: number;
+  kind: BackupKind;
+  sizeBytes: number;
+}
+
 export interface PerfSuggestion {
   projectId: string;
   title: string;
@@ -218,6 +243,12 @@ export const api = {
     invoke<InstalledContent[]>("install_content", { instanceId, projectId }),
   removeContent: (instanceId: string, projectId: string) =>
     invoke<void>("remove_content", { instanceId, projectId }),
+  listWorlds: (instanceId: string) => invoke<World[]>("list_worlds", { instanceId }),
+  listWorldBackups: (instanceId: string) => invoke<WorldBackup[]>("list_world_backups", { instanceId }),
+  backupWorld: (instanceId: string, world: string) => invoke<WorldBackup>("backup_world", { instanceId, world }),
+  restoreWorldBackup: (instanceId: string, world: string, fileName: string) =>
+    invoke<void>("restore_world_backup", { instanceId, world, fileName }),
+  openWorldBackups: (instanceId: string, world: string) => invoke<void>("open_world_backups", { instanceId, world }),
   perfSuggestions: (instanceId: string) => invoke<PerfSuggestion[]>("perf_suggestions", { instanceId }),
   checkContentUpdates: (instanceId: string) => invoke<ContentUpdate[]>("check_content_updates", { instanceId }),
   /** Every outdated project when `projectIds` is omitted. */

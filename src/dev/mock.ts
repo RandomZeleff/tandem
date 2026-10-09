@@ -15,6 +15,8 @@ import type {
   NewInstance,
   ProjectType,
   SearchHit,
+  World,
+  WorldBackup,
 } from "../lib/api";
 
 const now = Date.now();
@@ -131,6 +133,20 @@ function fakeInstall(instanceId: string, projectId: string): InstalledContent[] 
 }
 
 const settings: Record<string, unknown> = {};
+
+const ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 4" shape-rendering="crispEdges"><rect width="4" height="4" fill="#5DBB3F"/><rect y="2" width="4" height="2" fill="#7A5420"/></svg>');
+const worlds: Record<string, World[]> = {
+  "survie-avec-leo": [
+    { folder: "Survie", name: "Survie avec Léo", lastPlayed: now - 20 * 3_600_000, gameMode: "survival", version: "26.3", sizeBytes: 182_000_000, icon: ICON },
+    { folder: "Test redstone", name: "Test redstone", lastPlayed: now - 9 * 86_400_000, gameMode: "creative", version: "26.3", sizeBytes: 12_400_000, icon: null },
+  ],
+};
+const worldBackups: Record<string, WorldBackup[]> = {
+  "survie-avec-leo": [
+    { world: "Survie", fileName: "1-auto.zip", createdAt: now - 20 * 3_600_000, kind: "auto", sizeBytes: 96_000_000 },
+    { world: "Survie", fileName: "2-manual.zip", createdAt: now - 4 * 86_400_000, kind: "manual", sizeBytes: 91_000_000 },
+  ],
+};
 
 let accounts: Account[] = [
   { id: "a1", kind: "offline", username: "Zeleff", mcUuid: "00000000-0000-3000-8000-000000000000", isActive: true },
@@ -260,6 +276,22 @@ export function installMocks() {
           return CATALOGUE.mod
             .filter((h) => ["AANobbMI", "gvQqBUqZ", "uXXizFIs", "LQ3K71Q1"].includes(h.projectId) && !installed.has(h.projectId))
             .map((h) => ({ projectId: h.projectId, title: h.title, iconUrl: h.iconUrl }));
+        }
+        case "list_worlds":
+          return [...(worlds[args.instanceId as string] ?? [])];
+        case "list_world_backups":
+          return [...(worldBackups[args.instanceId as string] ?? [])].sort((a, b) => b.createdAt - a.createdAt);
+        case "backup_world": {
+          await new Promise((r) => setTimeout(r, 1200));
+          const backup: WorldBackup = { world: args.world as string, fileName: `${Date.now()}-manual.zip`, createdAt: Date.now(), kind: "manual", sizeBytes: 97_000_000 };
+          (worldBackups[args.instanceId as string] ??= []).push(backup);
+          return backup;
+        }
+        case "restore_world_backup": {
+          await new Promise((r) => setTimeout(r, 1200));
+          const before: WorldBackup = { world: args.world as string, fileName: `${Date.now()}-before-restore.zip`, createdAt: Date.now(), kind: "beforeRestore", sizeBytes: 97_000_000 };
+          (worldBackups[args.instanceId as string] ??= []).push(before);
+          return null;
         }
         case "get_setting":
           return settings[args.key as string] ?? null;
