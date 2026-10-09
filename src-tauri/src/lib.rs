@@ -6,6 +6,7 @@ mod screenshot_protocol;
 
 use std::sync::OnceLock;
 use std::time::Instant;
+use tandem_core::content::project::ProjectCache;
 use tandem_core::logging::{self, LogBuffer, LogEntry, WorkerGuard};
 use tandem_core::paths::DataDir;
 use tandem_core::Context;
@@ -27,6 +28,7 @@ pub struct AppState {
     pub ctx: Context,
     pub logs: LogBuffer,
     pub games: game::Games,
+    pub projects: ProjectCache,
     _log_guard: WorkerGuard,
 }
 
@@ -65,6 +67,7 @@ pub fn run() {
                 ctx,
                 logs,
                 games: game::Games::default(),
+                projects: ProjectCache::default(),
                 _log_guard: log_guard,
             });
             // Tauri creates the window and its webview before `setup`: most of this is theirs.
@@ -95,6 +98,10 @@ pub fn run() {
             commands::search_content,
             commands::list_content,
             commands::install_content,
+            commands::project_details,
+            commands::project_versions,
+            commands::version_changelog,
+            commands::version_dependencies,
             commands::remove_content,
             commands::check_content_updates,
             commands::perf_suggestions,

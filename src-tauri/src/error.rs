@@ -13,6 +13,9 @@ impl CommandError {
 /// Sent instead of the message so the frontend can offer to install Rosetta.
 pub const ROSETTA_MISSING: &str = "rosetta-missing";
 
+/// Sent when Modrinth does not know a project, so the page can say so.
+pub const PROJECT_NOT_FOUND: &str = "project-not-found";
+
 impl From<tandem_core::Error> for CommandError {
     fn from(err: tandem_core::Error) -> Self {
         match err {

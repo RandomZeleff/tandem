@@ -3,6 +3,7 @@ use serde_json::Value;
 use tandem_core::account::Account;
 use tandem_core::content::deps::{self, Dependent, Provider};
 use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
+use tandem_core::content::project::{self, DependencyItem, ProjectDetails, ProjectVersions};
 use tandem_core::content::{self, mrpack, perf, ContentUpdate, InstalledContent};
 use tandem_core::install;
 use tandem_core::instance::{self, Instance, NewInstance};
@@ -15,7 +16,7 @@ use tandem_core::worlds::{self, Backup, BackupKind, World};
 use tauri::{AppHandle, State};
 use tauri_plugin_opener::OpenerExt;
 
-use crate::error::{CommandError, CommandResult};
+use crate::error::{CommandError, CommandResult, PROJECT_NOT_FOUND};
 use crate::{game, modpack, AppState};
 
 #[derive(Serialize)]
@@ -288,9 +289,59 @@ pub async fn install_content(
     state: State<'_, AppState>,
     instance_id: String,
     project_id: String,
+    version_id: Option<String>,
 ) -> CommandResult<Vec<InstalledContent>> {
     let instance = state.ctx.db.get_instance(&instance_id).await?;
-    Ok(content::install(&state.ctx, &instance, &project_id, None).await?)
+    Ok(content::install(&state.ctx, &instance, &project_id, version_id.as_deref()).await?)
+}
+
+/// Everything a project page shows (id or slug).
+#[tauri::command]
+pub async fn project_details(
+    state: State<'_, AppState>,
+    id: String,
+) -> CommandResult<ProjectDetails> {
+    match project::details(&state.ctx, &state.projects, &id).await {
+        Ok(details) => Ok((*details).clone()),
+        Err(tandem_core::Error::HttpStatus { status: 404, .. }) => {
+            Err(CommandError::msg(PROJECT_NOT_FOUND))
+        }
+        Err(err) => Err(err.into()),
+    }
+}
+
+/// Versions of a project, marked compatible with the instance when one is given.
+#[tauri::command]
+pub async fn project_versions(
+    state: State<'_, AppState>,
+    project_id: String,
+    instance_id: Option<String>,
+) -> CommandResult<ProjectVersions> {
+    let instance = match &instance_id {
+        Some(id) => Some(state.ctx.db.get_instance(id).await?),
+        None => None,
+    };
+    let target = instance.as_ref().map(Into::into);
+    Ok(project::versions(&state.ctx, &state.projects, &project_id, target).await?)
+}
+
+#[tauri::command]
+pub async fn version_changelog(
+    state: State<'_, AppState>,
+    project_id: String,
+    version_id: String,
+) -> CommandResult<String> {
+    Ok(project::changelog(&state.ctx, &state.projects, &project_id, &version_id).await?)
+}
+
+/// Dependencies of a version, or the content of a modpack version (`embedded`).
+#[tauri::command]
+pub async fn version_dependencies(
+    state: State<'_, AppState>,
+    project_id: String,
+    version_id: String,
+) -> CommandResult<Vec<DependencyItem>> {
+    Ok(project::dependencies(&state.ctx, &state.projects, &project_id, &version_id).await?)
 }
 
 #[tauri::command]

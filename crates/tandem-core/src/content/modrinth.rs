@@ -12,6 +12,8 @@ use crate::error::{Error, Result};
 use crate::meta::loader::Loader;
 
 const API: &str = "https://api.modrinth.com/v2";
+/// Organizations only exist in the v3 API.
+const API_V3: &str = "https://api.modrinth.com/v3";
 
 /// Modpack loaders Tandem can launch.
 pub const MODPACK_LOADERS: &[&str] = &["fabric", "quilt", "forge", "neoforge"];
@@ -88,18 +90,153 @@ pub struct SearchHit {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Project {
     pub id: String,
+    #[serde(default)]
+    pub slug: String,
     pub title: String,
+    /// One-line summary.
+    #[serde(default)]
+    pub description: String,
     pub project_type: String,
     #[serde(default)]
     pub icon_url: Option<String>,
+    #[serde(default)]
+    pub downloads: u64,
+}
+
+/// Everything Modrinth says about a project, for its page.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ProjectPage {
+    pub id: String,
+    pub slug: String,
+    pub project_type: String,
+    pub title: String,
+    #[serde(default)]
+    pub description: String,
+    /// Long description, Markdown mixed with HTML.
+    #[serde(default)]
+    pub body: String,
+    #[serde(default)]
+    pub icon_url: Option<String>,
+    #[serde(default)]
+    pub color: Option<u32>,
+    #[serde(default)]
+    pub organization: Option<String>,
+    #[serde(default)]
+    pub published: String,
+    #[serde(default)]
+    pub updated: String,
+    #[serde(default)]
+    pub downloads: u64,
+    #[serde(default)]
+    pub followers: u64,
+    #[serde(default)]
+    pub categories: Vec<String>,
+    #[serde(default)]
+    pub additional_categories: Vec<String>,
+    #[serde(default)]
+    pub loaders: Vec<String>,
+    #[serde(default)]
+    pub game_versions: Vec<String>,
+    /// `required`, `optional`, `unsupported` or `unknown`.
+    #[serde(default)]
+    pub client_side: String,
+    #[serde(default)]
+    pub server_side: String,
+    #[serde(default)]
+    pub license: Option<License>,
+    #[serde(default)]
+    pub issues_url: Option<String>,
+    #[serde(default)]
+    pub source_url: Option<String>,
+    #[serde(default)]
+    pub wiki_url: Option<String>,
+    #[serde(default)]
+    pub discord_url: Option<String>,
+    #[serde(default)]
+    pub donation_urls: Vec<DonationUrl>,
+    #[serde(default)]
+    pub gallery: Vec<GalleryImage>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct License {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub url: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DonationUrl {
+    #[serde(default)]
+    pub platform: String,
+    pub url: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GalleryImage {
+    /// Reduced image, for thumbnails.
+    pub url: String,
+    #[serde(default)]
+    pub raw_url: Option<String>,
+    #[serde(default)]
+    pub featured: bool,
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub ordering: i64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TeamMember {
+    pub user: User,
+    #[serde(default)]
+    pub role: String,
+    #[serde(default)]
+    pub ordering: i64,
+    #[serde(default = "accepted")]
+    pub accepted: bool,
+}
+
+fn accepted() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct User {
+    pub username: String,
+    #[serde(default)]
+    pub avatar_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Organization {
+    pub slug: String,
+    pub name: String,
+    #[serde(default)]
+    pub icon_url: Option<String>,
+    #[serde(default)]
+    pub members: Vec<TeamMember>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Version {
     pub id: String,
     pub project_id: String,
+    #[serde(default)]
+    pub name: String,
     pub version_number: String,
     pub version_type: String,
+    /// Markdown; absent when the request asked to leave it out.
+    #[serde(default)]
+    pub changelog: Option<String>,
+    #[serde(default)]
+    pub downloads: u64,
+    #[serde(default)]
+    pub featured: bool,
     /// RFC 3339 in UTC, so string order is chronological.
     #[serde(default)]
     pub date_published: String,
@@ -164,7 +301,11 @@ pub fn mod_loaders(loader: Loader) -> &'static [&'static str] {
 }
 
 fn url(segments: &[&str]) -> Result<Url> {
-    let mut url = Url::parse(API).map_err(|e| Error::InvalidInput(e.to_string()))?;
+    url_at(API, segments)
+}
+
+fn url_at(base: &str, segments: &[&str]) -> Result<Url> {
+    let mut url = Url::parse(base).map_err(|e| Error::InvalidInput(e.to_string()))?;
     url.path_segments_mut()
         .map_err(|()| Error::InvalidInput("bad API URL".into()))?
         .extend(segments);
@@ -213,6 +354,23 @@ pub async fn search(ctx: &Context, filter: &SearchFilter<'_>) -> Result<SearchRe
 
 pub async fn project(ctx: &Context, id_or_slug: &str) -> Result<Project> {
     get(ctx, url(&["project", id_or_slug])?).await
+}
+
+pub async fn project_page(ctx: &Context, id_or_slug: &str) -> Result<ProjectPage> {
+    get(ctx, url(&["project", id_or_slug])?).await
+}
+
+pub async fn members(ctx: &Context, project_id: &str) -> Result<Vec<TeamMember>> {
+    get(ctx, url(&["project", project_id, "members"])?).await
+}
+
+pub async fn organization(ctx: &Context, id: &str) -> Result<Organization> {
+    get(ctx, url_at(API_V3, &["organization", id])?).await
+}
+
+/// Every version of a project with its changelog, newest first.
+pub async fn all_versions(ctx: &Context, project_id: &str) -> Result<Vec<Version>> {
+    get(ctx, url(&["project", project_id, "version"])?).await
 }
 
 pub async fn version(ctx: &Context, id: &str) -> Result<Version> {
