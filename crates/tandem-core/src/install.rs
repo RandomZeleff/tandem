@@ -308,7 +308,7 @@ fn upgrade_jna(version: &mut VersionJson) {
     }
 }
 
-fn rosetta_installed() -> bool {
+pub fn rosetta_installed() -> bool {
     Path::new("/Library/Apple/usr/libexec/oah/libRosettaRuntime").exists()
 }
 

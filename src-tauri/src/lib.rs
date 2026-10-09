@@ -76,6 +76,7 @@ pub fn run() {
             commands::open_instance_folder,
             commands::launch_instance,
             commands::stop_instance,
+            commands::install_rosetta,
             commands::running_instances,
             commands::list_accounts,
             commands::add_offline_account,

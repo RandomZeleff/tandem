@@ -10,9 +10,15 @@ impl CommandError {
     }
 }
 
+/// Sent instead of the message so the frontend can offer to install Rosetta.
+pub const ROSETTA_MISSING: &str = "rosetta-missing";
+
 impl From<tandem_core::Error> for CommandError {
     fn from(err: tandem_core::Error) -> Self {
-        Self(err.to_string())
+        match err {
+            tandem_core::Error::RosettaMissing => Self::msg(ROSETTA_MISSING),
+            err => Self(err.to_string()),
+        }
     }
 }
 

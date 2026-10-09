@@ -1,8 +1,9 @@
 import { Match, onMount, Show, Switch } from "solid-js";
 import NewInstanceDialog from "./components/NewInstanceDialog";
+import RosettaDialog from "./components/RosettaDialog";
 import Sidebar from "./components/Sidebar";
 import TitleBar from "./components/TitleBar";
-import { onGamePlayed, startGameEvents } from "./lib/games";
+import { onGamePlayed, rosettaPrompt, setRosettaPrompt, startGameEvents } from "./lib/games";
 import { startLogStream } from "./lib/logs";
 import {
   instances,
@@ -80,6 +81,10 @@ function App() {
             }}
           />
         )}
+      </Show>
+
+      <Show when={rosettaPrompt()} keyed>
+        {(id) => <RosettaDialog instanceId={id} onClose={() => setRosettaPrompt(null)} />}
       </Show>
     </div>
   );

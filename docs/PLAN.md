@@ -82,7 +82,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
 - [x] Apple Silicon : versions sans natives LWJGL `natives-macos-arm64` (≤ 1.18.2) lancées en mode Intel via Rosetta (runtime `mac-os` dans `java/<composant>-x86_64`, règles de libs évaluées en `osx`/`x86_64`) ; 1.19+ restent natives
 - [x] JNA < 5.13 plante au démarrage sur macOS récent (assertion `snprintf` dans `dispatch.c` quand oshi charge IOKit) → 1.17 à 1.20.2 reçoivent JNA 5.13.0 sur Mac
-- [ ] UI : si Rosetta manque (`RosettaMissing`), proposer l’installation au lieu du message brut
+- [x] UI : si Rosetta manque (`RosettaMissing`), fenêtre qui propose de l’installer (`softwareupdate --install-rosetta` derrière l’invite administrateur de macOS), puis relance l’instance
 - [x] Fenêtre : `titleBarStyle: Overlay` + boutons natifs sur Mac, masquer nos boutons de fenêtre façon Windows
 - [ ] CI : job macOS (`.dmg` universel x86_64 + arm64)
 - [ ] Signature + notarisation Apple (compte Apple Developer requis)
@@ -159,4 +159,5 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Prochaine étape : sur le Mac, `pnpm install` puis `pnpm tauri dev`, corriger ce qui casse, puis le mode Rosetta pour les vieilles versions sur Apple Silicon.
 - Sur le Mac (Apple Silicon) : build et tests OK après un correctif (`safe_relative` laissait passer `C:/…` hors Windows) ; barre de titre native (feux tricolores, logo masqué). Vanilla 1.21.4 atteint le menu en natif arm64 ; 1.16.5 échoue comme prévu (`JavaUnavailable { jre-legacy, mac-os-arm64 }`).
 - Mode Rosetta + correctif JNA : vérifié jusqu’au menu (exemple `play`, hors ligne) pour 1.12.2, 1.16.5, 1.17.1, 1.18.2 (Rosetta), 1.19.2, 1.20.1, 1.20.4, 1.21.4 (natif) et Forge 47.4.10 (1.20.1). L’exemple `play` affiche maintenant aussi le stderr du jeu.
-- Prochaine étape : proposer l’installation de Rosetta dans l’UI, puis le job CI macOS.
+- Installation de Rosetta depuis l’UI : parcours vérifié avec le backend simulé (`pnpm dev` dans le navigateur, l’instance 1.12.2 du mock réclame Rosetta) ; le vrai `osascript` n’a pas pu être testé, Rosetta étant déjà installé sur ce Mac.
+- Prochaine étape : job CI macOS (`.dmg` universel).

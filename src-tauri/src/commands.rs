@@ -3,6 +3,7 @@ use serde_json::Value;
 use tandem_core::account::Account;
 use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
 use tandem_core::content::{self, mrpack, ContentUpdate, InstalledContent};
+use tandem_core::install;
 use tandem_core::instance::{self, Instance, NewInstance};
 use tandem_core::logging::LogEntry;
 use tandem_core::meta::loader::{self, Loader, LoaderVersion};
@@ -240,6 +241,39 @@ pub async fn launch_instance(
     id: String,
 ) -> CommandResult<()> {
     game::launch(app, state.ctx.clone(), state.games.clone(), id).await
+}
+
+/// Installs Rosetta 2 behind macOS's administrator prompt. `false` if the user
+/// cancels the prompt.
+#[tauri::command]
+pub async fn install_rosetta() -> CommandResult<bool> {
+    if !cfg!(target_os = "macos") {
+        return Err(CommandError::msg("Rosetta only exists on macOS"));
+    }
+    let script = r#"do shell script "/usr/sbin/softwareupdate --install-rosetta --agree-to-license" with administrator privileges"#;
+    let output = tokio::process::Command::new("/usr/bin/osascript")
+        .args(["-e", script])
+        .output()
+        .await?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        // -128: the user dismissed the password prompt.
+        if stderr.contains("(-128)") {
+            return Ok(false);
+        }
+        tracing::error!(error = %stderr.trim(), "Rosetta install failed");
+        return Err(CommandError::msg(format!(
+            "Rosetta installation failed: {}",
+            stderr.trim()
+        )));
+    }
+    if !install::rosetta_installed() {
+        return Err(CommandError::msg(
+            "Rosetta is still missing after installation",
+        ));
+    }
+    tracing::info!("Rosetta installed");
+    Ok(true)
 }
 
 #[tauri::command]

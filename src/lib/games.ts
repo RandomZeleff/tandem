@@ -5,6 +5,7 @@ import {
   api,
   errorMessage,
   EVENTS,
+  ROSETTA_MISSING,
   type GameExited,
   type GameOutput,
   type InstallProgress,
@@ -30,8 +31,10 @@ const [games, setGames] = createStore<Record<string, GameState>>({});
 const [output, setOutput] = createStore<Record<string, OutputLine[]>>({});
 /** Instance whose console the bottom panel shows (the last one launched). */
 const [consoleInstance, setConsoleInstance] = createSignal<string | null>(null);
+/** Instance whose launch is waiting for Rosetta to be installed. */
+const [rosettaPrompt, setRosettaPrompt] = createSignal<string | null>(null);
 
-export { games, output, consoleInstance, setConsoleInstance };
+export { games, output, consoleInstance, setConsoleInstance, rosettaPrompt, setRosettaPrompt };
 
 export function gameState(id: string): GameState {
   return games[id] ?? { status: "idle" };
@@ -85,7 +88,13 @@ export async function launch(id: string) {
   try {
     await api.launchInstance(id);
   } catch (err) {
-    setGames(id, { status: "idle", error: errorMessage(err), progress: undefined });
+    const message = errorMessage(err);
+    if (message === ROSETTA_MISSING) {
+      setGames(id, { status: "idle", progress: undefined });
+      setRosettaPrompt(id);
+      return;
+    }
+    setGames(id, { status: "idle", error: message, progress: undefined });
   }
 }
 

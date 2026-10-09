@@ -137,6 +137,9 @@ const logs: LogEntry[] = [
 ];
 
 /** Simulates an install then a running game, emitting the real event names. */
+/** The 1.12.2 instance asks for Rosetta until it is "installed" once. */
+let rosettaInstalled = false;
+
 async function fakeLaunch(id: string) {
   const total = 331_000_000;
   for (let i = 0; i <= 20; i++) {
@@ -276,8 +279,15 @@ export function installMocks() {
         case "export_modpack":
           return null;
         case "launch_instance":
+          if (!rosettaInstalled && instances.find((i) => i.id === args.id)?.gameVersion === "1.12.2") {
+            throw "rosetta-missing";
+          }
           void fakeLaunch(args.id as string);
           return null;
+        case "install_rosetta":
+          await new Promise((r) => setTimeout(r, 1500));
+          rosettaInstalled = true;
+          return true;
         case "stop_instance":
           await emit("game://exited", { instanceId: args.id, code: null, stopped: true, crashReport: null });
           return true;

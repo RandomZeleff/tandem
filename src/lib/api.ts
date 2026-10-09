@@ -167,6 +167,8 @@ export const api = {
   openInstanceFolder: (id: string) => invoke<void>("open_instance_folder", { id }),
   launchInstance: (id: string) => invoke<void>("launch_instance", { id }),
   stopInstance: (id: string) => invoke<boolean>("stop_instance", { id }),
+  /** `false` when the user dismisses macOS's password prompt. */
+  installRosetta: () => invoke<boolean>("install_rosetta"),
   runningInstances: () => invoke<string[]>("running_instances"),
 
   searchContent: (query: string, kind: ProjectType, instanceId: string | null, offset = 0) =>
@@ -194,6 +196,9 @@ export const api = {
   setActiveAccount: (id: string) => invoke<Account>("set_active_account", { id }),
   removeAccount: (id: string) => invoke<void>("remove_account", { id }),
 };
+
+/** Launch error meaning the version needs Rosetta 2, which is not installed. */
+export const ROSETTA_MISSING = "rosetta-missing";
 
 /** Tauri rejects with the serialized CommandError string; normalise anything else. */
 export function errorMessage(err: unknown): string {
