@@ -141,6 +141,12 @@ export interface GameExited {
   crashReport: string | null;
 }
 
+export interface MemoryInfo {
+  /** What "automatic" gives this instance right now (depends on its mods). */
+  autoMb: number;
+  totalMb: number;
+}
+
 export const EVENTS = {
   log: "log://entry",
   progress: "install://progress",
@@ -164,6 +170,10 @@ export const api = {
   listInstances: () => invoke<Instance[]>("list_instances"),
   createInstance: (instance: NewInstance) => invoke<Instance>("create_instance", { instance }),
   deleteInstance: (id: string) => invoke<void>("delete_instance", { id }),
+  memoryInfo: (id: string) => invoke<MemoryInfo>("memory_info", { id }),
+  /** `null` goes back to automatic memory. */
+  setInstanceMemory: (id: string, memoryMb: number | null) =>
+    invoke<void>("set_instance_memory", { id, memoryMb }),
   openInstanceFolder: (id: string) => invoke<void>("open_instance_folder", { id }),
   launchInstance: (id: string) => invoke<void>("launch_instance", { id }),
   stopInstance: (id: string) => invoke<boolean>("stop_instance", { id }),

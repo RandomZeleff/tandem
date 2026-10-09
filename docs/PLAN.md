@@ -49,7 +49,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 ## Phase 4 — Performance & UX
 
-- [ ] Presets JVM (RAM auto selon machine, GC flags)
+- [x] Presets JVM (RAM auto selon machine, GC flags) — D18 ; mémoire réglable par instance dans l’onglet Informations
 - [ ] Suggestion de mods de perf selon loader (Sodium, Lithium, FerriteCore, ModernFix…)
 - [ ] Gestion des instances en cours : RAM/CPU, logs live, kill, plusieurs instances simultanées
 - [ ] Analyse de crash (lecture du crash report, mod coupable probable)
@@ -160,4 +160,6 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Sur le Mac (Apple Silicon) : build et tests OK après un correctif (`safe_relative` laissait passer `C:/…` hors Windows) ; barre de titre native (feux tricolores, logo masqué). Vanilla 1.21.4 atteint le menu en natif arm64 ; 1.16.5 échoue comme prévu (`JavaUnavailable { jre-legacy, mac-os-arm64 }`).
 - Mode Rosetta + correctif JNA : vérifié jusqu’au menu (exemple `play`, hors ligne) pour 1.12.2, 1.16.5, 1.17.1, 1.18.2 (Rosetta), 1.19.2, 1.20.1, 1.20.4, 1.21.4 (natif) et Forge 47.4.10 (1.20.1). L’exemple `play` affiche maintenant aussi le stderr du jeu.
 - Installation de Rosetta depuis l’UI : parcours vérifié avec le backend simulé (`pnpm dev` dans le navigateur, l’instance 1.12.2 du mock réclame Rosetta) ; le vrai `osascript` n’a pas pu être testé, Rosetta étant déjà installé sur ce Mac.
-- Prochaine étape : job CI macOS (`.dmg` universel).
+- CI : lint/tests aussi sur macOS, job « Build macOS bundle » (`.dmg` universel non signé, artefact `tandem-macos`), tout vert.
+- Phase 4 : mémoire automatique + flags G1 (D18), sélecteur de mémoire dans l’onglet Informations ; flags vérifiés sur Java 8 (1.16.5, Rosetta), Java 17 (Forge 1.20.1) et Java 21 (1.21.4).
+- Prochaine étape : suite de la Phase 4 (suggestion de mods de perf, suivi RAM/CPU des instances).

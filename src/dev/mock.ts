@@ -278,6 +278,15 @@ export function installMocks() {
         }
         case "export_modpack":
           return null;
+        case "memory_info": {
+          const mods = content[args.id as string]?.filter((c) => c.kind === "mod").length ?? 0;
+          return { autoMb: mods === 0 ? 2048 : mods <= 50 ? 4096 : 6144, totalMb: 16384 };
+        }
+        case "set_instance_memory": {
+          const instance = instances.find((i) => i.id === args.id)!;
+          instance.memoryMb = args.memoryMb as number | null;
+          return null;
+        }
         case "launch_instance":
           if (!rosettaInstalled && instances.find((i) => i.id === args.id)?.gameVersion === "1.12.2") {
             throw "rosetta-missing";

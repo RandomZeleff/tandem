@@ -63,6 +63,8 @@ pub fn run() {
             commands::list_instances,
             commands::create_instance,
             commands::delete_instance,
+            commands::memory_info,
+            commands::set_instance_memory,
             commands::search_content,
             commands::list_content,
             commands::install_content,

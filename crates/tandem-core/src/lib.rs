@@ -10,6 +10,7 @@ pub mod error;
 pub mod install;
 pub mod instance;
 pub mod java;
+pub mod jvm;
 pub mod launch;
 pub mod logging;
 pub mod meta;

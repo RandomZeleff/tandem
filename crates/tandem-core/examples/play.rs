@@ -8,10 +8,10 @@
 
 use std::time::Duration;
 
-use tandem_core::launch::{self, LaunchSpec, DEFAULT_MEMORY_MB};
+use tandem_core::launch::{self, LaunchSpec};
 use tandem_core::meta::{self, loader::Loader};
 use tandem_core::paths::DataDir;
-use tandem_core::{install, Context};
+use tandem_core::{install, jvm, Context};
 use tokio::io::{AsyncBufReadExt, BufReader};
 
 #[tokio::main]
@@ -91,7 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         libraries_dir: &ctx.data.libraries(),
         account: &account,
         access_token: "0",
-        memory_mb: DEFAULT_MEMORY_MB,
+        memory_mb: jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir)),
         extra_jvm_args: Vec::new(),
     });
     let mut child = launch::spawn(&command)?;

@@ -9,8 +9,7 @@ use tokio::process::{Child, Command};
 use crate::account::Account;
 use crate::error::Result;
 use crate::install::PreparedVersion;
-
-pub const DEFAULT_MEMORY_MB: u32 = 4096;
+use crate::jvm;
 
 pub struct LaunchSpec<'a> {
     pub prepared: &'a PreparedVersion,
@@ -71,6 +70,7 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
         // Log4Shell mitigation for 1.7–1.18; harmless on newer versions.
         "-Dlog4j2.formatMsgNoLookups=true".to_owned(),
     ];
+    args.extend(jvm::gc_flags(&spec.extra_jvm_args));
     args.extend(spec.extra_jvm_args.iter().cloned());
 
     match &version.arguments {

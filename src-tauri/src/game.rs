@@ -7,7 +7,8 @@ use std::time::{Duration, Instant, SystemTime};
 
 use serde::Serialize;
 use tandem_core::install::{self, InstallProgress, Stage};
-use tandem_core::launch::{self, LaunchSpec, DEFAULT_MEMORY_MB};
+use tandem_core::jvm;
+use tandem_core::launch::{self, LaunchSpec};
 use tandem_core::{Context, Error};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
@@ -185,14 +186,21 @@ async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathB
         account: &account,
         // Offline accounts have no token; Microsoft sign-in arrives in Phase 2.
         access_token: "0",
-        memory_mb: instance.memory_mb.unwrap_or(DEFAULT_MEMORY_MB),
+        memory_mb: instance.memory_mb.unwrap_or_else(|| {
+            jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir))
+        }),
         extra_jvm_args: instance
             .jvm_args
             .as_deref()
             .map(|a| a.split_whitespace().map(str::to_owned).collect())
             .unwrap_or_default(),
     });
-    tracing::info!(instance = %id, java = %command.program.display(), "starting game");
+    tracing::info!(
+        instance = %id,
+        java = %command.program.display(),
+        memory = %command.args[0],
+        "starting game"
+    );
     Ok((launch::spawn(&command)?, game_dir))
 }
 

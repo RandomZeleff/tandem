@@ -12,6 +12,7 @@ serde.workspace = true
 serde_json.workspace = true
 sha1_smol = "1"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"] }
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 thiserror.workspace = true
 tokio.workspace = true
 tracing.workspace = true

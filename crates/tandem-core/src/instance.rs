@@ -190,6 +190,16 @@ impl Database {
         Ok(())
     }
 
+    /// `None` goes back to automatic memory.
+    pub async fn set_instance_memory(&self, id: &str, memory_mb: Option<u32>) -> Result<()> {
+        sqlx::query("UPDATE instances SET memory_mb = ? WHERE id = ?")
+            .bind(memory_mb)
+            .bind(id)
+            .execute(self.pool())
+            .await?;
+        Ok(())
+    }
+
     pub async fn mark_instance_played(&self, id: &str) -> Result<()> {
         sqlx::query(
             "UPDATE instances SET last_played_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?",
@@ -235,6 +245,11 @@ mod tests {
         assert_eq!(a.loader, Loader::Vanilla);
         assert_eq!(b.loader, Loader::Fabric);
         assert_eq!(b.loader_version.as_deref(), Some("0.16.10"));
+
+        db.set_instance_memory(&a.id, Some(6144)).await.unwrap();
+        assert_eq!(db.get_instance(&a.id).await.unwrap().memory_mb, Some(6144));
+        db.set_instance_memory(&a.id, None).await.unwrap();
+        assert_eq!(db.get_instance(&a.id).await.unwrap().memory_mb, None);
 
         db.mark_instance_played(&b.id).await.unwrap();
         let list = db.list_instances().await.unwrap();

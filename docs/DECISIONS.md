@@ -101,3 +101,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Le jar client vanilla reste nommé `<mc>.jar` : il correspond au `${version_name}.jar` de l’`ignoreList` de Forge, ce qui évite de le copier.
 - Versions stockées sans le préfixe Minecraft pour Forge (`47.4.10`, comme dans les `.mrpack`) ; versions Forge à suffixe (≤ 1.7.10) non proposées.
 - Statut : validé
+
+### D18 · 2026-10-09 · Mémoire automatique et flags G1 par défaut
+- Sans réglage, la mémoire suit le nombre de mods activés de l’instance (jars dans `mods/`) : 2 Go en vanilla, 4 Go jusqu’à 50 mods, 6 Go jusqu’à 150, 8 Go au-delà.
+- Plafond pour laisser respirer l’OS : la moitié de la RAM sur les petites machines, tout sauf 6 Go sur les grosses (`max(RAM/2, RAM − 6 Go)`), plancher 1 Go. Ex. : 8 Go → 4 Go max, 16 Go → 8 Go pour un gros pack.
+- Le joueur peut fixer une taille par instance (onglet Informations) ou revenir en « Automatique ».
+- G1 réglé pour un client (pauses courtes, grande young gen, base Aikar sans `AlwaysPreTouch`) ajouté à chaque lancement, Java 8 compris ; pas ajouté si le joueur choisit son propre GC (`-XX:+Use…GC` dans ses arguments JVM).
+- Statut : validé

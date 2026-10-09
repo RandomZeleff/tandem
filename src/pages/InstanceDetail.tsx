@@ -1,4 +1,4 @@
-import { createSignal, For, Match, Show, Switch } from "solid-js";
+import { createResource, createSignal, For, Match, Show, Switch } from "solid-js";
 import ContentList from "../components/ContentList";
 import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
@@ -167,7 +167,9 @@ export default function InstanceDetail(props: { instance: Instance }) {
                 <dt class="text-muted">Java</dt>
                 <dd>{props.instance.javaPath ?? "Automatique (fourni par Mojang)"}</dd>
                 <dt class="text-muted">Mémoire</dt>
-                <dd>{props.instance.memoryMb ? `${props.instance.memoryMb / 1024} Go` : "4 Go (par défaut)"}</dd>
+                <dd>
+                  <MemoryPicker instance={props.instance} onError={setError} />
+                </dd>
                 <dt class="text-muted">Dernière partie</dt>
                 <dd>{formatRelative(props.instance.lastPlayedAt)}</dd>
                 <dt class="text-muted">Identifiant</dt>
@@ -194,6 +196,53 @@ export default function InstanceDetail(props: { instance: Instance }) {
             </button>
           </div>
         </Dialog>
+      </Show>
+    </div>
+  );
+}
+
+const MEMORY_STEPS_GB = [1, 2, 3, 4, 6, 8, 10, 12, 16, 24, 32];
+
+function gigabytes(mb: number): string {
+  return `${Number((mb / 1024).toFixed(1))} Go`;
+}
+
+/** "Automatique" follows the machine and the mod count; fixed sizes stay as chosen. */
+function MemoryPicker(props: { instance: Instance; onError: (message: string) => void }) {
+  const [info] = createResource(() => props.instance.id, api.memoryInfo);
+  const steps = () => {
+    const total = info()?.totalMb ?? Infinity;
+    const fitting = MEMORY_STEPS_GB.map((gb) => gb * 1024).filter((mb) => mb <= total * 0.75);
+    const current = props.instance.memoryMb;
+    return current && !fitting.includes(current) ? [...fitting, current].sort((a, b) => a - b) : fitting;
+  };
+
+  async function choose(value: string) {
+    try {
+      await api.setInstanceMemory(props.instance.id, value === "auto" ? null : Number(value));
+      await refetchInstances();
+    } catch (err) {
+      props.onError(errorMessage(err));
+    }
+  }
+
+  return (
+    <div class="flex flex-col gap-1.5">
+      <select
+        aria-label="Mémoire allouée"
+        class="field h-8 w-56 px-2 text-sm"
+        value={props.instance.memoryMb ?? "auto"}
+        onChange={(e) => void choose(e.currentTarget.value)}
+      >
+        <option value="auto">Automatique{info() ? ` (${gigabytes(info()!.autoMb)})` : ""}</option>
+        <For each={steps()}>{(mb) => <option value={mb}>{gigabytes(mb)}</option>}</For>
+      </select>
+      <Show when={info()}>
+        {(i) => (
+          <span class="text-xs text-muted">
+            {gigabytes(i().totalMb)} sur cette machine. En automatique, la mémoire suit le nombre de mods.
+          </span>
+        )}
       </Show>
     </div>
   );

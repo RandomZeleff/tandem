@@ -5,6 +5,7 @@ use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResu
 use tandem_core::content::{self, mrpack, ContentUpdate, InstalledContent};
 use tandem_core::install;
 use tandem_core::instance::{self, Instance, NewInstance};
+use tandem_core::jvm;
 use tandem_core::logging::LogEntry;
 use tandem_core::meta::loader::{self, Loader, LoaderVersion};
 use tandem_core::meta::{self, Latest, ManifestEntry};
@@ -94,6 +95,36 @@ pub async fn delete_instance(state: State<'_, AppState>, id: String) -> CommandR
         ));
     }
     Ok(instance::delete(&state.ctx, &id).await?)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MemoryInfo {
+    /// What "automatic" gives this instance right now.
+    auto_mb: u32,
+    total_mb: u64,
+}
+
+#[tauri::command]
+pub fn memory_info(state: State<'_, AppState>, id: String) -> MemoryInfo {
+    let total_mb = jvm::total_memory_mb();
+    let mods = jvm::count_mods(&state.ctx.data.instance_dir(&id));
+    MemoryInfo {
+        auto_mb: jvm::auto_memory_mb(total_mb, mods),
+        total_mb,
+    }
+}
+
+#[tauri::command]
+pub async fn set_instance_memory(
+    state: State<'_, AppState>,
+    id: String,
+    memory_mb: Option<u32>,
+) -> CommandResult<()> {
+    if memory_mb.is_some_and(|mb| mb < 512) {
+        return Err(CommandError::msg("at least 512 MB of memory is needed"));
+    }
+    Ok(state.ctx.db.set_instance_memory(&id, memory_mb).await?)
 }
 
 #[tauri::command]
