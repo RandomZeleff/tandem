@@ -176,3 +176,11 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Une liste qui charge affiche des lignes fantômes, jamais un faux « Aucun… ».
 - Réglage « Quand le jeu démarre » : rester ouvert (défaut) ou réduire le launcher, qui revient au premier plan quand le dernier jeu lancé ainsi se ferme.
 - Statut : validé
+
+### D29 · 2026-10-09 · Arrêter un jeu arrête tout ce qu'il a lancé
+- Le jeu est placé dans un Job Object à son lancement (Windows) ou démarré comme chef de son propre groupe de processus (Unix). « Arrêter » termine tout le groupe : les assistants livrés par certains modpacks (Crash Assistant lance sa propre JVM via un processus intermédiaire, hors de portée de `taskkill /T`) ne survivent plus au jeu.
+- Le Job Object ne tue pas le jeu quand Tandem se ferme (pas de `KILL_ON_JOB_CLOSE`) : fermer le launcher en pleine partie laisse la partie continuer.
+- Une fois le jeu terminé, on n'attend la fin de sa sortie que 2 s : un processus enfant qui garde le tuyau ouvert ne peut plus bloquer la fin de partie (sauvegarde auto, panneau de crash).
+- Client HTTP en fenêtre HTTP/2 adaptative : la fenêtre par défaut (64 Ko) limitait les téléchargements à ~7 Mo/s.
+- Java lancé avec sa sortie en UTF-8 (`stdout.encoding` / `sun.stdout.encoding`), pour que la console affiche les accents.
+- Statut : validé

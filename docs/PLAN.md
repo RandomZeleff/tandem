@@ -67,8 +67,8 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - [x] Navigation avec historique — D27 : retour/avant, boutons 4/5 de la souris, Alt+←/→ (⌘[ / ⌘] sur Mac), flèches dans la barre de titre ; onglet, recherche, filtres et défilement retrouvés
 - [x] Menus déroulants maison : les 5 `<select>` et la case « Snapshots » natifs remplacés
 - [x] Corrections issues de l'audit : P1, P2 (D28) et P3 traités
-- [ ] Tests sous charge ([fiche](TEST-CHARGE.md)) sur 2-3 vrais modpacks (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
-- [ ] Optimisations issues des tests sous charge
+- [~] Tests sous charge ([fiche](TEST-CHARGE.md), [résultats](TEST-CHARGE-RESULTATS.md)) : côté moteur fait (Prominence II, Create+, Cobblemon NeoForge) ; reste la partie interface à faire par un humain (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
+- [~] Optimisations issues des tests sous charge : téléchargements ×4-6, arrêt du jeu avec ses processus enfants, console en UTF-8, cache des modpacks (D29) ; pistes restantes : dépendances manquantes, choix de la version d'un modpack
 - [ ] Version 0.1 (build installable Windows + Mac)
 - [ ] Discussion traduction : s'inspirer des mods existants (AutoTranslation-Next, AutoTranslator, autotranslator-cn) → décision avant la Phase 5
 
@@ -202,4 +202,6 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - P2 de l'audit (D28) : notifications (`lib/toast.ts`, `Toaster`), retrait d'un mod ou d'un compte annulable ~6 s, squelettes de chargement dans Contenu / Mondes / Captures, vraie page Réglages (comportement au lancement du jeu, sauvegarde auto des mondes, dossier des données avec bouton « Ouvrir » via la nouvelle commande `open_data_folder`), nombres au format français (`2,6 Mo`), couleurs d'interface en tokens (`--color-danger`, `--color-xp-deep`…), accueil à 2 cartes sous 1280 px. Vérifié dans le navigateur (backend simulé) : retrait → Annuler → retrait confirmé, squelettes, réglage enregistré, accueil à 1100 px sans débordement.
 - Pas vérifié : la réduction/réouverture du launcher au lancement du jeu dans la vraie fenêtre Tauri.
 - P3 de l'audit : raccourcis Ctrl/⌘+K ou F (chercher sur Modrinth), Ctrl/⌘+N (nouvelle instance), Ctrl/⌘+, (réglages), rappelés dans les infobulles ; `Index` au lieu de `For` pour la barre d'XP et les graphes RAM/CPU (segments réutilisés, vérifié sur un faux lancement). Mouvement réduit : animations des notifications et des squelettes coupées.
-- Prochaine étape : tests sous charge avec de gros modpacks (à faire par Raphaël sur son PC), puis build installable de la v0.1.
+- Tests sous charge (côté moteur, par Claude) : Prominence II (678 mods), Create+ (Forge 1.19.2, 257 mods), Cobblemon NeoForge 1.21.1. Menu en 38-80 s selon le pack, ~4 Go au menu. Trouvé et corrigé (D29) : téléchargements bridés par la fenêtre HTTP/2 (6,7 → 26-36 Mo/s), assistants de modpack (Crash Assistant) qui survivaient à l'arrêt du jeu et bloquaient la fin de partie (Job Object Windows / groupe de processus Unix + lecture de sortie bornée à 2 s), sortie de Java en cp1252 (forcée en UTF-8), `.mrpack` de 400+ Mo gardé en cache. Détails : `docs/TEST-CHARGE-RESULTATS.md`.
+- Pas vérifié : le groupe de processus sous macOS (la CI compile la variante Unix) ; la partie interface de la fiche de test.
+- Prochaine étape : partie interface des tests sous charge (Raphaël), pistes « dépendances manquantes » et « choix de version d'un modpack », puis build installable de la v0.1.
