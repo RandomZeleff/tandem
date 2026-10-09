@@ -56,7 +56,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Gestion des mondes (liste, sauvegardes, backup auto) — D22
 - [x] Captures d'écran par instance — D23 ; onglet « Captures » (grille, visionneuse, suppression)
 - [x] Démarrage du launcher < 1 s — D24 ; ≈ 240-300 ms jusqu’à la première image (release, Windows, à chaud), plus de flash blanc
-- [ ] UI fluide : audit des vues lourdes (console à 5000 lignes, longues listes de contenu / captures)
+- [x] UI fluide : audit des vues lourdes — D25 ; sortie du jeu par paquets (≤ 50 ms), console 12× moins coûteuse, listes de 250 mods sans virtualisation
 
 ## Phase 5 — Traduction IA de modpacks
 
@@ -179,4 +179,6 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Démarrage (D24) : temps loggés (`backend ready`, `UI ready`, en ms depuis le lancement). Mesuré en release : ≈ 240-300 ms jusqu’à la première image, dont ≈ 150-170 ms de création fenêtre + WebView2 par Tauri avant `setup`, ≈ 5-8 ms pour notre init (dossiers, SQLite, HTTP), ≈ 100 ms de chargement de l’UI (JS ≈ 140 Ko). La fenêtre restait blanche jusqu’au premier rendu → `backgroundColor` #111316, vérifié en échantillonnant la couleur de la fenêtre toutes les ~30 ms.
 - Attention en mesurant : un `tauri dev` ouvert recompile à chaque modif et fausse les temps (jusqu’à 4-5 s).
 - Pas mesuré : démarrage à froid (premier lancement après redémarrage de Windows), ni sur le Mac.
-- Prochaine étape : « UI fluide » (dernier point de la Phase 4), puis Phase suivante.
+- UI fluide (D25) : mesuré dans le navigateur (backend simulé). Console pleine (5000 lignes) : 1,5 ms par ligne avec un événement par ligne → 1000 lignes = 1,5 s de gel, un gros modpack Forge (~20 000 lignes) ≈ 30 s. Le backend envoie maintenant la sortie par paquets (≤ 50 ms ou 500 lignes) : 0,12 ms par ligne, gel max ≈ 33 ms. Logs du launcher regroupés côté UI (≤ 50 ms). Bug corrigé : la console ne défilait plus toute seule une fois pleine (longueur constante). Onglet Contenu à 250 mods (nouveau jeu de données du mock « Pack Create ») : 77 ms au premier affichage, 17 ms pour activer/désactiver un mod.
+- Pas encore vérifié dans la vraie app : lancer un modpack Forge et regarder la console défiler (le panneau navigateur était masqué, donc mesures de calcul et de mise en page, pas d’images par seconde).
+- Phase 4 terminée. Prochaine étape : Phase 5 (traduction IA de modpacks), en commençant par l’extraction des `lang/en_us.json`.

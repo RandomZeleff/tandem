@@ -150,3 +150,9 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Mesure de référence (release, Windows, à chaud) : ≈ 240-300 ms jusqu’à la première image, objectif < 1 s atteint. L’essentiel (≈ 150-170 ms) est la création de la fenêtre et du WebView2 par Tauri avant `setup` ; notre init en prend ≈ 5-8 ms. Pas d’optimisation spéculative au-delà.
 - Fenêtre affichée tout de suite (retour visuel immédiat) mais avec `backgroundColor` = fond de l’app (#111316) : plus de fenêtre blanche pendant l’init du webview. Préféré à une fenêtre cachée jusqu’au premier rendu, qui retarderait le moment où l’app paraît lancée.
 - Statut : validé
+
+### D25 · 2026-10-09 · Flux à haut débit envoyés par paquets
+- La sortie du jeu part du backend par paquets (`game://output` porte `lines: string[]`) : envoyés au plus 50 ms après leur première ligne, ou dès 500 lignes. Un événement par ligne coûtait ≈ 1,5 ms chacun dans l’UI (mise à jour + mise en page), soit des dizaines de secondes de gel au démarrage d’un gros modpack.
+- Côté UI, un paquet = une seule mise à jour du store (lignes en trop retirées d’un coup) et un seul défilement. Les logs du launcher sont regroupés côté UI de la même façon (50 ms).
+- Pas de virtualisation des listes pour l’instant : console plafonnée à 5000 lignes, contenu à 250 mods affiché en ≈ 80 ms. À revoir si une vue dépasse ≈ 100 ms au premier affichage.
+- Statut : validé
