@@ -74,6 +74,34 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - [~] Version 0.1 (build installable Windows + Mac) — prête (workflow `release.yml` : tag `v*` → brouillon de Release, notes dans `docs/releases/v0.1.0.md`), **en attente de la réponse de Mojang** et de la Phase 2 (D31)
 - [ ] Discussion traduction : s'inspirer des mods existants (AutoTranslation-Next, AutoTranslator, autotranslator-cn) → décision avant la Phase 5
 
+## Phase 4.6 — Fiches de contenu
+
+Objectif : savoir ce qu'est un mod, un pack de textures, un shader ou un modpack avant de l'installer. Une fiche complète pour tout projet Modrinth, faite pour durer : on y reviendra pour des détails, pas pour la refaire. Elle servira de premier terrain à la Phase 5 (traduire la description).
+
+Moteur (Rust) :
+- [x] Détails d'un projet : description longue, galerie, licence, liens (code source, bugs, wiki, Discord, dons), client/serveur, catégories, loaders, versions du jeu, dates, téléchargements, abonnés
+- [x] Auteurs : membres de l'équipe ou de l'organisation (nom, avatar, rôle)
+- [x] Versions : liste légère (sans fichiers ni journal) + journal des changements d'une version à la demande
+- [x] Mods inclus dans une version de modpack (dépendances « embedded » de Modrinth), résolus en projets (titre, icône, type) par lots
+- [x] Dépendances d'un mod (requises, optionnelles, incompatibles) pour la version qui irait dans l'instance choisie
+- [x] Description Markdown/HTML → HTML sûr (`pulldown-cmark` + `ammonia`) : ni script ni style, vidéos YouTube en vignette cliquable, liens vers d'autres projets Modrinth reconnus pour s'ouvrir dans Tandem
+- [x] Cache mémoire (~10 min) : rouvrir une fiche ou revenir en arrière ne refait pas de requête — D32
+
+Interface :
+- [x] Page « fiche » dans l'historique (retour/avance, onglet et défilement retrouvés)
+- [x] En-tête : icône, titre, résumé, auteurs, chiffres, catégories, compatibilité, client/serveur, licence, liens externes
+- [x] Action selon le contexte : installer dans l'instance choisie (en disant si une version compatible existe), « Installé », « Mettre à jour » ; modpack → choix de la version, ou « Ouvrir » l'instance qui en vient
+- [x] Onglet Description (style Deepslate, images chargées au défilement, liens externes ouverts dans le navigateur)
+- [x] Onglet Galerie : grille + visionneuse (← → Échap) avec titre et légende
+- [x] Onglet Versions : filtres (version du jeu, loader, stable/bêta/alpha), journal dépliable, installer une version précise
+- [x] Onglet Mods inclus (modpacks) : liste de la version choisie, recherche, chaque mod ouvre sa fiche
+- [x] Onglet Dépendances (mods) : chaque dépendance ouvre sa fiche
+- [x] Points d'entrée : Découvrir, onglet Contenu d'une instance, modpack d'origine (onglet Informations), dépendances, liens dans les descriptions
+- [x] États : chargement (squelettes), hors ligne / erreur avec « Réessayer », projet introuvable
+- [x] Backend simulé pour tester dans le navigateur ; tests Rust (nettoyage du HTML, lecture des réponses)
+
+Hors périmètre : CurseForge (avec son import, Phase 3), traduction de la description (Phase 5), fiches des mods ajoutés à la main hors Modrinth.
+
 ## Phase 5 — Traduction IA de modpacks
 
 - [ ] Extraction : `assets/*/lang/en_us.json` (+ ancien format `.lang`)
@@ -213,3 +241,11 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - Décision (D31) : pas de build ni de Release tant que Mojang n'a pas répondu à la demande d'App ID et que la connexion Microsoft (Phase 2) n'est pas faite. Jobs de build de la CI désactivés (lint et tests gardés). Section « Comptes » des notes de la v0.1.0 à écrire à ce moment-là.
 - Anciens installeurs produits par la CI supprimés (41 artefacts). Phase 2 mise en pause en attendant Mojang : on continue le développement sur les autres phases.
 - Prochaine étape : choisir avec Raphaël entre la Phase 5 (traduction IA : discussion de conception d'abord, pistes réunies) et la Phase 6 (jeu à deux sans serveur, le différenciateur).
+
+### 2026-10-09 (Windows, suite)
+- Choix avec Raphaël : peaufiner l'existant avant la traduction, en finissant un chantier complet. Cadrage de la Phase 4.6 (fiches de contenu) puis réalisation.
+- Moteur (D32) : `content::project` (détails, auteurs équipe + organisation via l'API v3, versions marquées compatibles avec l'instance ou lançables par Tandem pour un modpack, journaux, dépendances et contenu d'un modpack résolus par lots de 100 en parallèle, cache 10 min dans `AppState`), `content::markdown` (pulldown-cmark + ammonia, vidéos YouTube en vignettes, liens relatifs vers modrinth.com). `install_content` accepte une version précise. Exemple `project <slug> [description.html]`. Mesuré sur Prominence II : page 0,45 s, 102 versions 0,9-1,5 s (réponse de 5 Mo), 563 mods inclus 1,1 s (4,6 s avant la parallélisation), 3 ms depuis le cache.
+- Interface : page `project` dans l'historique (chargée à la demande : +36 Ko hors du démarrage), en-tête avec action selon le contexte, onglets Description / Galerie / Versions / Contenu ou Dépendances, colonne Compatibilité / Créateurs / Liens / Détails, catégories traduites (aussi dans Découvrir). Points d'entrée : cartes de Découvrir, titres de l'onglet Contenu, modpack d'origine (Informations), dépendances, liens Modrinth dans les descriptions.
+- Vérifié dans le navigateur (backend simulé) : tous les onglets, visionneuse, liens internes, installation, mise à jour, instance Vanilla, aucune version compatible, projet inexistant, retour arrière, largeur 1100 px ; vraie description de Prominence II rendue dans l'aperçu. Vu dans la vraie fenêtre (`tauri dev`) : fiche de Prominence II avec le vrai backend.
+- Pas vérifié dans la vraie fenêtre : ouverture des liens externes (plugin opener), installation depuis la fiche, galerie.
+- Prochaine étape : discussion de conception de la traduction (Phase 5), avec la description d'une fiche comme premier usage.

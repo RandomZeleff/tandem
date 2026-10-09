@@ -16,7 +16,7 @@
 │   ├─ java       détection / install JRE              │
 │   ├─ instance   CRUD, config, lancement, process     │
 │   ├─ auth       Microsoft → Xbox → XSTS → MC         │
-│   ├─ content    Modrinth, CurseForge, mrpack         │
+│   ├─ content    Modrinth, fiches, mrpack, dépendances│
 │   ├─ translate  extraction, LLM, resource pack       │
 │   └─ p2p        détection LAN, tunnel iroh           │
 ├─────────────────────────────────────────────────────┤

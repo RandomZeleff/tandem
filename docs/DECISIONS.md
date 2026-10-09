@@ -197,3 +197,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Donc : aucun build distribuable (jobs de build de la CI désactivés, aucun tag `v*`) tant que Mojang n'a pas répondu à la demande d'App ID et que la Phase 2 n'est pas faite. La CI continue le lint et les tests sur Windows et macOS.
 - À la reprise : comptes hors ligne permis seulement après un compte Microsoft qui possède le jeu (comme Prism Launcher), réactiver les jobs de build, compléter la section « Comptes » de `docs/releases/v0.1.0.md`, puis pousser le tag `v0.1.0` (brouillon de Release à relire et publier à la main).
 - Statut : validé
+
+### D32 · 2026-10-09 · Fiches de contenu : HTML nettoyé côté Rust, cache en mémoire
+- Les descriptions et journaux Modrinth (Markdown mêlé de HTML) sont rendus et nettoyés en Rust (`pulldown-cmark` + `ammonia`), testables sans interface ; le frontend affiche le HTML tel quel. Autorisé : la mise en forme courante, `align`, `details`. Retiré : scripts, styles, formulaires, cadres. Les vidéos YouTube deviennent une vignette qui ouvre la vidéo dans le navigateur ; les autres cadres, un simple lien.
+- Les liens vers un projet Modrinth s'ouvrent dans Tandem, les autres dans le navigateur.
+- Compatibilité calculée en Rust : contenu = version du jeu de l'instance (+ loader pour les mods, Quilt accepte Fabric) ; modpack = loader que Tandem sait lancer. Version proposée : la plus récente stable compatible, sinon la plus récente compatible.
+- Cache mémoire de 10 min (pages, versions, résumés de projets), pas de cache disque : les fiches changent souvent et la mémoire reste petite. La liste des versions d'un gros modpack pèse ~5 Mo, d'où le cache.
+- Changer la version d'un contenu déjà installé passe par le retirer puis l'installer (pas de « rétrograder » pour l'instant).
+- Statut : validé
+
