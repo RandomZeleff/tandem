@@ -55,7 +55,8 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Analyse de crash (lecture du crash report, mod coupable probable) — D21
 - [x] Gestion des mondes (liste, sauvegardes, backup auto) — D22
 - [x] Captures d'écran par instance — D23 ; onglet « Captures » (grille, visionneuse, suppression)
-- [ ] Démarrage du launcher < 1 s, UI fluide
+- [x] Démarrage du launcher < 1 s — D24 ; ≈ 240-300 ms jusqu’à la première image (release, Windows, à chaud), plus de flash blanc
+- [ ] UI fluide : audit des vues lourdes (console à 5000 lignes, longues listes de contenu / captures)
 
 ## Phase 5 — Traduction IA de modpacks
 
@@ -175,4 +176,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Fait : pull des 14 commits du Mac ; Rust mis à jour 1.93 → 1.99 (`sysinfo` 0.39 demande 1.95) ; fmt, clippy et tests verts sur Windows, l’app tourne.
 - Captures d’écran (D23) : `tandem_core::screenshots` (liste, miniatures JPEG 480 px en cache, suppression), protocole `tandem-shot://` pour les images, onglet « Captures » avec grille paresseuse, visionneuse (← → Échap Suppr), « Afficher dans le dossier », rafraîchissement en direct sur « Saved screenshot as ». Tests unitaires sur des images générées ; onglet testé avec le backend simulé.
 - Pas encore vérifié : le protocole dans la vraie app (prendre une capture F2 en jeu, l’ouvrir dans l’onglet).
-- Prochaine étape : dernier point de la Phase 4, « Démarrage du launcher < 1 s, UI fluide ».
+- Démarrage (D24) : temps loggés (`backend ready`, `UI ready`, en ms depuis le lancement). Mesuré en release : ≈ 240-300 ms jusqu’à la première image, dont ≈ 150-170 ms de création fenêtre + WebView2 par Tauri avant `setup`, ≈ 5-8 ms pour notre init (dossiers, SQLite, HTTP), ≈ 100 ms de chargement de l’UI (JS ≈ 140 Ko). La fenêtre restait blanche jusqu’au premier rendu → `backgroundColor` #111316, vérifié en échantillonnant la couleur de la fenêtre toutes les ~30 ms.
+- Attention en mesurant : un `tauri dev` ouvert recompile à chaque modif et fausse les temps (jusqu’à 4-5 s).
+- Pas mesuré : démarrage à froid (premier lancement après redémarrage de Windows), ni sur le Mac.
+- Prochaine étape : « UI fluide » (dernier point de la Phase 4), puis Phase suivante.

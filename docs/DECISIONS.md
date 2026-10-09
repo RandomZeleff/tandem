@@ -144,3 +144,9 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Miniatures JPEG de 480 px de large générées à la demande (crate `image`, png + jpeg seulement) dans `cache/thumbnails/<instance>/`, refaites si la capture est plus récente, supprimées avec l’instance. URLs versionnées par la date de la capture → cache navigateur `immutable`.
 - Suppression définitive (pas de corbeille) après confirmation ; « Afficher dans le dossier » pour le reste (copier, partager).
 - Statut : validé
+
+### D24 · 2026-10-09 · Démarrage : mesurer d’abord, fond de fenêtre sombre
+- Le démarrage est loggé à chaque lancement : `backend ready ms=…` (fin de `setup`) et `UI ready ms=…` (premier rendu, signalé par le frontend via `ui_ready`), comptés depuis l’entrée dans `run`. Sert à repérer les régressions.
+- Mesure de référence (release, Windows, à chaud) : ≈ 240-300 ms jusqu’à la première image, objectif < 1 s atteint. L’essentiel (≈ 150-170 ms) est la création de la fenêtre et du WebView2 par Tauri avant `setup` ; notre init en prend ≈ 5-8 ms. Pas d’optimisation spéculative au-delà.
+- Fenêtre affichée tout de suite (retour visuel immédiat) mais avec `backgroundColor` = fond de l’app (#111316) : plus de fenêtre blanche pendant l’init du webview. Préféré à une fenêtre cachée jusqu’au premier rendu, qui retarderait le moment où l’app paraît lancée.
+- Statut : validé
