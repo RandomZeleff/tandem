@@ -10,6 +10,7 @@ use tandem_core::crash::{self, CrashAnalysis};
 use tandem_core::install::{self, InstallProgress, Stage};
 use tandem_core::jvm;
 use tandem_core::launch::{self, LaunchSpec};
+use tandem_core::process::ProcessGroup;
 use tandem_core::stats::{ProcessSampler, ProcessStats};
 use tandem_core::{worlds, Context, Error};
 use tauri::{AppHandle, Emitter};
@@ -33,6 +34,8 @@ const STATS_INTERVAL: Duration = Duration::from_secs(2);
 /// and one event per line would freeze the UI.
 const OUTPUT_BATCH_DELAY: Duration = Duration::from_millis(50);
 const OUTPUT_BATCH_MAX: usize = 500;
+/// How long to wait for the last output once the game has exited.
+const OUTPUT_DRAIN_TIMEOUT: Duration = Duration::from_secs(2);
 
 enum Slot {
     Preparing,
@@ -232,6 +235,7 @@ async fn supervise(
     game_dir: PathBuf,
     stop_rx: oneshot::Receiver<()>,
 ) {
+    let group = ProcessGroup::track(&child);
     let started = SystemTime::now();
     let mut readers = Vec::new();
     if let Some(out) = child.stdout.take() {
@@ -259,15 +263,22 @@ async fn supervise(
         status = child.wait() => (status, false),
         _ = stop_rx => {
             tracing::info!(instance = %id, "stopping game");
-            let _ = child.kill().await;
+            group.kill(&mut child).await;
             (child.wait().await, true)
         }
     };
     if let Some(sampler) = sampler {
         sampler.abort();
     }
-    for reader in readers {
-        let _ = reader.await;
+    // The game is gone; a helper it started may still hold its output pipe open.
+    let deadline = tokio::time::Instant::now() + OUTPUT_DRAIN_TIMEOUT;
+    for mut reader in readers {
+        if tokio::time::timeout_at(deadline, &mut reader)
+            .await
+            .is_err()
+        {
+            reader.abort();
+        }
     }
     // Before freeing the slot, so the game cannot be relaunched mid-backup.
     backup_played_worlds(&ctx, &id, &game_dir, started).await;

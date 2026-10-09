@@ -96,6 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         extra_jvm_args: Vec::new(),
     });
     let mut child = launch::spawn(&command)?;
+    let group = tandem_core::process::ProcessGroup::track(&child);
     if let Some(pid) = child.id() {
         tokio::spawn(async move {
             let mut sampler = ProcessSampler::new(pid);
@@ -112,18 +113,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let stdout = child.stdout.take().ok_or("no stdout")?;
     let stderr = child.stderr.take().ok_or("no stderr")?;
-    tokio::spawn(async move {
-        let mut lines = BufReader::new(stdout).lines();
-        while let Ok(Some(line)) = lines.next_line().await {
-            println!("[game] {line}");
-        }
-    });
-    tokio::spawn(async move {
-        let mut lines = BufReader::new(stderr).lines();
-        while let Ok(Some(line)) = lines.next_line().await {
-            eprintln!("[game:err] {line}");
-        }
-    });
+    tokio::spawn(forward(stdout, "[game]"));
+    tokio::spawn(forward(stderr, "[game:err]"));
 
     match seconds {
         Some(s) => {
@@ -139,13 +130,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 _ = tokio::time::sleep(Duration::from_secs(s)) => {
                     println!("still running after {s}s, stopping");
-                    child.kill().await?;
+                    group.kill(&mut child).await;
                 }
             }
         }
         None => println!("game exited: {:?}", child.wait().await?),
     }
     Ok(())
+}
+
+/// Prints the game's output. Lossy on purpose: a reader that stops on the first non-UTF-8
+/// byte lets the pipe fill up, and the game then freezes on its next write.
+async fn forward(output: impl tokio::io::AsyncRead + Unpin, prefix: &'static str) {
+    let mut reader = BufReader::new(output);
+    let mut buf = Vec::new();
+    while matches!(reader.read_until(b'\n', &mut buf).await, Ok(n) if n > 0) {
+        println!("{prefix} {}", String::from_utf8_lossy(&buf).trim_end());
+        buf.clear();
+    }
 }
 
 fn newest_crash_report(game_dir: &std::path::Path) -> Option<std::path::PathBuf> {

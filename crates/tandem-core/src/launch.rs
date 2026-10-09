@@ -69,6 +69,12 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
         format!("-Xmx{}M", spec.memory_mb),
         // Log4Shell mitigation for 1.7–1.18; harmless on newer versions.
         "-Dlog4j2.formatMsgNoLookups=true".to_owned(),
+        // `System.out` otherwise uses the OS code page (cp1252 on a French Windows), which
+        // the launcher console would show as `�`. `sun.*` up to Java 18, plain from 19.
+        "-Dstdout.encoding=UTF-8".to_owned(),
+        "-Dstderr.encoding=UTF-8".to_owned(),
+        "-Dsun.stdout.encoding=UTF-8".to_owned(),
+        "-Dsun.stderr.encoding=UTF-8".to_owned(),
     ];
     args.extend(jvm::gc_flags(&spec.extra_jvm_args));
     args.extend(spec.extra_jvm_args.iter().cloned());
@@ -151,12 +157,15 @@ pub fn spawn(command: &GameCommand) -> Result<Child> {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     #[cfg(windows)]
-    {
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-    }
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    // Own process group, so `ProcessGroup::kill` reaches whatever the game starts.
+    #[cfg(unix)]
+    cmd.process_group(0);
     Ok(cmd.spawn()?)
 }
+
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 #[cfg(test)]
 mod tests {

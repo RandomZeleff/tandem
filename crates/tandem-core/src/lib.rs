@@ -16,6 +16,7 @@ pub mod launch;
 pub mod logging;
 pub mod meta;
 pub mod paths;
+pub mod process;
 pub mod screenshots;
 pub mod stats;
 pub mod store;
