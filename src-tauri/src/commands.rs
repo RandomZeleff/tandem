@@ -32,6 +32,12 @@ pub fn app_info(state: State<'_, AppState>) -> AppInfo {
     }
 }
 
+/// Called by the frontend once its first screen is painted.
+#[tauri::command]
+pub fn ui_ready() {
+    tracing::info!(ms = crate::uptime_ms(), "UI ready");
+}
+
 #[tauri::command]
 pub fn get_logs(state: State<'_, AppState>) -> Vec<LogEntry> {
     state.logs.snapshot()

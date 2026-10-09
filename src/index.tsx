@@ -1,4 +1,5 @@
 /* @refresh reload */
+import { invoke } from "@tauri-apps/api/core";
 import { render } from "solid-js/web";
 import "./index.css";
 
@@ -11,6 +12,8 @@ async function main() {
   }
   const { default: App } = await import("./App");
   render(() => <App />, document.getElementById("root") as HTMLElement);
+  // After the first frame is painted.
+  requestAnimationFrame(() => setTimeout(() => void invoke("ui_ready"), 0));
 }
 
 void main();

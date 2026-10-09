@@ -4,14 +4,24 @@ mod game;
 mod modpack;
 mod screenshot_protocol;
 
+use std::sync::OnceLock;
+use std::time::Instant;
 use tandem_core::logging::{self, LogBuffer, LogEntry, WorkerGuard};
 use tandem_core::paths::DataDir;
 use tandem_core::Context;
+
 use tauri::{async_runtime, Emitter, Manager};
 
 /// Event carrying each new [`LogEntry`] to the frontend.
 pub const LOG_EVENT: &str = "log://entry";
 const LOG_BUFFER_CAPACITY: usize = 2000;
+
+static STARTED_AT: OnceLock<Instant> = OnceLock::new();
+
+/// Milliseconds since the process entered [`run`].
+pub fn uptime_ms() -> u128 {
+    STARTED_AT.get().map_or(0, |t| t.elapsed().as_millis())
+}
 
 pub struct AppState {
     pub ctx: Context,
@@ -22,6 +32,7 @@ pub struct AppState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    STARTED_AT.get_or_init(Instant::now);
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
@@ -56,10 +67,13 @@ pub fn run() {
                 games: game::Games::default(),
                 _log_guard: log_guard,
             });
+            // Tauri creates the window and its webview before `setup`: most of this is theirs.
+            tracing::info!(ms = uptime_ms(), "backend ready");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
+            commands::ui_ready,
             commands::get_logs,
             commands::get_setting,
             commands::set_setting,
