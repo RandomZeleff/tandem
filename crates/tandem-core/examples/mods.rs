@@ -4,7 +4,8 @@
 //!
 //! `loader@version` creates a new instance; `instance:<id>` reuses one. Projects are
 //! installed (optionally pinned to a version id), then available updates are listed and,
-//! with `--update`, applied. Launch the result with the `play` example (`instance:<id>`).
+//! with `--update`, applied; missing performance mods are suggested last. Launch the
+//! result with the `play` example (`instance:<id>`).
 //! Uses `TANDEM_DATA_DIR` if set.
 
 use tandem_core::content;
@@ -88,6 +89,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             item.version_number,
             item.file_name
         );
+    }
+
+    let suggestions = content::perf::suggestions(&ctx, &instance).await?;
+    println!("performance suggestions:");
+    for suggestion in &suggestions {
+        println!("  {} ({})", suggestion.title, suggestion.project_id);
     }
     Ok(())
 }

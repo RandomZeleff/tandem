@@ -108,3 +108,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Le joueur peut fixer une taille par instance (onglet Informations) ou revenir en « Automatique ».
 - G1 réglé pour un client (pauses courtes, grande young gen, base Aikar sans `AlwaysPreTouch`) ajouté à chaque lancement, Java 8 compris ; pas ajouté si le joueur choisit son propre GC (`-XX:+Use…GC` dans ses arguments JVM).
 - Statut : validé
+
+### D19 · 2026-10-09 · Suggestion de mods de performance
+- Catalogue court et figé (ids Modrinth), par impact : Sodium (à défaut Embeddium), Lithium, FerriteCore, ModernFix, ImmediatelyFast, Entity Culling, Dynamic FPS. Uniquement des mods connus pour être sûrs côté client, pas de liste « fourre-tout ».
+- Compatibilité vérifiée en direct sur Modrinth pour la version et le loader de l’instance ; rien pour une instance vanilla.
+- Un seul moteur de rendu par instance : Sodium, Embeddium et Rubidium s’excluent, et rien n’est proposé si l’un d’eux ou un jar OptiFine est déjà là.
+- Panneau dans l’onglet Contenu (installation à l’unité ou « Tout installer », dépendances comprises) ; « Masquer » est retenu par instance (réglage `perf_suggestions_hidden.<id>`). Hors ligne, le panneau ne s’affiche pas.
+- Statut : validé

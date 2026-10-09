@@ -70,6 +70,7 @@ pub fn run() {
             commands::install_content,
             commands::remove_content,
             commands::check_content_updates,
+            commands::perf_suggestions,
             commands::update_content,
             commands::set_content_enabled,
             commands::install_modpack,

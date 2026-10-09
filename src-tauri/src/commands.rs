@@ -2,7 +2,7 @@ use serde::Serialize;
 use serde_json::Value;
 use tandem_core::account::Account;
 use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
-use tandem_core::content::{self, mrpack, ContentUpdate, InstalledContent};
+use tandem_core::content::{self, mrpack, perf, ContentUpdate, InstalledContent};
 use tandem_core::install;
 use tandem_core::instance::{self, Instance, NewInstance};
 use tandem_core::jvm;
@@ -169,6 +169,15 @@ pub async fn install_content(
 ) -> CommandResult<Vec<InstalledContent>> {
     let instance = state.ctx.db.get_instance(&instance_id).await?;
     Ok(content::install(&state.ctx, &instance, &project_id, None).await?)
+}
+
+#[tauri::command]
+pub async fn perf_suggestions(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<perf::PerfSuggestion>> {
+    let instance = state.ctx.db.get_instance(&instance_id).await?;
+    Ok(perf::suggestions(&state.ctx, &instance).await?)
 }
 
 #[tauri::command]

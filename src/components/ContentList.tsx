@@ -15,6 +15,7 @@ import {
 } from "../lib/content";
 import { exportModpackFile } from "../lib/modpacks";
 import { navigate } from "../lib/store";
+import PerfSuggestions from "./PerfSuggestions";
 import { Icon, Toggle } from "./pixel";
 import ProjectIcon from "./ProjectIcon";
 
@@ -106,6 +107,8 @@ export default function ContentList(props: { instance: Instance; locked: boolean
       <Show when={error()}>
         <p class="bg-[#2A1414] px-3 py-2 text-sm text-redstone-text shadow-[inset_0_0_0_1px_#6E2A26]">{error()}</p>
       </Show>
+
+      <PerfSuggestions instance={props.instance} locked={props.locked} onError={setError} />
 
       <Show when={updates().length > 0}>
         <div class="panel px-corners-md flex items-center justify-between gap-4 p-3.5 shadow-[inset_0_0_0_1px_#4E9A1E]">

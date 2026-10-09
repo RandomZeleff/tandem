@@ -4,6 +4,7 @@
 
 pub mod modrinth;
 pub mod mrpack;
+pub mod perf;
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;

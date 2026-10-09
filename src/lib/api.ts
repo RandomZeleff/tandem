@@ -141,6 +141,12 @@ export interface GameExited {
   crashReport: string | null;
 }
 
+export interface PerfSuggestion {
+  projectId: string;
+  title: string;
+  iconUrl: string | null;
+}
+
 export interface MemoryInfo {
   /** What "automatic" gives this instance right now (depends on its mods). */
   autoMb: number;
@@ -188,6 +194,7 @@ export const api = {
     invoke<InstalledContent[]>("install_content", { instanceId, projectId }),
   removeContent: (instanceId: string, projectId: string) =>
     invoke<void>("remove_content", { instanceId, projectId }),
+  perfSuggestions: (instanceId: string) => invoke<PerfSuggestion[]>("perf_suggestions", { instanceId }),
   checkContentUpdates: (instanceId: string) => invoke<ContentUpdate[]>("check_content_updates", { instanceId }),
   /** Every outdated project when `projectIds` is omitted. */
   updateContent: (instanceId: string, projectIds?: string[]) =>

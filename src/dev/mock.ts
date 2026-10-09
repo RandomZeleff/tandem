@@ -82,6 +82,9 @@ const CATALOGUE: Record<ProjectType, SearchHit[]> = {
       ["AANobbMI", "Sodium", "jellysquid3", "The fastest and most compatible rendering optimization mod for Minecraft.", 98_000_000, ["optimization"]],
       ["YL57xq9U", "Iris Shaders", "coderbot", "A modern shader pack loader compatible with existing OptiFine shader packs.", 82_000_000, ["decoration", "optimization"]],
       ["mOgUt4GM", "Mod Menu", "Prospector", "Adds a mod menu to view the list of mods you have installed.", 70_000_000, ["utility"]],
+      ["gvQqBUqZ", "Lithium", "jellysquid3", "No-compromises game logic optimization mod.", 64_000_000, ["optimization"]],
+      ["uXXizFIs", "FerriteCore", "malte0811", "Memory usage optimizations.", 60_000_000, ["optimization"]],
+      ["LQ3K71Q1", "Dynamic FPS", "juliand665", "Dynamically adjust FPS so Minecraft doesn't hog your computer.", 30_000_000, ["optimization"]],
     ] as Row[]
   ).map(hit),
   resourcepack: ([["Bq0hLR4Y", "Faithful 32x", "Faithful", "Faithful to the original textures, at twice the resolution.", 4_200_000, ["32x", "vanilla-like"]]] as Row[]).map(hit),
@@ -127,6 +130,8 @@ function fakeInstall(instanceId: string, projectId: string): InstalledContent[] 
   return added;
 }
 
+const settings: Record<string, unknown> = {};
+
 let accounts: Account[] = [
   { id: "a1", kind: "offline", username: "Zeleff", mcUuid: "00000000-0000-3000-8000-000000000000", isActive: true },
 ];
@@ -136,10 +141,10 @@ const logs: LogEntry[] = [
   { seq: 2, timestampMs: now - 4000, level: "DEBUG", target: "tandem_core::db", message: "database ready" },
 ];
 
-/** Simulates an install then a running game, emitting the real event names. */
 /** The 1.12.2 instance asks for Rosetta until it is "installed" once. */
 let rosettaInstalled = false;
 
+/** Simulates an install then a running game, emitting the real event names. */
 async function fakeLaunch(id: string) {
   const total = 331_000_000;
   for (let i = 0; i <= 20; i++) {
@@ -217,10 +222,24 @@ export function installMocks() {
           return { hits, offset: 0, limit: 20, totalHits: hits.length };
         }
         case "list_content":
-          return content[args.instanceId as string] ?? [];
+          return [...(content[args.instanceId as string] ?? [])];
         case "install_content":
           await new Promise((r) => setTimeout(r, 900));
           return fakeInstall(args.instanceId as string, args.projectId as string);
+        case "perf_suggestions": {
+          await new Promise((r) => setTimeout(r, 400));
+          const instance = instances.find((i) => i.id === args.instanceId);
+          if (!instance || instance.loader === "vanilla") return [];
+          const installed = new Set((content[instance.id] ?? []).map((c) => c.projectId));
+          return CATALOGUE.mod
+            .filter((h) => ["AANobbMI", "gvQqBUqZ", "uXXizFIs", "LQ3K71Q1"].includes(h.projectId) && !installed.has(h.projectId))
+            .map((h) => ({ projectId: h.projectId, title: h.title, iconUrl: h.iconUrl }));
+        }
+        case "get_setting":
+          return settings[args.key as string] ?? null;
+        case "set_setting":
+          settings[args.key as string] = args.value;
+          return null;
         case "check_content_updates":
           await new Promise((r) => setTimeout(r, 600));
           return (content[args.instanceId as string] ?? [])

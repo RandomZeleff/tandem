@@ -50,7 +50,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 ## Phase 4 — Performance & UX
 
 - [x] Presets JVM (RAM auto selon machine, GC flags) — D18 ; mémoire réglable par instance dans l’onglet Informations
-- [ ] Suggestion de mods de perf selon loader (Sodium, Lithium, FerriteCore, ModernFix…)
+- [x] Suggestion de mods de perf selon loader (Sodium, Lithium, FerriteCore, ModernFix…) — D19
 - [ ] Gestion des instances en cours : RAM/CPU, logs live, kill, plusieurs instances simultanées
 - [ ] Analyse de crash (lecture du crash report, mod coupable probable)
 - [ ] Gestion des mondes (liste, sauvegardes, backup auto)
@@ -162,4 +162,5 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - Installation de Rosetta depuis l’UI : parcours vérifié avec le backend simulé (`pnpm dev` dans le navigateur, l’instance 1.12.2 du mock réclame Rosetta) ; le vrai `osascript` n’a pas pu être testé, Rosetta étant déjà installé sur ce Mac.
 - CI : lint/tests aussi sur macOS, job « Build macOS bundle » (`.dmg` universel non signé, artefact `tandem-macos`), tout vert.
 - Phase 4 : mémoire automatique + flags G1 (D18), sélecteur de mémoire dans l’onglet Informations ; flags vérifiés sur Java 8 (1.16.5, Rosetta), Java 17 (Forge 1.20.1) et Java 21 (1.21.4).
-- Prochaine étape : suite de la Phase 4 (suggestion de mods de perf, suivi RAM/CPU des instances).
+- Suggestion de mods de perf (D19) : vérifiée sur Modrinth pour Fabric 1.21.4, Forge 1.20.1 (Embeddium, pas de Lithium), NeoForge 1.21.1 et Fabric 1.16.5 ; les 7 mods suggérés installés ensemble sur Fabric 1.21.4 atteignent le menu. Panneau testé avec le backend simulé.
+- Prochaine étape : suivi RAM/CPU des instances en cours.
