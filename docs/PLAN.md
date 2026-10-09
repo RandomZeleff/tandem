@@ -58,6 +58,20 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Démarrage du launcher < 1 s — D24 ; ≈ 240-300 ms jusqu’à la première image (release, Windows, à chaud), plus de flash blanc
 - [x] UI fluide : audit des vues lourdes — D25 ; sortie du jeu par paquets (≤ 50 ms), console 12× moins coûteuse, listes de 250 mods sans virtualisation
 
+## Phase 4.5 — Finitions (avant la v0.1)
+
+Objectif : une version 0.1 propre et solide avant les grosses features (traduction IA, P2P).
+
+- [x] Audit de l'UI écran par écran → [AUDIT-UI.md](AUDIT-UI.md) (13/20, 6 P1, 11 P2, 3 P3)
+- [ ] Composants de base : `Select`, `Alert`, onglets accessibles, `Dialog` avec gestion du focus, popover
+- [ ] Navigation avec historique : retour/avant, boutons 4/5 de la souris, Alt+←/→, bouton retour dans la barre de titre ; onglet et position de défilement conservés
+- [ ] Menus déroulants maison (remplacer les 5 `<select>` natifs) : style pixel, clavier, identiques Windows/Mac
+- [ ] Corrections issues de l'audit
+- [ ] Tests sous charge sur 2-3 vrais modpacks (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
+- [ ] Optimisations issues des tests sous charge
+- [ ] Version 0.1 (build installable Windows + Mac)
+- [ ] Discussion traduction : s'inspirer des mods existants (AutoTranslation-Next, AutoTranslator, autotranslator-cn) → décision avant la Phase 5
+
 ## Phase 5 — Traduction IA de modpacks
 
 - [ ] Extraction : `assets/*/lang/en_us.json` (+ ancien format `.lang`)
