@@ -206,3 +206,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Changer la version d'un contenu déjà installé passe par le retirer puis l'installer (pas de « rétrograder » pour l'instant).
 - Statut : validé
 
+### D33 · 2026-10-10 · Traduction IA : par texte, réversible, sans clé à nous
+- Sources : langues des mods activés, des packs de ressources activés (ordre de `options.txt`, le dernier gagne), KubeJS, FTB Quests, Patchouli. Les textes déjà traduits par les auteurs sont gardés ; une « traduction » identique à une phrase anglaise (3 mots et plus) compte comme manquante.
+- Unité de cache : le texte anglais (SHA-1) + la langue, en SQLite. Un même texte n'est traduit qu'une fois pour tous les mods, instances et versions. Les corrections du joueur (`manual`) ne sont jamais remplacées par l'IA.
+- Envoi au modèle : lots par mod (30 textes, ~1 800 caractères), codes du jeu remplacés par des jetons `⟦n⟧` et vérifiés au retour (manquant, en double ou inventé = rejet, puis une seconde tentative en petits lots). Clé de traduction envoyée comme identifiant (indice du sens). Glossaire envoyé seulement pour les termes présents dans le lot : noms officiels de Minecraft (lus dans les fichiers du jeu), termes courts déjà traduits par les auteurs du pack, termes du joueur. Ordre : noms d'objets, quêtes, interface, livres ; on peut arrêter à tout moment.
+- Mesuré avec qwen2.5:7b sur RTX 4060 : ~40-50 tokens/s, 90 textes en 29 s. Prominence II : ~50 000 textes, ~710 000 tokens en sortie, soit des heures en local : d'où l'estimation affichée, la priorité et le choix des sources.
+- Sortie réversible : pack `resourcepacks/tandem-translation-<langue>/` inséré sous les packs du joueur (leurs traductions humaines gagnent) et accepté dans `incompatibleResourcePacks` ; fichiers de quêtes `lang/<langue>.snbt` créés à côté ; quêtes écrites dans les chapitres traduites sur place avec l'original dans `.tandem/originals/`. Un manifeste (`.tandem/translation.json`) liste ce qui a été écrit (SHA-1) : désactiver restaure tout, y compris la langue du jeu d'avant. Un fichier modifié depuis par quelqu'un d'autre n'est jamais écrasé.
+- Services : API compatible OpenAI uniquement (Ollama, LM Studio et la plupart des services en ligne la proposent). Tandem n'embarque aucune clé ; celle du joueur va dans le coffre du système (crate `keyring`), jamais en base. Pas de prix affichés (ils changent) : tokens et durée estimée à partir de la vitesse mesurée au dernier passage.
+- Statut : validé
+

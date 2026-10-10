@@ -72,7 +72,7 @@ Objectif : une version 0.1 propre et solide avant les grosses features (traducti
 - [~] Tests sous charge ([fiche](TEST-CHARGE.md), [résultats](TEST-CHARGE-RESULTATS.md)) : côté moteur fait (Prominence II, Create+, Cobblemon NeoForge) ; reste la partie interface à faire par un humain (gros Fabric, NeoForge 1.21.1, Forge 1.20.1 + FTB Quests) : installation, lancement, RAM/CPU du launcher, onglet Contenu, mises à jour, crash, export
 - [~] Optimisations issues des tests sous charge : téléchargements ×4-6, arrêt du jeu avec ses processus enfants, console en UTF-8, cache des modpacks (D29) ; dépendances entre mods (D30), choix de la version d'un modpack
 - [~] Version 0.1 (build installable Windows + Mac) — prête (workflow `release.yml` : tag `v*` → brouillon de Release, notes dans `docs/releases/v0.1.0.md`), **en attente de la réponse de Mojang** et de la Phase 2 (D31)
-- [ ] Discussion traduction : s'inspirer des mods existants (AutoTranslation-Next, AutoTranslator, autotranslator-cn) → décision avant la Phase 5
+- [x] Discussion traduction : s'inspirer des mods existants (AutoTranslation-Next, AutoTranslator, autotranslator-cn) → décision avant la Phase 5 (D33)
 
 ## Phase 4.6 — Fiches de contenu
 
@@ -104,13 +104,35 @@ Hors périmètre : CurseForge (avec son import, Phase 3), traduction de la descr
 
 ## Phase 5 — Traduction IA de modpacks
 
-- [ ] Extraction : `assets/*/lang/en_us.json` (+ ancien format `.lang`)
-- [ ] Extraction : FTB Quests (`.snbt`), Patchouli, KubeJS
-- [ ] Protection des codes de format (`§x`, `%s`, `%1$d`, `{0}`) avant envoi au LLM, restauration + validation après
-- [ ] Traduction par lots avec contexte (nom du mod, glossaire du modpack)
-- [ ] Sortie en resource pack généré (non destructif, activable/désactivable)
-- [ ] Cache local indexé par hash de mod + langue
+Décisions : D33.
+
+- [x] Extraction : `assets/*/lang/en_us.json` (+ ancien format `.lang`) des mods activés, des packs de ressources activés et de KubeJS, avec la priorité du jeu (le dernier pack gagne)
+- [x] Extraction : FTB Quests (fichiers `lang/` récents, ou texte dans les chapitres traduit sur place avec originaux gardés), Patchouli (livres dans les jars et livres en vrac)
+- [x] Textes déjà traduits par les auteurs gardés ; copies de l'anglais dans les autres langues (phrases) retraduites
+- [x] Protection des codes de format (`§x`, `&x`, `%s`, `%1$d`, `{0}`, `$(…)`, sauts de ligne) avant envoi au LLM, restauration + validation après
+- [x] Traduction par lots avec contexte (nom du mod, clé de traduction comme indice) et glossaire : noms officiels de Minecraft, termes déjà traduits par les auteurs, termes du joueur
+- [x] Sortie en resource pack généré (non destructif, activable/désactivable) + `options.txt` (pack sous ceux du joueur, langue du jeu, retour à l'ancienne langue)
+- [x] Cache local par texte anglais + langue (SQLite), corrections du joueur jamais écrasées
+- [x] Services compatibles OpenAI (Ollama, LM Studio, OpenAI, Anthropic, Mistral, Gemini, OpenRouter, DeepSeek, autre), clé dans le coffre du système
+- [x] UI : onglet Traduction (couverture, estimation tokens/temps, progression, arrêt, choix des sources, relecture et correction, glossaire), réglages, traduction des descriptions de fiches
+- [x] Mise à jour automatique de la traduction active après un changement de contenu
 - [ ] (plus tard) Cache communautaire partagé
+
+## Phase 4.7 — Instances et contenu, au complet
+
+Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
+
+- [ ] Messages d'erreur en français partout (les erreurs Rust sont aujourd'hui en anglais)
+- [ ] Mise à jour d'un modpack vers une nouvelle version (mods remplacés ; mondes, réglages, captures et fichiers modifiés par le joueur gardés)
+- [ ] Renommer, changer l'icône, dupliquer une instance
+- [ ] Réglages avancés par instance : arguments JVM, Java (automatique / installé / chemin), taille de la fenêtre du jeu
+- [ ] Détection des Java installés
+- [ ] Changement de version d'une instance (jeu et/ou loader) avec vérification des mods
+- [ ] Datapacks par monde (Modrinth)
+- [ ] Détection des incompatibilités entre mods (déclarées dans les jars et sur Modrinth)
+- [ ] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte
+- [ ] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel)
+- [ ] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne
 
 ## Phase 6 — Multijoueur P2P sans serveur
 
