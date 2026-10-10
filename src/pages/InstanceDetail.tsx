@@ -14,13 +14,14 @@ import Scene from "../components/Scene";
 import ScreenshotsTab from "../components/ScreenshotsTab";
 import Select from "../components/Select";
 import Tabs, { tabPanel } from "../components/Tabs";
+import TranslationTab from "../components/translation/TranslationTab";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
 import { formatBytes, formatGigabytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { openProject } from "../lib/projects";
 import { navigate, refetchInstances, remembered } from "../lib/store";
 
-type Tab = "console" | "content" | "worlds" | "screenshots" | "info";
+type Tab = "console" | "content" | "worlds" | "screenshots" | "translation" | "info";
 
 function stageLabel(p: InstallProgress | undefined): string {
   if (!p || p.stage === "metadata") return "Lecture des métadonnées Mojang…";
@@ -57,6 +58,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
     { id: "content", label: "Contenu" },
     { id: "worlds", label: "Mondes" },
     { id: "screenshots", label: "Captures" },
+    { id: "translation", label: "Traduction" },
     { id: "info", label: "Informations" },
   ];
 
@@ -160,6 +162,9 @@ export default function InstanceDetail(props: { instance: Instance }) {
             </Match>
             <Match when={tab() === "screenshots"}>
               <ScreenshotsTab instanceId={props.instance.id} />
+            </Match>
+            <Match when={tab() === "translation"}>
+              <TranslationTab instance={props.instance} locked={state().status !== "idle"} />
             </Match>
             <Match when={tab() === "info"}>
               <dl class="panel px-corners-md grid max-w-xl grid-cols-[auto_1fr] gap-x-8 gap-y-3 p-5 text-sm">

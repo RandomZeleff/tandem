@@ -231,6 +231,100 @@ export interface DependencyItem {
   project: ProjectSummary;
 }
 
+export interface TranslationLanguage {
+  code: string;
+  name: string;
+}
+
+export interface TranslationPreset {
+  id: string;
+  label: string;
+  baseUrl: string;
+  /** Runs on the player's computer. */
+  local: boolean;
+  needsKey: boolean;
+  helpUrl: string;
+  concurrency: number;
+}
+
+export interface ProviderConfig {
+  preset: string;
+  baseUrl: string;
+  model: string;
+  concurrency: number;
+}
+
+export interface TranslationPreferences {
+  locale: string;
+  setGameLanguage: boolean;
+}
+
+export interface TranslationSettings {
+  languages: TranslationLanguage[];
+  presets: TranslationPreset[];
+  provider: { config: ProviderConfig | null; hasKey: boolean };
+  preferences: TranslationPreferences;
+}
+
+export type TranslationSourceKind = "mod" | "resourcePack" | "kubeJs" | "quests" | "book";
+
+export interface TranslationCounts {
+  total: number;
+  /** Translated by the authors or a resource pack. */
+  existing: number;
+  /** Translated by Tandem. */
+  translated: number;
+  missing: number;
+}
+
+export interface TranslationSource {
+  id: string;
+  name: string;
+  kind: TranslationSourceKind;
+  excluded: boolean;
+  counts: TranslationCounts;
+}
+
+export interface TranslationOverview {
+  locale: string;
+  sources: TranslationSource[];
+  totals: TranslationCounts;
+  estimate: { texts: number; characters: number; inputTokens: number; outputTokens: number };
+  activeLocale: string | null;
+  gameLanguage: string | null;
+  quests: "languageFile" | "inPlace" | null;
+  running: boolean;
+}
+
+export interface TranslationProgress {
+  done: number;
+  total: number;
+  failed: number;
+  promptTokens: number;
+  completionTokens: number;
+  elapsedMs: number;
+}
+
+export interface TranslationReport {
+  progress: TranslationProgress;
+  cancelled: boolean;
+  error: string | null;
+}
+
+export interface TranslationEntry {
+  key: string;
+  english: string;
+  translation: string | null;
+  byAuthors: boolean;
+}
+
+export interface GlossaryTerm {
+  term: string;
+  translation: string;
+  /** Empty for terms shared by every instance. */
+  instanceId: string;
+}
+
 /** An enabled mod that needs another one to start. */
 export interface Dependent {
   name: string;
@@ -341,6 +435,7 @@ export const EVENTS = {
   exited: "game://exited",
   stats: "game://stats",
   installFinished: "install://finished",
+  translateProgress: "translate://progress",
   instancesChanged: "instances://changed",
 } as const;
 
@@ -413,6 +508,39 @@ export const api = {
   importModpack: (path: string) => invoke<Instance>("import_modpack", { path }),
   exportModpack: (instanceId: string, path: string, version: string) =>
     invoke<void>("export_modpack", { instanceId, path, version }),
+
+  translationSettings: () => invoke<TranslationSettings>("translation_settings"),
+  setTranslationPreferences: (preferences: TranslationPreferences) =>
+    invoke<void>("set_translation_preferences", { preferences }),
+  /** `key`: new key, `""` deletes it, `null` keeps the stored one. */
+  setTranslationProvider: (config: ProviderConfig, key: string | null) =>
+    invoke<void>("set_translation_provider", { config, key }),
+  testTranslationProvider: (config: ProviderConfig, key: string | null) =>
+    invoke<string[]>("test_translation_provider", { config, key }),
+  translationOverview: (instanceId: string, locale: string) =>
+    invoke<TranslationOverview>("translation_overview", { instanceId, locale }),
+  /** Resolves when the run ends; progress arrives as events. */
+  translateInstance: (instanceId: string, locale: string) =>
+    invoke<TranslationReport>("translate_instance", { instanceId, locale }),
+  cancelTranslation: (instanceId: string) => invoke<void>("cancel_translation", { instanceId }),
+  setTranslationActive: (instanceId: string, locale: string, active: boolean) =>
+    invoke<void>("set_translation_active", { instanceId, locale, active }),
+  translationEntries: (instanceId: string, locale: string, sourceId: string, query: string) =>
+    invoke<TranslationEntry[]>("translation_entries", { instanceId, locale, sourceId, query }),
+  correctTranslation: (instanceId: string, locale: string, english: string, translation: string) =>
+    invoke<void>("correct_translation", { instanceId, locale, english, translation }),
+  forgetTranslations: (instanceId: string, locale: string, sourceId: string) =>
+    invoke<void>("forget_translations", { instanceId, locale, sourceId }),
+  setTranslationExcluded: (instanceId: string, sourceId: string, excluded: boolean) =>
+    invoke<void>("set_translation_excluded", { instanceId, sourceId, excluded }),
+  glossaryTerms: (instanceId: string, locale: string) => invoke<GlossaryTerm[]>("glossary_terms", { instanceId, locale }),
+  /** `instanceId` null: for every instance. */
+  setGlossaryTerm: (instanceId: string | null, locale: string, term: string, translation: string) =>
+    invoke<void>("set_glossary_term", { instanceId, locale, term, translation }),
+  removeGlossaryTerm: (instanceId: string | null, locale: string, term: string) =>
+    invoke<void>("remove_glossary_term", { instanceId, locale, term }),
+  translateDescription: (projectId: string, locale: string) =>
+    invoke<string>("translate_description", { projectId, locale }),
 
   listAccounts: () => invoke<Account[]>("list_accounts"),
   addOfflineAccount: (username: string) => invoke<Account>("add_offline_account", { username }),

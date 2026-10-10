@@ -3,6 +3,7 @@ import Alert from "../components/Alert";
 import LogView from "../components/LogView";
 import { Icon, Toggle } from "../components/pixel";
 import Select from "../components/Select";
+import TranslationSettings from "../components/translation/TranslationSettings";
 import { api, errorMessage } from "../lib/api";
 import { ON_GAME_START_SETTING, type OnGameStart } from "../lib/games";
 
@@ -111,6 +112,8 @@ export default function Settings() {
           </div>
         </Section>
       </div>
+
+      <TranslationSettings />
 
       <section class="panel px-corners-md flex min-h-[260px] flex-1 flex-col gap-3 p-4">
         <h2 class="panel-title">Journal du launcher</h2>

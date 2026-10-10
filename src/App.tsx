@@ -6,6 +6,7 @@ import TitleBar from "./components/TitleBar";
 import Toaster from "./components/Toaster";
 import { onGamePlayed, rosettaPrompt, setRosettaPrompt, startGameEvents } from "./lib/games";
 import { startLogStream } from "./lib/logs";
+import { startTranslationEvents } from "./lib/translation";
 import {
   currentEntry,
   goBack,
@@ -49,6 +50,7 @@ function App() {
   onMount(() => {
     void startLogStream();
     void startGameEvents();
+    void startTranslationEvents();
     onGamePlayed(() => void refetchInstances());
 
     // Back / Forward: mouse side buttons, Alt+arrows, and Cmd+[ / Cmd+] on macOS.

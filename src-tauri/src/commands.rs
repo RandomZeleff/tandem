@@ -17,7 +17,7 @@ use tauri::{AppHandle, State};
 use tauri_plugin_opener::OpenerExt;
 
 use crate::error::{CommandError, CommandResult, PROJECT_NOT_FOUND};
-use crate::{game, modpack, AppState};
+use crate::{game, modpack, translation, AppState};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -286,13 +286,17 @@ pub async fn list_content(
 
 #[tauri::command]
 pub async fn install_content(
+    app: AppHandle,
     state: State<'_, AppState>,
     instance_id: String,
     project_id: String,
     version_id: Option<String>,
 ) -> CommandResult<Vec<InstalledContent>> {
     let instance = state.ctx.db.get_instance(&instance_id).await?;
-    Ok(content::install(&state.ctx, &instance, &project_id, version_id.as_deref()).await?)
+    let installed =
+        content::install(&state.ctx, &instance, &project_id, version_id.as_deref()).await?;
+    translation::refresh_later(&app, &instance_id);
+    Ok(installed)
 }
 
 /// Everything a project page shows (id or slug).
@@ -365,6 +369,7 @@ pub async fn check_content_updates(
 /// Updates the given projects, or every outdated one when `project_ids` is absent.
 #[tauri::command]
 pub async fn update_content(
+    app: AppHandle,
     state: State<'_, AppState>,
     instance_id: String,
     project_ids: Option<Vec<String>>,
@@ -373,7 +378,9 @@ pub async fn update_content(
         return Err(CommandError::msg("stop the game before updating content"));
     }
     let instance = state.ctx.db.get_instance(&instance_id).await?;
-    Ok(content::update(&state.ctx, &instance, project_ids.as_deref()).await?)
+    let updated = content::update(&state.ctx, &instance, project_ids.as_deref()).await?;
+    translation::refresh_later(&app, &instance_id);
+    Ok(updated)
 }
 
 /// Reads the instance's mod metadata ahead of time, so the checks below are instant.
@@ -444,6 +451,7 @@ pub async fn mod_providers(
 
 #[tauri::command]
 pub async fn set_content_enabled(
+    app: AppHandle,
     state: State<'_, AppState>,
     instance_id: String,
     project_id: String,
@@ -454,11 +462,14 @@ pub async fn set_content_enabled(
             "stop the game before enabling or disabling content",
         ));
     }
-    Ok(content::set_enabled(&state.ctx, &instance_id, &project_id, enabled).await?)
+    let item = content::set_enabled(&state.ctx, &instance_id, &project_id, enabled).await?;
+    translation::refresh_later(&app, &instance_id);
+    Ok(item)
 }
 
 #[tauri::command]
 pub async fn remove_content(
+    app: AppHandle,
     state: State<'_, AppState>,
     instance_id: String,
     project_id: String,
@@ -466,7 +477,9 @@ pub async fn remove_content(
     if state.games.is_busy(&instance_id) {
         return Err(CommandError::msg("stop the game before removing content"));
     }
-    Ok(content::remove(&state.ctx, &instance_id, &project_id).await?)
+    content::remove(&state.ctx, &instance_id, &project_id).await?;
+    translation::refresh_later(&app, &instance_id);
+    Ok(())
 }
 
 /// Creates an instance from the latest compatible version of a Modrinth modpack.

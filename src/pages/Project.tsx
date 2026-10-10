@@ -33,6 +33,7 @@ import {
 } from "../lib/projects";
 import { goBack, instances, navigate, remembered, setNewInstanceDialog } from "../lib/store";
 import { toast } from "../lib/toast";
+import { readyProvider, translationSettings } from "../lib/translation";
 
 type Tab = "description" | "gallery" | "versions" | "content" | "dependencies";
 
@@ -126,6 +127,8 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
   const currentTab = () => (tabs().some((t) => t.id === tab()) ? tab() : "description");
 
   const [error, setError] = createSignal<string | null>(null);
+  /** The description in the player's language, once asked for. */
+  const [translatedHtml, setTranslatedHtml] = createSignal<string | null>(null);
   /** Modpack version picker: the version to preselect, or "" for the recommended one. */
   const [picking, setPicking] = createSignal<string | null>(null);
 
@@ -252,8 +255,9 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
                   when={d().bodyHtml.trim()}
                   fallback={<p class="panel px-corners-md py-12 text-center text-chalk-2">L'auteur n'a pas écrit de description.</p>}
                 >
-                  <article class="panel px-corners-md p-6">
-                    <RichText html={d().bodyHtml} instanceId={isContent() ? instanceId() : undefined} />
+                  <article class="panel px-corners-md flex flex-col gap-4 p-6">
+                    <DescriptionTools projectId={d().id} translated={translatedHtml()} onTranslated={setTranslatedHtml} />
+                    <RichText html={translatedHtml() ?? d().bodyHtml} instanceId={isContent() ? instanceId() : undefined} />
                   </article>
                 </Show>
               </Match>
@@ -311,6 +315,55 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
         )}
       </Show>
     </>
+  );
+}
+
+/** "Translate" above a description, with the provider configured for instances. */
+function DescriptionTools(props: { projectId: string; translated: string | null; onTranslated: (html: string | null) => void }) {
+  const [busy, setBusy] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+  const locale = () => translationSettings()?.preferences.locale ?? "fr_fr";
+  const language = () => translationSettings()?.languages.find((l) => l.code === locale())?.name ?? locale();
+
+  async function translate() {
+    setBusy(true);
+    setError(null);
+    try {
+      props.onTranslated(await api.translateDescription(props.projectId, locale()));
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Show when={readyProvider()}>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2 border-b border-line pb-3">
+          <Show
+            when={props.translated}
+            fallback={
+              <button class="btn btn-ghost h-8 px-2.5 text-xs" disabled={busy()} onClick={() => void translate()}>
+                <Icon name="sparkle" size={10} />
+                {busy() ? "Traduction en cours…" : `Traduire en ${language()}`}
+              </button>
+            }
+          >
+            <span class="flex items-center gap-1.5 text-xs text-xp-text">
+              <Icon name="sparkle" size={10} />
+              Traduit par l'IA en {language()}
+            </span>
+            <button class="btn btn-ghost h-8 px-2.5 text-xs" onClick={() => props.onTranslated(null)}>
+              Voir l'original
+            </button>
+          </Show>
+        </div>
+        <Show when={error()}>
+          <Alert onClose={() => setError(null)}>{error()}</Alert>
+        </Show>
+      </div>
+    </Show>
   );
 }
 

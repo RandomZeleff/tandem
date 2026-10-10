@@ -3,6 +3,7 @@ mod error;
 mod game;
 mod modpack;
 mod screenshot_protocol;
+mod translation;
 
 use std::sync::OnceLock;
 use std::time::Instant;
@@ -29,6 +30,7 @@ pub struct AppState {
     pub logs: LogBuffer,
     pub games: game::Games,
     pub projects: ProjectCache,
+    pub translations: tandem_core::translate::service::Service,
     _log_guard: WorkerGuard,
 }
 
@@ -68,6 +70,7 @@ pub fn run() {
                 logs,
                 games: game::Games::default(),
                 projects: ProjectCache::default(),
+                translations: Default::default(),
                 _log_guard: log_guard,
             });
             // Tauri creates the window and its webview before `setup`: most of this is theirs.
@@ -102,6 +105,22 @@ pub fn run() {
             commands::project_versions,
             commands::version_changelog,
             commands::version_dependencies,
+            translation::translation_settings,
+            translation::set_translation_preferences,
+            translation::set_translation_provider,
+            translation::test_translation_provider,
+            translation::translation_overview,
+            translation::translate_instance,
+            translation::cancel_translation,
+            translation::set_translation_active,
+            translation::translation_entries,
+            translation::correct_translation,
+            translation::forget_translations,
+            translation::set_translation_excluded,
+            translation::glossary_terms,
+            translation::set_glossary_term,
+            translation::remove_glossary_term,
+            translation::translate_description,
             commands::remove_content,
             commands::check_content_updates,
             commands::perf_suggestions,

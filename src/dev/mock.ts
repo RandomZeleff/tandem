@@ -20,6 +20,7 @@ import type {
   WorldBackup,
 } from "../lib/api";
 import { projectMocks } from "./mockProjects";
+import { translationMocks } from "./mockTranslations";
 
 const now = Date.now();
 const iso = (hoursAgo: number) => new Date(now - hoursAgo * 3_600_000).toISOString();
@@ -241,10 +242,11 @@ export function installMocks() {
   const w = window as unknown as { __TAURI_INTERNALS__?: Record<string, unknown> };
   (w.__TAURI_INTERNALS__ ??= {}).convertFileSrc = fakeScreenshot;
   const projects = projectMocks(CATALOGUE, instances);
+  const translations = translationMocks();
   mockIPC(
     async (cmd, payload) => {
       const args = (payload ?? {}) as Record<string, unknown>;
-      const project = await projects(cmd, args);
+      const project = (await projects(cmd, args)) ?? (await translations(cmd, args));
       if (project !== undefined) return project;
       switch (cmd) {
         case "app_info":
