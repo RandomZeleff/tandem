@@ -22,7 +22,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Téléchargement : client.jar, libraries (règles OS/arch), natives, assets (index + objets, layouts legacy `virtual`/`resources`)
 - [x] Moteur de téléchargement : parallèle borné (16), retry avec backoff, reprise `.part`, vérif SHA1, progression → UI
 - [x] ~~Store content-addressed + hardlinks~~ → fait en Phase 3 pour le contenu des instances (voir D10)
-- [~] Gestion Java : téléchargement auto des runtimes Mojang selon la version ✅ ; détection des JRE déjà installés à faire (override `java_path` par instance déjà en base, sans UI)
+- [x] Gestion Java : téléchargement auto des runtimes Mojang selon la version ; détection des JRE installés et choix par instance (Phase 4.7)
 - [x] Construction de la ligne de commande (format 1.13+ et legacy `minecraftArguments`)
 - [x] Lancement du process (sans console), capture stdout/stderr, détection crash + rapport
 - [x] Comptes offline (UUID identique au serveur vanilla), un seul actif
@@ -42,12 +42,12 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 - [x] Fabric / Quilt (API meta, simple)
 - [x] NeoForge / Forge (exécution des installers / processors) — Forge 1.12.2 → actuel, NeoForge 1.20.2 → actuel
-- [~] Client API Modrinth : recherche + installation mods, shaders, resource packs, modpacks ✅ ; datapacks (par monde) à faire
-- [~] Résolution de dépendances + compatibilité version/loader : dépendances requises récursives + choix de la version compatible ✅ ; détection des incompatibilités à faire
+- [x] Client API Modrinth : recherche + installation mods, shaders, resource packs, modpacks, datapacks (par monde)
+- [x] Résolution de dépendances + compatibilité version/loader : dépendances requises récursives, choix de la version compatible, détection des incompatibilités
 - [x] Import/export `.mrpack` (+ installation de modpacks depuis Découvrir ; Fabric/Quilt uniquement)
 - [ ] Import modpacks CurseForge (`manifest.json`, clé API, gestion des mods non distribuables)
 - [x] Mises à jour de contenu par instance (+ activer/désactiver un contenu)
-- [ ] Changement de version d'une instance (avec vérif de compatibilité des mods)
+- [x] Changement de version d'une instance (avec vérif de compatibilité des mods) — Phase 4.7
 
 ## Phase 4 — Performance & UX
 
@@ -122,14 +122,14 @@ Décisions : D33.
 
 Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 
-- [ ] Messages d'erreur en français partout (les erreurs Rust sont aujourd'hui en anglais)
-- [ ] Mise à jour d'un modpack vers une nouvelle version (mods remplacés ; mondes, réglages, captures et fichiers modifiés par le joueur gardés)
-- [ ] Renommer, changer l'icône, dupliquer une instance
-- [ ] Réglages avancés par instance : arguments JVM, Java (automatique / installé / chemin), taille de la fenêtre du jeu
-- [ ] Détection des Java installés
-- [ ] Changement de version d'une instance (jeu et/ou loader) avec vérification des mods
-- [ ] Datapacks par monde (Modrinth)
-- [ ] Détection des incompatibilités entre mods (déclarées dans les jars et sur Modrinth)
+- [x] Messages d'erreur en français partout (les erreurs Rust sont aujourd'hui en anglais)
+- [x] Mise à jour d'un modpack vers une nouvelle version (mods remplacés ; mondes, réglages, captures et fichiers modifiés par le joueur gardés)
+- [x] Renommer, changer l'icône, dupliquer une instance
+- [x] Réglages avancés par instance : arguments JVM, Java (automatique / installé / chemin), taille de la fenêtre du jeu
+- [x] Détection des Java installés
+- [x] Changement de version d'une instance (jeu et/ou loader) avec vérification des mods
+- [x] Datapacks par monde (Modrinth)
+- [x] Détection des incompatibilités entre mods (déclarées dans les jars et sur Modrinth)
 - [ ] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte
 - [ ] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel)
 - [ ] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne
