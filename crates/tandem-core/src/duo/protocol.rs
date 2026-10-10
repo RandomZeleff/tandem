@@ -21,6 +21,45 @@ pub const STREAM_GAME: u8 = b'G';
 pub const STREAM_MOD: u8 = b'M';
 pub const MOD_FOUND: u8 = 1;
 pub const MOD_MISSING: u8 = 0;
+/// First byte of a stream asking the host for the list of its pack files (configs,
+/// scripts…): answered with one JSON line, a list of [`PackFile`]. Older hosts close it.
+pub const STREAM_PACK_LIST: u8 = b'F';
+/// First byte of a stream asking for one pack file: the guest sends its path and a
+/// newline; answered like [`STREAM_MOD`].
+pub const STREAM_PACK_FILE: u8 = b'P';
+
+/// Folders of an instance that shape the game besides its mods (registered content,
+/// recipes, settings shared by the pack), copied into a guest's copy of the instance.
+pub const PACK_ROOTS: &[&str] = &[
+    "config",
+    "defaultconfigs",
+    "kubejs",
+    "scripts",
+    "global_packs",
+    "datapacks",
+];
+/// Of those, the folders mirrored exactly: an extra script could add content the host
+/// does not have.
+pub const MIRRORED_ROOTS: &[&str] = &["kubejs", "scripts"];
+
+/// A file of one of the [`PACK_ROOTS`], by its path relative to the instance (`/`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PackFile {
+    pub path: String,
+    pub sha1: String,
+    pub size: u64,
+}
+
+/// A relative path inside one of the [`PACK_ROOTS`], with nothing that could leave it.
+pub fn pack_path_ok(path: &str) -> bool {
+    let parts: Vec<&str> = path.split('/').collect();
+    parts.len() > 1
+        && PACK_ROOTS.contains(&parts[0])
+        && parts
+            .iter()
+            .all(|p| !p.is_empty() && *p != "." && *p != ".." && !p.contains(['\\', ':']))
+}
 
 /// The world the host opened to LAN, as guests see it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -146,6 +185,19 @@ mod tests {
                 world: Some(WorldInfo { motd: "M".into() })
             }
         );
+    }
+
+    #[test]
+    fn pack_paths_stay_inside_their_folders() {
+        assert!(pack_path_ok("config/create-common.toml"));
+        assert!(pack_path_ok("kubejs/startup_scripts/items.js"));
+        assert!(!pack_path_ok("config"));
+        assert!(!pack_path_ok("mods/x.jar"));
+        assert!(!pack_path_ok("config/../mods/x.jar"));
+        assert!(!pack_path_ok("config//x"));
+        assert!(!pack_path_ok("config/C:\\x"));
+        assert!(!pack_path_ok("config/a\\..\\..\\x"));
+        assert!(!pack_path_ok("/config/x"));
     }
 
     #[test]

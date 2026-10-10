@@ -1,7 +1,7 @@
 //! The player who opens their world: publishes the invite code, welcomes guests and
 //! relays each of their game connections to the world opened to LAN.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::Ipv4Addr;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -10,6 +10,7 @@ use std::time::Duration;
 use iroh::endpoint::{Connection, Incoming, RecvStream, SendStream, VarInt};
 use iroh::Endpoint;
 use serde::Serialize;
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
 use tokio::net::TcpStream;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
@@ -29,8 +30,9 @@ const LINK_EVERY: Duration = Duration::from_secs(2);
 pub struct HostConfig {
     pub player: String,
     pub instance: Option<InstanceSummary>,
-    /// Folder of the mods listed in `instance`, which guests may ask for.
-    pub mods_dir: Option<PathBuf>,
+    /// Folder of `instance`: guests may ask for its mods (those listed in `instance`)
+    /// and its pack files (see [`protocol::PACK_ROOTS`]).
+    pub game_dir: Option<PathBuf>,
 }
 
 /// A guest, as the host's interface shows it.
@@ -74,6 +76,8 @@ struct Shared {
     config: HostConfig,
     world: watch::Receiver<Option<LanWorld>>,
     guests: Mutex<HashMap<String, Connection>>,
+    /// Pack files last listed to a guest: the only ones it may then ask for.
+    pack_files: Mutex<HashSet<String>>,
     emit: Emit,
 }
 
@@ -121,6 +125,7 @@ impl Host {
             config,
             world: world_rx,
             guests: Mutex::new(HashMap::new()),
+            pack_files: Mutex::new(HashSet::new()),
             emit: Arc::new(emit),
         });
         let mut tasks = Vec::new();
@@ -329,6 +334,8 @@ async fn welcome(incoming: Incoming, shared: Arc<Shared>) {
             match tag[0] {
                 protocol::STREAM_GAME => relay_game(send, recv, &shared).await,
                 protocol::STREAM_MOD => send_mod(send, recv, &shared).await,
+                protocol::STREAM_PACK_LIST => send_pack_list(send, &shared).await,
+                protocol::STREAM_PACK_FILE => send_pack_file(send, recv, &shared).await,
                 _ => {}
             }
         });
@@ -357,7 +364,7 @@ async fn relay_game(send: SendStream, mut recv: RecvStream, shared: &Shared) {
 
 /// Sends a guest one of the mods of this session's instance (only those: the request is
 /// a SHA-1 looked up in the summary given to guests).
-async fn send_mod(mut send: SendStream, mut recv: RecvStream, shared: &Shared) {
+async fn send_mod(send: SendStream, mut recv: RecvStream, shared: &Shared) {
     let mut sha1 = [0u8; 40];
     if recv.read_exact(&mut sha1).await.is_err() {
         return;
@@ -368,10 +375,48 @@ async fn send_mod(mut send: SendStream, mut recv: RecvStream, shared: &Shared) {
         .instance
         .as_ref()
         .and_then(|i| i.mods.iter().find(|m| m.sha1 == sha1))
-        .zip(shared.config.mods_dir.as_ref())
-        .map(|(m, dir)| dir.join(&m.file_name));
-    let file = match path {
-        Some(path) => tokio::fs::File::open(&path).await.ok(),
+        .zip(shared.config.game_dir.as_ref())
+        .map(|(m, dir)| dir.join("mods").join(&m.file_name));
+    send_file(send, path).await;
+}
+
+/// Lists the instance's pack files (configs, scripts…) to a guest.
+async fn send_pack_list(mut send: SendStream, shared: &Shared) {
+    let files = match shared.config.game_dir.clone() {
+        Some(dir) => tokio::task::spawn_blocking(move || super::pack_files(&dir))
+            .await
+            .unwrap_or_default(),
+        None => Vec::new(),
+    };
+    *lock(&shared.pack_files) = files.iter().map(|f| f.path.clone()).collect();
+    tracing::info!(files = files.len(), "pack files listed to a guest");
+    let mut line = serde_json::to_vec(&files).unwrap_or_else(|_| b"[]".to_vec());
+    line.push(b'\n');
+    let _ = send.write_all(&line).await;
+    let _ = send.finish();
+    let _ = send.stopped().await;
+}
+
+/// Sends a guest one of the pack files listed to it.
+async fn send_pack_file(send: SendStream, recv: RecvStream, shared: &Shared) {
+    let mut lines = BufReader::new(recv.take(4096)).lines();
+    let Ok(Some(path)) = lines.next_line().await else {
+        return;
+    };
+    let listed = protocol::pack_path_ok(&path) && lock(&shared.pack_files).contains(&path);
+    let file = shared
+        .config
+        .game_dir
+        .as_ref()
+        .filter(|_| listed)
+        .map(|dir| dir.join(&path));
+    send_file(send, file).await;
+}
+
+/// Answers a file request: found and its bytes, or missing.
+async fn send_file(mut send: SendStream, path: Option<PathBuf>) {
+    let file = match &path {
+        Some(path) => tokio::fs::File::open(path).await.ok(),
         None => None,
     };
     let Some(mut file) = file else {
@@ -380,9 +425,8 @@ async fn send_mod(mut send: SendStream, mut recv: RecvStream, shared: &Shared) {
         return;
     };
     if send.write_all(&[protocol::MOD_FOUND]).await.is_ok() {
-        match tokio::io::copy(&mut file, &mut send).await {
-            Ok(bytes) => tracing::info!(%sha1, bytes, "mod sent to a guest"),
-            Err(err) => tracing::warn!(%sha1, error = %err, "mod not sent"),
+        if let Err(err) = tokio::io::copy(&mut file, &mut send).await {
+            tracing::warn!(path = ?path, error = %err, "file not sent to a guest");
         }
     }
     let _ = send.finish();

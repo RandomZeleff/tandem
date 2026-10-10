@@ -9,12 +9,13 @@ use std::time::Duration;
 use iroh::endpoint::{ApplicationClose, Connection, ConnectionError, SendStream};
 use iroh::Endpoint;
 use serde::Serialize;
+use tokio::io::AsyncBufReadExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{watch, Mutex};
 use tokio::task::JoinHandle;
 
 use super::lan::{self, LanWorld};
-use super::protocol::{self, InstanceSummary, Message, Reader, WorldInfo};
+use super::protocol::{self, InstanceSummary, Message, PackFile, Reader, WorldInfo};
 use super::{
     bind_endpoint, fail, invite, link_status, pipe, LinkStatus, CLOSE_HOST_LEFT, CLOSE_KICKED,
     RELAYED_MARK,
@@ -24,6 +25,8 @@ use crate::error::Result;
 const LINK_EVERY: Duration = Duration::from_secs(2);
 /// Largest mod accepted from the host.
 const MAX_MOD_BYTES: u64 = 512 * 1024 * 1024;
+/// Largest list of pack files accepted from the host.
+const MAX_LIST_BYTES: u64 = 64 * 1024 * 1024;
 
 /// What the host told the guest on arrival.
 #[derive(Debug, Clone, Serialize)]
@@ -255,11 +258,47 @@ impl Guest {
         sha1: &str,
         out: &mut (impl tokio::io::AsyncWrite + Unpin),
     ) -> Result<()> {
-        let (mut send, mut recv) = self.conn.open_bi().await.map_err(fail)?;
-        send.write_all(&[protocol::STREAM_MOD])
+        self.fetch(protocol::STREAM_MOD, sha1.as_bytes(), out).await
+    }
+
+    /// Receives one of the host's pack files, by path, into `out` (unchecked: the caller
+    /// checks the hash). Only paths from [`Guest::pack_files`] are served.
+    pub async fn fetch_pack_file(
+        &self,
+        path: &str,
+        out: &mut (impl tokio::io::AsyncWrite + Unpin),
+    ) -> Result<()> {
+        let request = format!("{path}\n");
+        self.fetch(protocol::STREAM_PACK_FILE, request.as_bytes(), out)
+            .await
+    }
+
+    /// The host's pack files (configs, scripts…).
+    pub async fn pack_files(&self) -> Result<Vec<PackFile>> {
+        let (mut send, recv) = self.conn.open_bi().await.map_err(fail)?;
+        send.write_all(&[protocol::STREAM_PACK_LIST])
             .await
             .map_err(fail)?;
-        send.write_all(sha1.as_bytes()).await.map_err(fail)?;
+        let _ = send.finish();
+        let mut lines =
+            tokio::io::BufReader::new(tokio::io::AsyncReadExt::take(recv, MAX_LIST_BYTES)).lines();
+        match lines.next_line().await {
+            Ok(Some(line)) => Ok(serde_json::from_str(&line)?),
+            _ => Err(fail(
+                "la version de Tandem de l'hôte ne sait pas encore envoyer ses réglages",
+            )),
+        }
+    }
+
+    async fn fetch(
+        &self,
+        tag: u8,
+        request: &[u8],
+        out: &mut (impl tokio::io::AsyncWrite + Unpin),
+    ) -> Result<()> {
+        let (mut send, mut recv) = self.conn.open_bi().await.map_err(fail)?;
+        send.write_all(&[tag]).await.map_err(fail)?;
+        send.write_all(request).await.map_err(fail)?;
         let _ = send.finish();
         let mut status = [0u8; 1];
         if recv.read_exact(&mut status).await.is_err() {

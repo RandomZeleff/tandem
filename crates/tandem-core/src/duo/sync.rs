@@ -1,6 +1,9 @@
-//! Gives the guest the host's mods (6b). What Modrinth knows is downloaded from it, the
-//! rest is sent by the host over the session; the guest's mods the host does not have are
-//! switched off (renamed `.disabled`, like the Content tab does), never deleted.
+//! Gives the guest's copy of the host's instance the host's mods and pack files (6b).
+//! Mods Modrinth knows are downloaded from it, the rest is sent by the host over the
+//! session; the copy's mods the host does not have are switched off (renamed
+//! `.disabled`, like the Content tab does), never deleted. Pack files (configs,
+//! scripts…) come from the host. Only ever run on a copy Tandem made, never on the
+//! player's own instances.
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -12,7 +15,7 @@ use serde::Serialize;
 use tokio::io::AsyncWriteExt;
 
 use super::guest::Guest;
-use super::protocol::{InstanceSummary, ModRef};
+use super::protocol::{self, InstanceSummary, ModRef, PackFile};
 use super::{fail, hash_file};
 use crate::content::modrinth;
 use crate::context::Context;
@@ -36,7 +39,11 @@ pub struct SyncReport {
     pub enabled: usize,
     /// The guest's mods the host does not have, switched off.
     pub disabled: usize,
-    /// Host mods that could not be fetched (file names).
+    /// Pack files (configs, scripts…) copied from the host.
+    pub files: usize,
+    /// Content scripts the host does not have, removed.
+    pub files_removed: usize,
+    /// Host files that could not be fetched (mod names, pack file paths).
     pub unavailable: Vec<String>,
 }
 
@@ -244,20 +251,162 @@ async fn fetch_from_host(guest: &Guest, m: &ModRef, mods_dir: &Path) -> Result<(
     if m.file_name.contains(['/', '\\']) || m.file_name.starts_with('.') {
         return Err(fail("nom de fichier refusé"));
     }
-    let dest = mods_dir.join(&m.file_name);
-    let partial = mods_dir.join(format!(".{}.part", m.sha1));
+    receive(
+        guest,
+        Ask::Mod(&m.sha1),
+        &mods_dir.join(&m.file_name),
+        &m.sha1,
+    )
+    .await
+}
+
+/// What is asked of the host.
+enum Ask<'a> {
+    Mod(&'a str),
+    PackFile(&'a str),
+}
+
+/// Receives a file from the host into `dest` (through a partial file next to it), checked
+/// against its SHA-1.
+async fn receive(guest: &Guest, ask: Ask<'_>, dest: &Path, sha1: &str) -> Result<()> {
+    let dir = dest.parent().ok_or_else(|| fail("dossier introuvable"))?;
+    tokio::fs::create_dir_all(dir).await?;
+    // Named after the destination: identical files (same SHA-1) may arrive side by side.
+    let name = dest
+        .file_name()
+        .ok_or_else(|| fail("nom de fichier introuvable"))?
+        .to_string_lossy();
+    let partial = dir.join(format!(".{name}.part"));
     let mut file = tokio::fs::File::create(&partial).await?;
-    let received = guest.fetch_mod(&m.sha1, &mut file).await;
+    let received = match ask {
+        Ask::Mod(sha1) => guest.fetch_mod(sha1, &mut file).await,
+        Ask::PackFile(path) => guest.fetch_pack_file(path, &mut file).await,
+    };
     file.flush().await?;
     drop(file);
     if let Err(err) = received {
         let _ = tokio::fs::remove_file(&partial).await;
         return Err(err);
     }
-    if download::sha1_file(&partial).await? != m.sha1 {
+    if download::sha1_file(&partial).await? != sha1 {
         let _ = tokio::fs::remove_file(&partial).await;
         return Err(fail("fichier reçu abîmé"));
     }
-    tokio::fs::rename(&partial, &dest).await?;
+    tokio::fs::rename(&partial, dest).await?;
     Ok(())
+}
+
+/// Brings a copy of the host's instance in line with it: mods, then pack files.
+pub async fn sync_instance<F>(
+    ctx: &Context,
+    guest: &Guest,
+    game_dir: &Path,
+    host: &InstanceSummary,
+    on_progress: F,
+) -> Result<SyncReport>
+where
+    F: Fn(InstallProgress) + Send + Sync,
+{
+    let mut report = sync_mods(ctx, guest, game_dir, host, &on_progress).await?;
+    match guest.pack_files().await {
+        Ok(files) => sync_pack_files(guest, game_dir, &files, &mut report, &on_progress).await?,
+        // An older host: mods only.
+        Err(err) => tracing::warn!(error = %err, "pack files not synced"),
+    }
+    tracing::info!(?report, "duo instance sync done");
+    Ok(report)
+}
+
+/// Copies the host's pack files that differ or are missing; in the
+/// [`protocol::MIRRORED_ROOTS`], removes the files the host does not have.
+async fn sync_pack_files<F>(
+    guest: &Guest,
+    game_dir: &Path,
+    files: &[PackFile],
+    report: &mut SyncReport,
+    on_progress: &F,
+) -> Result<()>
+where
+    F: Fn(InstallProgress) + Send + Sync,
+{
+    let files: Vec<PackFile> = files
+        .iter()
+        .filter(|f| protocol::pack_path_ok(&f.path))
+        .cloned()
+        .collect();
+    let (local, wanted) = {
+        let (dir, files) = (game_dir.to_owned(), files.clone());
+        tokio::task::spawn_blocking(move || {
+            let local: HashMap<String, String> = super::pack_files(&dir)
+                .into_iter()
+                .map(|f| (f.path, f.sha1))
+                .collect();
+            let wanted: Vec<PackFile> = files
+                .into_iter()
+                .filter(|f| local.get(&f.path) != Some(&f.sha1))
+                .collect();
+            (local, wanted)
+        })
+        .await
+        .map_err(fail)?
+    };
+
+    // Content scripts the host does not have.
+    let hosts: HashSet<&str> = files.iter().map(|f| f.path.as_str()).collect();
+    for path in local.keys() {
+        let root = path.split('/').next().unwrap_or_default();
+        if protocol::MIRRORED_ROOTS.contains(&root) && !hosts.contains(path.as_str()) {
+            tokio::fs::remove_file(game_dir.join(path)).await?;
+            report.files_removed += 1;
+        }
+    }
+
+    let total = wanted.len();
+    let progress = |done: usize| {
+        on_progress(InstallProgress {
+            stage: Stage::Copying,
+            download: Progress {
+                done_files: done,
+                total_files: total,
+                ..Progress::default()
+            },
+        })
+    };
+    progress(0);
+    let mut waiting = wanted.iter();
+    let mut running = FuturesUnordered::new();
+    for f in waiting.by_ref().take(HOST_CONCURRENCY) {
+        running.push(receive_pack_file(guest, f, game_dir));
+    }
+    let mut done = 0;
+    while let Some((f, result)) = running.next().await {
+        done += 1;
+        progress(done);
+        if let Some(next) = waiting.next() {
+            running.push(receive_pack_file(guest, next, game_dir));
+        }
+        match result {
+            Ok(()) => report.files += 1,
+            Err(err) => {
+                tracing::warn!(file = %f.path, error = %err, "pack file not received from the host");
+                report.unavailable.push(f.path.clone());
+            }
+        }
+    }
+    Ok(())
+}
+
+async fn receive_pack_file<'a>(
+    guest: &Guest,
+    f: &'a PackFile,
+    game_dir: &Path,
+) -> (&'a PackFile, Result<()>) {
+    let dest = f
+        .path
+        .split('/')
+        .fold(game_dir.to_owned(), |dir, part| dir.join(part));
+    (
+        f,
+        receive(guest, Ask::PackFile(&f.path), &dest, &f.sha1).await,
+    )
 }

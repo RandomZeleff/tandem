@@ -17,13 +17,29 @@ use std::time::{Duration, Instant};
 use tandem_core::duo::guest::{Guest, GuestEvent};
 use tandem_core::duo::host::{Host, HostConfig, HostEvent};
 use tandem_core::duo::lan::{self, LanWorld};
-use tandem_core::duo::protocol::{InstanceSummary, ModRef};
+use tandem_core::duo::protocol::{InstanceSummary, ModRef, PACK_ROOTS};
 use tandem_core::duo::sync;
 use tandem_core::paths::DataDir;
 use tandem_core::Context;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::watch;
+
+fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+    let Ok(entries) = std::fs::read_dir(from) else {
+        return Ok(());
+    };
+    std::fs::create_dir_all(to)?;
+    for entry in entries {
+        let entry = entry?;
+        if entry.file_type()?.is_dir() {
+            copy_dir(&entry.path(), &to.join(entry.file_name()))?;
+        } else {
+            std::fs::copy(entry.path(), to.join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
 
 fn varint(mut value: i32, out: &mut Vec<u8>) {
     loop {
@@ -140,9 +156,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tokio::spawn(lan::announce(announces));
 
             // A mod the guest will ask the host for (3 MB, not on Modrinth).
-            let mods = tempfile::tempdir()?;
+            let game_dir = tempfile::tempdir()?;
+            std::fs::create_dir_all(game_dir.path().join("mods"))?;
             let jar: Vec<u8> = (0..3_000_000u32).map(|i| (i * 7 % 251) as u8).collect();
-            std::fs::write(mods.path().join("my-tweaks.jar"), &jar)?;
+            std::fs::write(game_dir.path().join("mods").join("my-tweaks.jar"), &jar)?;
             let jar_sha1 = sha1_smol::Sha1::from(&jar).digest().to_string();
             let summary = InstanceSummary {
                 name: "Test".into(),
@@ -163,7 +180,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 HostConfig {
                     player: "Zeleff".into(),
                     instance: Some(summary),
-                    mods_dir: Some(mods.path().to_owned()),
+                    game_dir: Some(game_dir.path().to_owned()),
                 },
                 move |event| {
                     if let HostEvent::World { world } = &event {
@@ -248,6 +265,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             let private: Vec<u8> = (0..2_000_000u32).map(|i| (i * 13 % 241) as u8).collect();
             std::fs::write(host_mods.join("host-only-tweaks.jar"), &private)?;
+            // Its pack files (configs, scripts…).
+            for root in PACK_ROOTS {
+                copy_dir(
+                    &ctx.data.instance_dir(id).join(root),
+                    &host_dir.path().join(root),
+                )?;
+            }
+            let host_files = tandem_core::duo::pack_files(host_dir.path());
+            println!("host: {} pack files", host_files.len());
             let mut host_copy = instance.clone();
             host_copy.id = "host-copy".into();
             let summary = tandem_core::duo::summary_of_dir(&host_copy, &host_mods).await?;
@@ -263,20 +289,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 host_mods.join(&first.file_name),
                 guest_mods.join(format!("{}.disabled", first.file_name)),
             )?;
+            // A content script the host does not have, and a config the guest changed.
+            std::fs::create_dir_all(guest_dir.path().join("kubejs/startup_scripts"))?;
+            std::fs::write(
+                guest_dir.path().join("kubejs/startup_scripts/extra.js"),
+                b"// adds an item",
+            )?;
+            if let Some(config) = host_files.iter().find(|f| f.path.starts_with("config/")) {
+                let path = guest_dir.path().join(&config.path);
+                std::fs::create_dir_all(path.parent().unwrap())?;
+                std::fs::write(path, b"changed by the guest")?;
+            }
 
             let host = Host::start(
                 http.clone(),
                 HostConfig {
                     player: "Zeleff".into(),
                     instance: Some(summary.clone()),
-                    mods_dir: Some(host_mods.clone()),
+                    game_dir: Some(host_dir.path().to_owned()),
                 },
                 |_| {},
             )
             .await?;
             let (guest, _) = Guest::join(http.clone(), &host.code(), "Léo", None, |_| {}).await?;
             let started = Instant::now();
-            let report = sync::sync_mods(&ctx, &guest, guest_dir.path(), &summary, |p| {
+            let report = sync::sync_instance(&ctx, &guest, guest_dir.path(), &summary, |p| {
                 if p.download.total_files > 0 && p.download.done_files == p.download.total_files {
                     println!(
                         "  {:?} {}/{}",
@@ -302,6 +339,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "guest-only.jar switched off: {}",
                 guest_mods.join("guest-only.jar.disabled").exists()
             );
+            let guest_files = tandem_core::duo::pack_files(guest_dir.path());
+            println!(
+                "same pack files as the host: {} ({} files), extra script removed: {}",
+                host_files.iter().all(|f| guest_files.contains(f)),
+                guest_files.len(),
+                !guest_dir
+                    .path()
+                    .join("kubejs/startup_scripts/extra.js")
+                    .exists()
+            );
             host.stop().await;
             guest.leave().await;
         }
@@ -317,7 +364,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 HostConfig {
                     player: name,
                     instance: None,
-                    mods_dir: None,
+                    game_dir: None,
                 },
                 |event| {
                     println!(

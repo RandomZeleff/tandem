@@ -429,8 +429,8 @@ function CopyOffer(props: { hostPlayer: string }) {
             <div class="flex min-w-0 flex-1 flex-col gap-0.5">
               <span class="text-sm font-semibold">Jouer avec les mêmes mods que {props.hostPlayer}</span>
               <span class="text-xs text-chalk-2">
-                Tandem prépare une instance comme la sienne : son modpack et ses mods, depuis Modrinth ou envoyés par{" "}
-                {props.hostPlayer}. Tes instances ne changent pas.
+                Tandem prépare une instance comme la sienne : son modpack, ses mods et ses réglages, depuis Modrinth ou
+                envoyés par {props.hostPlayer}. Tes instances ne changent pas.
               </span>
             </div>
             <button class="btn btn-gold px-corners h-10 shrink-0 px-4 text-sm" onClick={() => void prepare()}>
@@ -458,13 +458,20 @@ function CopyOffer(props: { hostPlayer: string }) {
   );
 }
 
-/** Host mods the copy could not get. */
+/** Files listed by name before "and N others". */
+const UNAVAILABLE_SHOWN = 5;
+
+/** Host files the copy could not get. */
 function Unavailable(props: { files: string[]; hostPlayer: string }) {
+  const names = () => {
+    const shown = props.files.slice(0, UNAVAILABLE_SHOWN).map((f) => f.split("/").pop());
+    const more = props.files.length - shown.length;
+    return more > 0 ? `${shown.join(", ")} et ${more} autre${more > 1 ? "s" : ""}` : shown.join(", ");
+  };
   return (
-    <p class="text-xs text-gold">
+    <p class="text-xs text-gold" title={props.files.join("\n")}>
       {props.files.length === 1 ? "Un fichier n'a pas pu être récupéré" : `${props.files.length} fichiers n'ont pas pu être récupérés`} :{" "}
-      {props.files.join(", ")}. Demande à {props.hostPlayer} de mettre Tandem à jour, ou {props.files.length === 1 ? "ajoute-le" : "ajoute-les"} à la main dans
-      l'onglet Contenu.
+      {names()}. Réessaie « Préparer l'instance », ou demande à {props.hostPlayer} de mettre Tandem à jour.
     </p>
   );
 }
@@ -555,7 +562,7 @@ function Joined() {
           )}
         </Show>
         <DiffNote diff={guest().diff} who={`Par rapport à ${guest().hostPlayer}, ton instance a`} />
-        <Show when={guest().hostInstance && (copying() || !instance() || !matches())}>
+        <Show when={guest().hostInstance && (copying() || !instance() || !matches() || !!copyReport()?.unavailable.length)}>
           <CopyOffer hostPlayer={guest().hostPlayer} />
         </Show>
         <Show when={copyReport()?.unavailable.length}>

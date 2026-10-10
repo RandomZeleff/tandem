@@ -22,7 +22,7 @@ use tokio::net::TcpStream;
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::instance::Instance;
-use protocol::{InstanceSummary, ModRef, PackRef};
+use protocol::{InstanceSummary, ModRef, PackFile, PackRef};
 
 /// iroh application protocol of Tandem's sessions.
 pub const ALPN: &[u8] = b"tandem/duo/1";
@@ -179,6 +179,47 @@ fn hash_mods(dir: &Path) -> Vec<ModRef> {
         .unwrap_or_default();
     mods.sort_by(|a, b| a.file_name.cmp(&b.file_name));
     mods
+}
+
+/// Most pack files listed (a runaway folder must not stall the session).
+const MAX_PACK_FILES: usize = 50_000;
+
+/// The files of the instance's [`protocol::PACK_ROOTS`], hashed, paths with `/`.
+pub fn pack_files(game_dir: &Path) -> Vec<PackFile> {
+    fn walk(dir: &Path, rel: &str, out: &mut Vec<PackFile>) {
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for entry in entries.filter_map(|e| e.ok()) {
+            if out.len() >= MAX_PACK_FILES {
+                return;
+            }
+            let Ok(kind) = entry.file_type() else {
+                continue;
+            };
+            let name = entry.file_name().to_string_lossy().into_owned();
+            let path = format!("{rel}/{name}");
+            if kind.is_dir() {
+                walk(&entry.path(), &path, out);
+            } else if kind.is_file() && protocol::pack_path_ok(&path) {
+                let Ok(meta) = entry.metadata() else {
+                    continue;
+                };
+                if let Some(sha1) = hash_file(&entry.path()) {
+                    out.push(PackFile {
+                        path,
+                        sha1,
+                        size: meta.len(),
+                    });
+                }
+            }
+        }
+    }
+    let mut files = Vec::new();
+    for root in protocol::PACK_ROOTS {
+        walk(&game_dir.join(root), root, &mut files);
+    }
+    files
 }
 
 /// SHA-1 of a file, lowercase hex.

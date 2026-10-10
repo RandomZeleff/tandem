@@ -154,9 +154,9 @@ pub async fn duo_host(
         HostConfig {
             player: name,
             instance: summary,
-            mods_dir: instance_id
+            game_dir: instance_id
                 .as_ref()
-                .map(|id| state.ctx.data.instance_dir(id).join("mods")),
+                .map(|id| state.ctx.data.instance_dir(id)),
         },
         move |event| {
             let payload = match event {
@@ -372,7 +372,7 @@ pub async fn duo_prepare_copy(
             "Cette instance est en cours d'utilisation",
         ));
     }
-    let synced = sync::sync_mods(
+    let synced = sync::sync_instance(
         ctx,
         &guest,
         &ctx.data.instance_dir(&copy.id),
