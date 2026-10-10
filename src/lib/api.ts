@@ -88,7 +88,18 @@ export interface JavaInstall {
 export type ContentKind = "mod" | "resourcepack" | "shader";
 
 /** What the Discover page can search: instance content or modpacks. */
-export type ProjectType = ContentKind | "modpack";
+export type ProjectType = ContentKind | "modpack" | "datapack";
+
+/** A datapack in a world's `datapacks/` folder. */
+export interface Datapack {
+  fileName: string;
+  title: string;
+  description: string | null;
+  projectId: string | null;
+  versionNumber: string | null;
+  iconUrl: string | null;
+  sizeBytes: number;
+}
 
 export interface SearchHit {
   projectId: string;
@@ -190,7 +201,7 @@ export type ProjectSide = "required" | "optional" | "unsupported" | "unknown";
 export interface ProjectDetails {
   id: string;
   slug: string;
-  projectType: ProjectType | "datapack" | "plugin";
+  projectType: ProjectType | "plugin";
   title: string;
   summary: string;
   /** Sanitized by the backend. */
@@ -543,6 +554,11 @@ export const api = {
   removeContent: (instanceId: string, projectId: string) =>
     invoke<void>("remove_content", { instanceId, projectId }),
   listWorlds: (instanceId: string) => invoke<World[]>("list_worlds", { instanceId }),
+  listDatapacks: (instanceId: string, world: string) => invoke<Datapack[]>("list_datapacks", { instanceId, world }),
+  installDatapack: (instanceId: string, world: string, projectId: string) =>
+    invoke<Datapack>("install_datapack", { instanceId, world, projectId }),
+  removeDatapack: (instanceId: string, world: string, fileName: string) =>
+    invoke<void>("remove_datapack", { instanceId, world, fileName }),
   listWorldBackups: (instanceId: string) => invoke<WorldBackup[]>("list_world_backups", { instanceId }),
   backupWorld: (instanceId: string, world: string) => invoke<WorldBackup>("backup_world", { instanceId, world }),
   restoreWorldBackup: (instanceId: string, world: string, fileName: string) =>

@@ -7,6 +7,9 @@ import { toast } from "../lib/toast";
 import Dialog from "./Dialog";
 import LoadingRows from "./LoadingRows";
 import { Icon, Toggle } from "./pixel";
+import ProjectIcon from "./ProjectIcon";
+import { navigate } from "../lib/store";
+import { openProject } from "../lib/projects";
 
 const MODES: Record<GameMode, string> = {
   survival: "Survie",
@@ -107,6 +110,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
           <For each={worlds()}>
             {(world) => (
               <WorldCard
+                instanceId={props.instanceId}
                 world={world}
                 backups={backupsOf(world.folder)}
                 locked={props.locked}
@@ -151,6 +155,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
 }
 
 function WorldCard(props: {
+  instanceId: string;
   world: World;
   backups: WorldBackup[];
   locked: boolean;
@@ -160,6 +165,7 @@ function WorldCard(props: {
   onOpen: () => void;
 }) {
   const [open, setOpen] = createSignal(false);
+  const [packsOpen, setPacksOpen] = createSignal(false);
   return (
     <li class="panel px-corners-md flex flex-col">
       <div class="flex items-center gap-3.5 p-3.5">
@@ -174,6 +180,9 @@ function WorldCard(props: {
             {formatRelative(iso(props.world.lastPlayed))}
           </span>
         </div>
+        <button class="btn btn-ghost h-8 px-2.5 text-xs" aria-expanded={packsOpen()} onClick={() => setPacksOpen(!packsOpen())}>
+          Datapacks
+        </button>
         <button
           class="btn btn-ghost h-8 px-2.5 text-xs"
           aria-expanded={open()}
@@ -191,6 +200,9 @@ function WorldCard(props: {
           {props.busy === props.world.folder ? "Sauvegarde…" : "Sauvegarder"}
         </button>
       </div>
+      <Show when={packsOpen()}>
+        <DatapackList instanceId={props.instanceId} world={props.world} locked={props.locked} />
+      </Show>
       <Show when={open() && props.backups.length > 0}>
         <ul class="flex flex-col divide-y divide-line border-t border-line px-3.5">
           <For each={props.backups}>
@@ -218,5 +230,72 @@ function WorldCard(props: {
         </ul>
       </Show>
     </li>
+  );
+}
+
+/** Datapacks of one world, with links to add more from Modrinth. */
+function DatapackList(props: { instanceId: string; world: World; locked: boolean }) {
+  const [packs, { refetch, mutate }] = createResource(() => api.listDatapacks(props.instanceId, props.world.folder));
+  const [error, setError] = createSignal<string | null>(null);
+
+  async function remove(fileName: string, title: string) {
+    setError(null);
+    try {
+      await api.removeDatapack(props.instanceId, props.world.folder, fileName);
+      mutate((list) => list?.filter((p) => p.fileName !== fileName));
+      toast(`${title} retiré du monde`);
+    } catch (err) {
+      setError(errorMessage(err));
+      void refetch();
+    }
+  }
+
+  return (
+    <div class="flex flex-col gap-2 border-t border-line px-3.5 py-3">
+      <Show when={error()}>
+        <Alert onClose={() => setError(null)}>{error()}</Alert>
+      </Show>
+      <Show when={packs()} fallback={<LoadingRows count={2} height={36} label="Chargement des datapacks…" />}>
+        <Show when={packs()!.length > 0} fallback={<p class="text-xs text-muted">Aucun datapack dans ce monde.</p>}>
+          <ul class="flex flex-col divide-y divide-line">
+            <For each={packs()}>
+              {(pack) => (
+                <li class="flex items-center gap-3 py-2">
+                  <ProjectIcon url={pack.iconUrl} size={32} />
+                  <div class="flex min-w-0 flex-1 flex-col">
+                    <Show
+                      when={pack.projectId}
+                      fallback={<span class="truncate text-sm">{pack.title}</span>}
+                    >
+                      <button class="truncate text-left text-sm hover:text-xp-text hover:underline" onClick={() => openProject(pack.projectId!, props.instanceId)}>
+                        {pack.title}
+                      </button>
+                    </Show>
+                    <span class="truncate text-xs text-muted">
+                      {[pack.versionNumber, pack.description].filter(Boolean).join(" · ") || pack.fileName}
+                    </span>
+                  </div>
+                  <button
+                    class="btn btn-ghost h-8 w-8 px-0 hover:text-redstone-text"
+                    aria-label={`Retirer ${pack.title}`}
+                    disabled={props.locked}
+                    onClick={() => void remove(pack.fileName, pack.title)}
+                  >
+                    <Icon name="trash" size={11} />
+                  </button>
+                </li>
+              )}
+            </For>
+          </ul>
+        </Show>
+      </Show>
+      <button
+        class="btn px-corners h-8 w-fit px-2.5 text-xs"
+        onClick={() => navigate({ page: "discover", instanceId: props.instanceId, kind: "datapack", world: props.world.folder })}
+      >
+        <Icon name="plus" size={10} />
+        Ajouter des datapacks
+      </button>
+    </div>
   );
 }

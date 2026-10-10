@@ -5,6 +5,7 @@ pub mod auth;
 pub mod content;
 pub mod context;
 pub mod crash;
+pub mod datapacks;
 pub mod db;
 pub mod download;
 pub mod error;

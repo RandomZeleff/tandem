@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar";
 import TitleBar from "./components/TitleBar";
 import Toaster from "./components/Toaster";
 import { onGamePlayed, rosettaPrompt, setRosettaPrompt, startGameEvents } from "./lib/games";
+import type { ProjectType } from "./lib/api";
 import { startLogStream } from "./lib/logs";
 import { startTranslationEvents } from "./lib/translation";
 import {
@@ -120,7 +121,7 @@ function App() {
               </Show>
             </Match>
             <Match when={route().page === "discover"}>
-              <Discover {...(route() as { instanceId?: string; query?: string })} />
+              <Discover {...(route() as { instanceId?: string; query?: string; kind?: ProjectType; world?: string })} />
             </Match>
             <Match when={route().page === "project"}>
               <Project {...(route() as { id: string; instanceId?: string })} />

@@ -99,7 +99,7 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
   });
 
   const [versions, { refetch: refetchVersions }] = createResource(
-    () => ({ id: d().id, instanceId: isContent() ? instanceId() || null : null }),
+    () => ({ id: d().id, instanceId: isContent() || d().projectType === "datapack" ? instanceId() || null : null }),
     ({ id, instanceId }) => api.projectVersions(id, instanceId),
   );
   // Keep the previous list on screen while another instance's compatibility loads.
@@ -227,6 +227,9 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
                 onInstall={() => void install()}
                 onUpdate={() => void update()}
               />
+            </Match>
+            <Match when={d().projectType === "datapack"}>
+              <DatapackAction details={d()} instanceId={instanceId()} onInstance={setInstanceId} />
             </Match>
             <Match when={true}>
               <p class="text-[13px] text-chalk-2">
@@ -538,6 +541,75 @@ function ContentAction(props: {
           </Show>
         </Match>
       </Switch>
+    </Show>
+  );
+}
+
+/** Datapacks go into one world of an instance. */
+function DatapackAction(props: { details: ProjectDetails; instanceId: string; onInstance: (id: string) => void }) {
+  const [worlds] = createResource(() => props.instanceId || false, (id) => api.listWorlds(id));
+  const [world, setWorld] = createSignal("");
+  createEffect(() => {
+    const list = worlds();
+    if (list && !list.some((w) => w.folder === world())) setWorld(list[0]?.folder ?? "");
+  });
+  const [packs, { refetch }] = createResource(
+    () => (props.instanceId && world() ? { id: props.instanceId, world: world() } : false),
+    ({ id, world }) => api.listDatapacks(id, world).catch(() => []),
+  );
+  const [busy, setBusy] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+  const installed = () => (packs() ?? []).find((p) => p.projectId === props.details.id);
+
+  async function add() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.installDatapack(props.instanceId, world(), props.details.id);
+      await refetch();
+      toast(`${props.details.title} ajouté au monde`);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Show when={instances().length > 0} fallback={<p class="text-[13px] text-chalk-2">Crée d'abord une instance et un monde.</p>}>
+      <Select
+        class="h-9 w-full text-[13px]"
+        label="Instance"
+        value={props.instanceId}
+        options={instances().map((i) => ({ value: i.id, label: i.name, hint: i.gameVersion, icon: <LoaderIcon loader={i.loader} size={12} /> }))}
+        onChange={props.onInstance}
+      />
+      <Show when={(worlds() ?? []).length > 0} fallback={<p class="text-xs text-muted">{worlds() ? "Aucun monde : crée-en un en jeu." : "Chargement des mondes…"}</p>}>
+        <Select
+          class="h-9 w-full text-[13px]"
+          label="Monde"
+          value={world()}
+          options={(worlds() ?? []).map((w) => ({ value: w.folder, label: w.name, hint: w.version ?? undefined }))}
+          onChange={setWorld}
+        />
+        <Show
+          when={!installed()}
+          fallback={
+            <span class="flex h-10 items-center justify-center gap-1.5 bg-success text-sm text-xp-text shadow-[inset_0_0_0_1px_var(--color-success-line)]">
+              <Icon name="check" size={12} />
+              Dans ce monde
+            </span>
+          }
+        >
+          <button class="btn btn-primary px-corners h-10" disabled={busy() || !world()} onClick={() => void add()}>
+            <Icon name="download" size={12} />
+            {busy() ? "Ajout…" : "Ajouter au monde"}
+          </button>
+        </Show>
+      </Show>
+      <Show when={error()}>
+        <span class="text-xs text-redstone-text">{error()}</span>
+      </Show>
     </Show>
   );
 }

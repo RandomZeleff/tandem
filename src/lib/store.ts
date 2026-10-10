@@ -1,11 +1,11 @@
 import { createResource, createRoot, createSignal, type Signal } from "solid-js";
-import { api } from "./api";
+import { api, type ProjectType } from "./api";
 
 export type Route =
   | { page: "home" }
   | { page: "instances" }
   | { page: "instance"; id: string }
-  | { page: "discover"; instanceId?: string; query?: string }
+  | { page: "discover"; instanceId?: string; query?: string; kind?: ProjectType; world?: string }
   /** Modrinth project page (id or slug); `instanceId` is where content would go. */
   | { page: "project"; id: string; instanceId?: string }
   | { page: "multi" }

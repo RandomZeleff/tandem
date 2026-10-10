@@ -415,6 +415,9 @@ fn compatible(version: &Version, project_type: &str, target: Option<Target<'_>>)
         ("mod" | "resourcepack" | "shader", None) => true,
         ("mod", Some(t)) => fits_game(t) && has_loader(modrinth::mod_loaders(t.loader)),
         ("resourcepack" | "shader", Some(t)) => fits_game(t),
+        // Datapacks ship as files for the `datapack` loader (next to mod files at times).
+        ("datapack", None) => has_loader(&["datapack"]),
+        ("datapack", Some(t)) => fits_game(t) && has_loader(&["datapack"]),
         _ => false,
     }
 }

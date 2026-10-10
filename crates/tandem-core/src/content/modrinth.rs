@@ -27,6 +27,8 @@ pub enum ProjectType {
     ResourcePack,
     Shader,
     Modpack,
+    /// Installed into a world rather than the instance.
+    Datapack,
 }
 
 impl ProjectType {
@@ -36,6 +38,7 @@ impl ProjectType {
             ProjectType::ResourcePack => "resourcepack",
             ProjectType::Shader => "shader",
             ProjectType::Modpack => "modpack",
+            ProjectType::Datapack => "datapack",
         }
     }
 }

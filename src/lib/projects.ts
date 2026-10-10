@@ -46,6 +46,7 @@ export function projectTypeLabel(type: string): string {
 /** Modrinth's category slugs, in French. Unknown ones show as is. */
 const CATEGORIES: Record<string, string> = {
   adventure: "Aventure",
+  datapack: "Datapack",
   cursed: "Insolite",
   decoration: "Décoration",
   economy: "Économie",

@@ -8,6 +8,7 @@ import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import type {
   Account,
   ContentKind,
+  Datapack,
   InstalledContent,
   Instance,
   InstanceSettings,
@@ -97,6 +98,12 @@ const CATALOGUE: Record<ProjectType, SearchHit[]> = {
     ] as Row[]
   ).map(hit),
   resourcepack: ([["Bq0hLR4Y", "Faithful 32x", "Faithful", "Faithful to the original textures, at twice the resolution.", 4_200_000, ["32x", "vanilla-like"]]] as Row[]).map(hit),
+  datapack: (
+    [
+      ["8oi3bsk5", "Terralith", "Stardust Labs", "Explore almost 100 new biomes consisting of both realism and light fantasy.", 9_000_000, ["datapack", "worldgen"]],
+      ["tpehi7ww", "Dungeons and Taverns", "nova_wostra", "Adds dungeons, taverns and other structures to your world.", 5_000_000, ["datapack", "adventure"]],
+    ] as Row[]
+  ).map(hit),
   shader: ([["HVnmMxH1", "Complementary Shaders - Reimagined", "EminGT", "Enhances your Minecraft experience while staying close to the default art style.", 11_000_000, ["iris", "optifine"]]] as Row[]).map(hit),
 };
 
@@ -180,6 +187,13 @@ function fakeScreenshot(path: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90" shape-rendering="crispEdges"><rect width="160" height="90" fill="${SKIES[seed % SKIES.length]}"/><rect x="${20 + (seed % 100)}" y="12" width="12" height="12" fill="#F2C744"/>${hills}<rect y="72" width="160" height="18" fill="#7A5420"/></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}#`;
 }
+
+/** Datapacks by `instance/world`. */
+const datapacks: Record<string, Datapack[]> = {
+  "survie-avec-leo/Survie": [
+    { fileName: "custom-recipes", title: "custom-recipes", description: "Recettes maison", projectId: null, versionNumber: null, iconUrl: null, sizeBytes: 0 },
+  ],
+};
 
 /** Pack version each updated instance can go back to. */
 const rollbackFrom: Record<string, string> = {};
@@ -412,6 +426,21 @@ export function installMocks() {
           instances.unshift(copy);
           content[copy.id] = (content[source.id] ?? []).map((c) => ({ ...c }));
           return copy;
+        }
+        case "list_datapacks":
+          await new Promise((r) => setTimeout(r, 200));
+          return [...(datapacks[`${args.instanceId}/${args.world}`] ?? [])];
+        case "install_datapack": {
+          await new Promise((r) => setTimeout(r, 700));
+          const h = CATALOGUE.datapack.find((d) => d.projectId === args.projectId)!;
+          const pack = { fileName: `${h.slug}.zip`, title: h.title, description: h.description, projectId: h.projectId, versionNumber: "2.5.8", iconUrl: h.iconUrl, sizeBytes: 1_400_000 };
+          (datapacks[`${args.instanceId}/${args.world}`] ??= []).push(pack);
+          return pack;
+        }
+        case "remove_datapack": {
+          const key = `${args.instanceId}/${args.world}`;
+          datapacks[key] = (datapacks[key] ?? []).filter((p) => p.fileName !== args.fileName);
+          return null;
         }
         case "plan_version_change": {
           await new Promise((r) => setTimeout(r, 500));

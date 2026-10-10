@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, type JSX, on, onCleanup, Show } from "solid-js";
+import { createEffect, createMemo, createResource, createSignal, For, type JSX, on, onCleanup, Show } from "solid-js";
 import { Icon, LoaderIcon } from "../components/pixel";
 import Alert from "../components/Alert";
 import ModpackInstallDialog from "../components/ModpackInstallDialog";
@@ -11,22 +11,41 @@ import { formatCount, loaderLabel } from "../lib/format";
 import { importModpackFile, installPack, isInstallingPack } from "../lib/modpacks";
 import { categoryLabel, isLoaderCategory, openProject } from "../lib/projects";
 import { instances, navigate, remembered, setNewInstanceDialog } from "../lib/store";
+import { toast } from "../lib/toast";
 
 const KINDS: { id: ProjectType; label: string }[] = [
   { id: "mod", label: "Mods" },
   { id: "resourcepack", label: "Packs de textures" },
   { id: "shader", label: "Shaders" },
+  { id: "datapack", label: "Datapacks" },
   { id: "modpack", label: "Modpacks" },
 ];
 
 const SEARCH_DELAY_MS = 300;
 
-export default function Discover(props: { instanceId?: string; query?: string }) {
+export default function Discover(props: { instanceId?: string; query?: string; kind?: ProjectType; world?: string }) {
   const pickDefault = () =>
     props.instanceId ?? (instances().find((i) => i.loader !== "vanilla") ?? instances()[0])?.id ?? "";
   const [instanceId, setInstanceId] = remembered("instance", pickDefault());
   // Without any instance, only modpacks make sense: they create one.
-  const [kind, setKind] = remembered<ProjectType>("kind", instances().length > 0 ? "mod" : "modpack");
+  const [kind, setKind] = remembered<ProjectType>("kind", props.kind ?? (instances().length > 0 ? "mod" : "modpack"));
+  const datapacks = () => kind() === "datapack";
+  // Datapacks go into a world of the instance.
+  const [worlds] = createResource(
+    () => (datapacks() && instanceId() ? instanceId() : false),
+    (id) => api.listWorlds(id),
+  );
+  const [world, setWorld] = remembered("world", props.world ?? "");
+  createEffect(() => {
+    const list = worlds();
+    if (list && !list.some((w) => w.folder === world())) setWorld(list[0]?.folder ?? "");
+  });
+  const [worldPacks, { refetch: refetchWorldPacks }] = createResource(
+    () => (datapacks() && instanceId() && world() ? { id: instanceId(), world: world() } : false),
+    ({ id, world }) => api.listDatapacks(id, world).catch(() => []),
+  );
+  const [packBusy, setPackBusy] = createSignal<Record<string, boolean>>({});
+  const needsWorld = () => datapacks() && !!instanceId() && worlds() !== undefined && worlds()!.length === 0;
   const [query, setQuery] = remembered("query", props.query ?? "");
   // A remembered query searches right away, without waiting for the debounce.
   const [debounced, setDebounced] = createSignal(query());
@@ -43,7 +62,7 @@ export default function Discover(props: { instanceId?: string; query?: string })
   const needsLoader = () => kind() === "mod" && instance()?.loader === "vanilla";
   const needsIris = () =>
     kind() === "shader" && instance()?.loader !== "vanilla" && !isInstalled(instanceId(), "YL57xq9U");
-  const searchable = () => !needsInstance() && !needsLoader();
+  const searchable = () => !needsInstance() && !needsLoader() && !needsWorld();
 
   // Instances load asynchronously: pick one as soon as the list arrives.
   createEffect(() => {
@@ -116,7 +135,43 @@ export default function Discover(props: { instanceId?: string; query?: string })
     }
   }
 
+  async function installDatapack(projectId: string) {
+    setPackBusy((b) => ({ ...b, [projectId]: true }));
+    setActionError(null);
+    try {
+      const installed = await api.installDatapack(instanceId(), world(), projectId);
+      await refetchWorldPacks();
+      toast(`${installed.title} ajouté au monde`);
+    } catch (err) {
+      setActionError(errorMessage(err));
+    } finally {
+      setPackBusy((b) => ({ ...b, [projectId]: false }));
+    }
+  }
+
   function action(hit: SearchHit): JSX.Element {
+    if (datapacks()) {
+      return (
+        <Show
+          when={!(worldPacks() ?? []).some((p) => p.projectId === hit.projectId)}
+          fallback={
+            <span class="flex h-9 shrink-0 items-center gap-1.5 px-3 text-sm text-xp-text">
+              <Icon name="check" size={12} />
+              Dans le monde
+            </span>
+          }
+        >
+          <button
+            class="btn btn-primary px-corners h-9 shrink-0"
+            disabled={!world() || packBusy()[hit.projectId]}
+            onClick={() => void installDatapack(hit.projectId)}
+          >
+            <Icon name="download" size={12} />
+            {packBusy()[hit.projectId] ? "Ajout…" : "Ajouter"}
+          </button>
+        </Show>
+      );
+    }
     if (modpacks()) {
       const existing = instances().find((i) => i.packProjectId === hit.projectId);
       return (
@@ -167,7 +222,7 @@ export default function Discover(props: { instanceId?: string; query?: string })
       <div class="flex flex-col gap-1">
         <h1 class="pixel-shadow font-pixel text-3xl font-bold">Découvrir</h1>
         <span class="text-[13px] text-muted">
-          Mods, packs de textures, shaders et modpacks de Modrinth, filtrés sur la version et le loader de ton instance.
+          Mods, packs de textures, shaders, datapacks et modpacks de Modrinth, filtrés sur la version et le loader de ton instance.
         </span>
       </div>
 
@@ -187,6 +242,16 @@ export default function Discover(props: { instanceId?: string; query?: string })
               icon: <LoaderIcon loader={i.loader} size={14} />,
             }))}
             onChange={setInstanceId}
+          />
+        </Show>
+
+        <Show when={datapacks() && (worlds() ?? []).length > 0}>
+          <Select
+            class="w-52 text-sm"
+            label="Monde"
+            value={world()}
+            options={(worlds() ?? []).map((w) => ({ value: w.folder, label: w.name, hint: w.version ?? undefined }))}
+            onChange={setWorld}
           />
         </Show>
 
@@ -225,6 +290,13 @@ export default function Discover(props: { instanceId?: string; query?: string })
             <Icon name="folder" size={12} />
             {importing() ? "Import…" : "Importer un .mrpack"}
           </button>
+        </div>
+      </Show>
+
+      <Show when={needsWorld()}>
+        <div class="panel px-corners-md flex flex-col items-center gap-2 py-12 text-center">
+          <p class="text-chalk-2">Les datapacks s'ajoutent à un monde, et « {instance()?.name} » n'en a pas encore.</p>
+          <p class="text-sm text-muted">Lance le jeu et crée un monde : il apparaîtra ici.</p>
         </div>
       </Show>
 

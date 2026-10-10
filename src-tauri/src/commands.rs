@@ -579,6 +579,41 @@ pub async fn instance_java(state: State<'_, AppState>, id: String) -> CommandRes
     Ok(JavaInfo { required, installs })
 }
 
+#[tauri::command]
+pub async fn list_datapacks(
+    state: State<'_, AppState>,
+    instance_id: String,
+    world: String,
+) -> CommandResult<Vec<tandem_core::datapacks::Datapack>> {
+    Ok(tandem_core::datapacks::list(&state.ctx, &instance_id, &world).await?)
+}
+
+#[tauri::command]
+pub async fn install_datapack(
+    state: State<'_, AppState>,
+    instance_id: String,
+    world: String,
+    project_id: String,
+) -> CommandResult<tandem_core::datapacks::Datapack> {
+    let instance = state.ctx.db.get_instance(&instance_id).await?;
+    Ok(tandem_core::datapacks::install(&state.ctx, &instance, &world, &project_id).await?)
+}
+
+#[tauri::command]
+pub async fn remove_datapack(
+    state: State<'_, AppState>,
+    instance_id: String,
+    world: String,
+    file_name: String,
+) -> CommandResult<()> {
+    if state.games.is_busy(&instance_id) {
+        return Err(CommandError::msg(
+            "Arrête le jeu avant de retirer un datapack",
+        ));
+    }
+    Ok(tandem_core::datapacks::remove(&state.ctx, &instance_id, &world, &file_name).await?)
+}
+
 /// What moving an instance to another version would do to its content.
 #[tauri::command]
 pub async fn plan_version_change(
