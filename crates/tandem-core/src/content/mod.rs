@@ -4,6 +4,7 @@
 
 pub mod curseforge;
 pub mod deps;
+pub mod local;
 pub mod markdown;
 pub mod modrinth;
 pub mod mrpack;

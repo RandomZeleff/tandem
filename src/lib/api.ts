@@ -135,6 +135,17 @@ export interface InstalledContent {
   installedAt: string;
 }
 
+/** A file in a content folder that Tandem does not track (added by hand, unknown to Modrinth). */
+export interface LocalFile {
+  kind: ContentKind;
+  /** Without the `.disabled` suffix. */
+  fileName: string;
+  name: string;
+  enabled: boolean;
+  /** 0 for a folder. */
+  size: number;
+}
+
 export interface ContentUpdate {
   projectId: string;
   title: string;
@@ -636,6 +647,11 @@ export const api = {
   scanOtherLaunchers: () => invoke<FoundInstance[]>("scan_other_launchers"),
   inspectLauncherFolder: (path: string) => invoke<FoundInstance[]>("inspect_launcher_folder", { path }),
   importFromLauncher: (found: FoundInstance) => invoke<Instance>("import_from_launcher", { found }),
+  listLocalContent: (instanceId: string) => invoke<LocalFile[]>("list_local_content", { instanceId }),
+  setLocalContentEnabled: (instanceId: string, kind: ContentKind, fileName: string, enabled: boolean) =>
+    invoke<void>("set_local_content_enabled", { instanceId, kind, fileName, enabled }),
+  removeLocalContent: (instanceId: string, kind: ContentKind, fileName: string) =>
+    invoke<void>("remove_local_content", { instanceId, kind, fileName }),
   modpackKind: (path: string) => invoke<"modrinth" | "curseforge">("modpack_kind", { path }),
   curseforgeKeySaved: () => invoke<boolean>("curseforge_key_saved"),
   /** Checks the key with CurseForge, then saves it; `""` deletes it. */

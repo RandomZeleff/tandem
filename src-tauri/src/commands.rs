@@ -288,6 +288,36 @@ pub async fn list_content(
     Ok(state.ctx.db.list_content(&instance_id).await?)
 }
 
+/// Files of the content folders that Tandem does not track (added by hand, unknown to Modrinth).
+#[tauri::command]
+pub async fn list_local_content(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<content::local::LocalFile>> {
+    Ok(content::local::list(&state.ctx, &instance_id).await?)
+}
+
+#[tauri::command]
+pub async fn set_local_content_enabled(
+    state: State<'_, AppState>,
+    instance_id: String,
+    kind: content::ContentKind,
+    file_name: String,
+    enabled: bool,
+) -> CommandResult<()> {
+    Ok(content::local::set_enabled(&state.ctx, &instance_id, kind, &file_name, enabled).await?)
+}
+
+#[tauri::command]
+pub async fn remove_local_content(
+    state: State<'_, AppState>,
+    instance_id: String,
+    kind: content::ContentKind,
+    file_name: String,
+) -> CommandResult<()> {
+    Ok(content::local::remove(&state.ctx, &instance_id, kind, &file_name).await?)
+}
+
 #[tauri::command]
 pub async fn install_content(
     app: AppHandle,

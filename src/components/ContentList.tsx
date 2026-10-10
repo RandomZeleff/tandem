@@ -1,6 +1,7 @@
 import { createResource, createSignal, For, onMount, Show } from "solid-js";
 import Alert from "./Alert";
-import { api, errorMessage, type ContentKind, type Dependent, type InstalledContent, type Instance } from "../lib/api";
+import { api, errorMessage, type ContentKind, type Dependent, type InstalledContent, type Instance, type LocalFile } from "../lib/api";
+import { formatBytes } from "../lib/format";
 import {
   checkUpdates,
   contentLoaded,
@@ -37,10 +38,61 @@ export default function ContentList(props: { instance: Instance; locked: boolean
   const [exporting, setExporting] = createSignal(false);
   /** Removed but still undoable: hidden until the removal is committed. */
   const [removing, setRemoving] = createSignal<ReadonlySet<string>>(new Set());
-  const items = () => installedContent(props.instance.id).filter((i) => !removing().has(i.projectId));
+  const [query, setQuery] = createSignal("");
+  const matches = (...texts: string[]) => {
+    const q = query().trim().toLowerCase();
+    return !q || texts.some((t) => t.toLowerCase().includes(q));
+  };
+  const all = () => installedContent(props.instance.id).filter((i) => !removing().has(i.projectId));
+  const items = () => all().filter((i) => matches(i.title, i.fileName));
+
+  /** Files Tandem does not track; re-read when the tracked content changes. */
+  const [localFiles, { mutate: setLocalFiles, refetch: refetchLocal }] = createResource(
+    () => (contentLoaded(props.instance.id) ? installedContent(props.instance.id).length : false),
+    () => api.listLocalContent(props.instance.id).catch(() => [] as LocalFile[]),
+  );
+  const localKey = (f: LocalFile) => `local:${f.kind}/${f.fileName}`;
+  const allLocal = () => (localFiles() ?? []).filter((f) => !removing().has(localKey(f)));
+  const locals = () => allLocal().filter((f) => matches(f.name, f.fileName));
+  const total = () => all().length + allLocal().length;
+
+  async function toggleLocal(file: LocalFile, enabled: boolean) {
+    try {
+      await api.setLocalContentEnabled(props.instance.id, file.kind, file.fileName, enabled);
+      setLocalFiles((list) => list?.map((f) => (f === file ? { ...f, enabled } : f)));
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
+  function removeLocal(file: LocalFile) {
+    const key = localKey(file);
+    const mark = (on: boolean) =>
+      setRemoving((set) => {
+        const next = new Set(set);
+        if (on) next.add(key);
+        else next.delete(key);
+        return next;
+      });
+    removeWithUndo({
+      message: `${file.name} retiré`,
+      hide: () => mark(true),
+      show: () => mark(false),
+      commit: async () => {
+        try {
+          await api.removeLocalContent(props.instance.id, file.kind, file.fileName);
+          await refetchLocal();
+          mark(false);
+          return null;
+        } catch (err) {
+          return errorMessage(err);
+        }
+      },
+    });
+  }
   // Re-checked whenever the set of enabled mods changes.
   const [conflicts] = createResource(
-    () => (contentLoaded(props.instance.id) ? items().filter((i) => i.enabled).map((i) => i.fileName).sort().join("|") : false),
+    () => (contentLoaded(props.instance.id) ? all().filter((i) => i.enabled).map((i) => i.fileName).sort().join("|") : false),
     () => api.contentConflicts(props.instance.id).catch(() => []),
   );
 
@@ -99,7 +151,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
     if (!failure) toast(count === 1 ? "1 élément mis à jour" : `${count} éléments mis à jour`);
   }
   const updates = () => contentUpdates(props.instance.id);
-  const disabledCount = () => items().filter((i) => !i.enabled).length;
+  const disabledCount = () => all().filter((i) => !i.enabled).length + allLocal().filter((f) => !f.enabled).length;
   const browse = () => navigate({ page: "discover", instanceId: props.instance.id });
 
   async function run(action: Promise<string | null>) {
@@ -128,11 +180,11 @@ export default function ContentList(props: { instance: Instance; locked: boolean
       setError(errorMessage(err));
       return;
     }
-    if (items().length > 0) void run(checkUpdates(props.instance.id));
+    if (all().length > 0) void run(checkUpdates(props.instance.id));
   });
 
   const summary = () => {
-    const parts = [`${items().length} élément${items().length > 1 ? "s" : ""}`];
+    const parts = [`${total()} élément${total() > 1 ? "s" : ""}`];
     if (disabledCount() > 0) parts.push(`${disabledCount()} désactivé${disabledCount() > 1 ? "s" : ""}`);
     return parts.join(" · ");
   };
@@ -141,11 +193,11 @@ export default function ContentList(props: { instance: Instance; locked: boolean
     <div class="flex h-full flex-col gap-4 overflow-y-auto">
       <div class="flex items-center justify-between gap-3">
         <span class="text-[13px] text-muted">
-          {items().length === 0 ? "Aucun contenu installé." : summary()}
-          <Show when={props.locked && items().length > 0}> · arrête le jeu pour modifier le contenu</Show>
+          {total() === 0 ? "Aucun contenu installé." : summary()}
+          <Show when={props.locked && total() > 0}> · arrête le jeu pour modifier le contenu</Show>
         </span>
         <div class="flex gap-2">
-          <Show when={items().length > 0}>
+          <Show when={all().length > 0}>
             <button
               class="btn px-corners h-9"
               disabled={isCheckingUpdates(props.instance.id) || isUpdatingAll(props.instance.id)}
@@ -232,8 +284,21 @@ export default function ContentList(props: { instance: Instance; locked: boolean
       </Show>
 
       <Show when={contentLoaded(props.instance.id)} fallback={<LoadingRows count={4} height={52} label="Chargement du contenu…" />}>
+      <Show when={total() > 15}>
+        <input
+          type="search"
+          class="field h-9 w-full max-w-sm text-sm"
+          placeholder={`Filtrer les ${total()} éléments…`}
+          aria-label="Filtrer le contenu"
+          value={query()}
+          onInput={(e) => setQuery(e.currentTarget.value)}
+        />
+      </Show>
+      <Show when={total() > 0 && items().length + locals().length === 0}>
+        <p class="py-6 text-center text-sm text-muted">Rien ne correspond à « {query().trim()} ».</p>
+      </Show>
       <Show
-        when={items().length > 0}
+        when={total() > 0}
         fallback={
           <div class="panel px-corners-md flex flex-col items-center gap-3 py-12 text-center">
             <p class="text-chalk-2">Ajoute des mods, des packs de textures ou des shaders depuis Modrinth.</p>
@@ -244,16 +309,20 @@ export default function ContentList(props: { instance: Instance; locked: boolean
           </div>
         }
       >
-        <For each={SECTIONS.filter((s) => items().some((i) => i.kind === s.kind))}>
+        <For each={SECTIONS.filter((s) => items().some((i) => i.kind === s.kind) || locals().some((f) => f.kind === s.kind))}>
           {(section) => {
             const list = () => items().filter((i) => i.kind === section.kind);
+            const local = () => locals().filter((f) => f.kind === section.kind);
             return (
               <section class="flex flex-col gap-2">
                 <h2 class="panel-title">
-                  {section.label} <span class="font-mono text-muted">{list().length}</span>
+                  {section.label} <span class="font-mono text-muted">{list().length + local().length}</span>
                 </h2>
                 <ul class="panel px-corners-md flex flex-col divide-y divide-line">
                   <For each={list()}>{(item) => <Row instanceId={props.instance.id} item={item} locked={props.locked} run={run} onToggle={(on) => toggle(item, on)} onRemove={() => remove(item)} />}</For>
+                  <For each={local()}>
+                    {(file) => <LocalRow file={file} locked={props.locked} onToggle={(on) => void toggleLocal(file, on)} onRemove={() => removeLocal(file)} />}
+                  </For>
                 </ul>
               </section>
             );
@@ -368,6 +437,50 @@ function Row(props: {
         aria-label={`Retirer ${props.item.title}`}
         title="Retirer"
         disabled={frozen()}
+        onClick={props.onRemove}
+      >
+        <Icon name="trash" size={12} />
+      </button>
+    </li>
+  );
+}
+
+/** A file Tandem does not track: no page, no updates, but it can be switched off or removed. */
+function LocalRow(props: { file: LocalFile; locked: boolean; onToggle: (enabled: boolean) => void; onRemove: () => void }) {
+  return (
+    <li class="flex items-center gap-3 px-3 py-2.5">
+      <span class="transition-opacity" classList={{ "opacity-40 grayscale": !props.file.enabled }}>
+        <ProjectIcon url={null} size={36} />
+      </span>
+      <div class="flex min-w-0 flex-1 flex-col" classList={{ "opacity-60": !props.file.enabled }}>
+        <span class="flex items-center gap-2">
+          <span class="truncate text-sm font-medium">{props.file.name}</span>
+          <span
+            class="chip h-5 shrink-0 px-1.5 text-[11px] text-muted"
+            title="Ajouté à la main ou absent de Modrinth : Tandem ne peut pas le mettre à jour"
+          >
+            fichier local
+          </span>
+          <Show when={!props.file.enabled}>
+            <span class="chip h-5 px-1.5 text-[11px] text-muted">désactivé</span>
+          </Show>
+        </span>
+        <span class="truncate font-mono text-xs text-muted" title={props.file.fileName}>
+          {props.file.fileName}
+          <Show when={props.file.size > 0}> · {formatBytes(props.file.size)}</Show>
+        </span>
+      </div>
+      <Toggle
+        checked={props.file.enabled}
+        label={props.file.enabled ? `Désactiver ${props.file.name}` : `Activer ${props.file.name}`}
+        disabled={props.locked}
+        onChange={props.onToggle}
+      />
+      <button
+        class="btn btn-ghost h-8 w-8 px-0 hover:text-redstone-text"
+        aria-label={`Retirer ${props.file.name}`}
+        title="Retirer"
+        disabled={props.locked}
         onClick={props.onRemove}
       >
         <Icon name="trash" size={12} />

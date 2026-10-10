@@ -640,6 +640,17 @@ export function installMocks() {
           await emit("install://finished", created.id);
           return created;
         }
+        case "list_local_content":
+          return args.instanceId === "pack-create"
+            ? [
+                { kind: "mod", fileName: "Mekanism-1.21.1-10.7.7.jar", name: "Mekanism", enabled: true, size: 10_812_004 },
+                { kind: "mod", fileName: "my-tweaks.jar", name: "My Tweaks", enabled: false, size: 21_430 },
+                { kind: "resourcepack", fileName: "Create Dark Mode", name: "Create Dark Mode", enabled: true, size: 0 },
+              ]
+            : [];
+        case "set_local_content_enabled":
+        case "remove_local_content":
+          return null;
         case "manual_downloads":
           return manualFiles[args.instanceId as string] ?? [];
         case "collect_manual_downloads": {
