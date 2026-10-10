@@ -20,6 +20,7 @@ const KINDS: Record<BackupKind, string> = {
   manual: "Manuelle",
   auto: "Automatique",
   beforeRestore: "Avant restauration",
+  beforeUpdate: "Avant mise à jour du modpack",
 };
 
 const AUTO_BACKUP_SETTING = "auto_backup_worlds";

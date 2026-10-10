@@ -8,6 +8,7 @@ import GameStatsPanel from "../components/GameStatsPanel";
 import InstanceSlot from "../components/InstanceSlot";
 import MissingDepsPanel from "../components/MissingDepsPanel";
 import { Icon, LoaderTag, XpBar } from "../components/pixel";
+import PackUpdateBanner, { PackRollback } from "../components/PackUpdate";
 import PlayButton from "../components/PlayButton";
 import WorldsTab from "../components/WorldsTab";
 import Scene from "../components/Scene";
@@ -134,6 +135,9 @@ export default function InstanceDetail(props: { instance: Instance }) {
           )}
         </Show>
         <MissingDepsPanel instanceId={props.instance.id} />
+        <Show when={props.instance.packProjectId && state().status === "idle"}>
+          <PackUpdateBanner instance={props.instance} locked={state().status !== "idle"} />
+        </Show>
         <Show when={state().status === "preparing"}>
           <div class="panel px-corners-md flex flex-col gap-2.5 p-4">
             <div class="flex items-center justify-between">
@@ -186,7 +190,8 @@ export default function InstanceDetail(props: { instance: Instance }) {
                     >
                       Voir la fiche du modpack
                     </button>
-                    <span class="font-mono text-xs text-muted"> {props.instance.packVersion}</span>
+                    <span class="font-mono text-xs text-muted"> {props.instance.packVersion} </span>
+                    <PackRollback instance={props.instance} locked={state().status !== "idle"} onError={setError} />
                   </dd>
                 </Show>
                 <dt class="text-muted">Java</dt>

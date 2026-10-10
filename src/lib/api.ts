@@ -325,6 +325,17 @@ export interface GlossaryTerm {
   instanceId: string;
 }
 
+/** What a modpack update did. */
+export interface PackUpdateReport {
+  added: number;
+  replaced: number;
+  removed: number;
+  /** Files the player changed, kept as they are. */
+  kept: string[];
+  gameVersion: [string, string] | null;
+  worldsBackedUp: number;
+}
+
 /** An enabled mod that needs another one to start. */
 export interface Dependent {
   name: string;
@@ -391,7 +402,7 @@ export interface World {
   icon: string | null;
 }
 
-export type BackupKind = "manual" | "auto" | "beforeRestore";
+export type BackupKind = "manual" | "auto" | "beforeRestore" | "beforeUpdate";
 
 export interface WorldBackup {
   world: string;
@@ -505,6 +516,11 @@ export const api = {
   installModpack: (projectId: string, versionId?: string) =>
     invoke<Instance>("install_modpack", { projectId, versionId: versionId ?? null }),
   modpackVersions: (projectId: string) => invoke<PackVersion[]>("modpack_versions", { projectId }),
+  modpackUpdates: (instanceId: string) => invoke<PackVersion[]>("modpack_updates", { instanceId }),
+  updateModpack: (instanceId: string, versionId: string) =>
+    invoke<PackUpdateReport>("update_modpack", { instanceId, versionId }),
+  modpackRollbackVersion: (instanceId: string) => invoke<string | null>("modpack_rollback_version", { instanceId }),
+  rollbackModpack: (instanceId: string) => invoke<void>("rollback_modpack", { instanceId }),
   importModpack: (path: string) => invoke<Instance>("import_modpack", { path }),
   exportModpack: (instanceId: string, path: string, version: string) =>
     invoke<void>("export_modpack", { instanceId, path, version }),

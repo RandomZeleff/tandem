@@ -177,6 +177,9 @@ function fakeScreenshot(path: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}#`;
 }
 
+/** Pack version each updated instance can go back to. */
+const rollbackFrom: Record<string, string> = {};
+
 let accounts: Account[] = [
   { id: "a1", kind: "offline", username: "Zeleff", mcUuid: "00000000-0000-3000-8000-000000000000", isActive: true },
 ];
@@ -254,7 +257,8 @@ export function installMocks() {
         case "get_logs":
           return logs;
         case "list_instances":
-          return instances;
+          // Fresh objects, like the real backend: the UI sees changes.
+          return instances.map((i) => ({ ...i }));
         case "list_accounts":
           return accounts;
         case "running_instances":
@@ -382,6 +386,34 @@ export function installMocks() {
         case "remove_content":
           content[args.instanceId as string] = (content[args.instanceId as string] ?? []).filter((c) => c.projectId !== args.projectId);
           return null;
+        case "modpack_updates": {
+          const instance = instances.find((i) => i.id === args.instanceId);
+          if (!instance?.packProjectId || instance.packVersion !== "14.1.0") return [];
+          return [
+            { id: "fo15", versionNumber: "15.0.0", versionType: "release", gameVersions: ["26.3"], loaders: ["fabric"], datePublished: iso(30), size: 30_000_000, recommended: true },
+            { id: "fo142", versionNumber: "14.2.0", versionType: "release", gameVersions: ["26.2"], loaders: ["fabric"], datePublished: iso(300), size: 29_000_000, recommended: false },
+          ];
+        }
+        case "update_modpack": {
+          const instance = instances.find((i) => i.id === args.instanceId)!;
+          for (let i = 0; i <= 10; i++) {
+            await new Promise((r) => setTimeout(r, 120));
+            await emit("install://progress", { instanceId: instance.id, stage: "downloading", doneFiles: i * 3, totalFiles: 30, doneBytes: i * 3_000_000, totalBytes: 30_000_000 });
+          }
+          await emit("install://finished", instance.id);
+          const to = args.versionId === "fo15" ? "15.0.0" : "14.2.0";
+          rollbackFrom[instance.id] = instance.packVersion!;
+          Object.assign(instance, { packVersion: to, packVersionId: args.versionId, gameVersion: to === "15.0.0" ? "26.3" : "26.2" });
+          return { added: 12, replaced: 31, removed: 4, kept: ["config/sodium-options.json"], gameVersion: null, worldsBackedUp: 0 };
+        }
+        case "modpack_rollback_version":
+          return rollbackFrom[args.instanceId as string] ?? null;
+        case "rollback_modpack": {
+          const instance = instances.find((i) => i.id === args.instanceId)!;
+          Object.assign(instance, { packVersion: rollbackFrom[instance.id], packVersionId: "v1", gameVersion: "26.2" });
+          delete rollbackFrom[instance.id];
+          return null;
+        }
         case "modpack_versions":
           await new Promise((r) => setTimeout(r, 300));
           return [
