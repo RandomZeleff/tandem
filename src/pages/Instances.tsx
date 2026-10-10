@@ -40,12 +40,12 @@ export default function Instances() {
 
   return (
     <div class="flex flex-col gap-5">
-      <div class="flex items-end justify-between gap-4">
-        <div class="flex flex-col gap-1">
+      <div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div class="flex min-w-0 flex-col gap-1">
           <h1 class="pixel-shadow font-pixel text-3xl font-bold">Instances</h1>
           <span class="text-[13px] text-muted">Chaque instance a son propre dossier, ses mondes et ses réglages.</span>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 whitespace-nowrap">
           <button class="btn px-corners h-10 px-4" onClick={() => setLauncherImport(true)} title="Modrinth App, Prism, CurseForge, launcher officiel…">
             <Icon name="arrow" size={12} />
             Depuis un autre launcher

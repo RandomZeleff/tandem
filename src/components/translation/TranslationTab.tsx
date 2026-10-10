@@ -202,7 +202,8 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
                             </>
                           )}
                         </Show>
-                        . Les noms d'objets passent en premier ; tu peux arrêter quand tu veux, rien n'est perdu.
+                        .{o().estimate.texts < o().totals.missing ? " Un texte répété n'est traduit qu'une fois." : ""} Les noms
+                        d'objets passent en premier ; tu peux arrêter quand tu veux, rien n'est perdu.
                       </span>
                     </Show>
                   </div>

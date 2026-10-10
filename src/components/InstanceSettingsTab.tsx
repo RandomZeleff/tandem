@@ -325,7 +325,7 @@ function WindowField(props: { instance: Instance; onSave: (size: [number, number
       <div class="flex flex-wrap items-center gap-2">
         <Select
           id="instance-window"
-          class="h-9 w-48 text-[13px]"
+          class="h-9 w-56 text-[13px]"
           value={preset()}
           options={[
             { value: "", label: "Par défaut" },
@@ -375,7 +375,7 @@ function MemoryPicker(props: { instance: Instance; onError: (message: string) =>
     <div class="flex flex-col gap-1.5">
       <Select
         label="Mémoire allouée"
-        class="h-9 w-56 text-sm"
+        class="h-9 w-56 text-[13px]"
         value={String(props.instance.memoryMb ?? "auto")}
         options={[
           { value: "auto", label: "Automatique", hint: info() ? formatGigabytes(info()!.autoMb) : undefined },
