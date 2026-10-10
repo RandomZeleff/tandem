@@ -228,3 +228,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Pas copiés : journaux, rapports de crash, caches, et dans un `.minecraft` officiel les fichiers du launcher (`versions`, `libraries`, `assets`, `launcher_*`). Une instance vanilla ne prend pas le dossier `mods`.
 - Mesuré : DawnCraft (CurseForge, Forge 1.18.2, 298 mods) : 5 305 fichiers, 1,1 Go copiés en 16 s, 162 fichiers reconnus sur Modrinth ; le jeu importé atteint le menu (69 s de chargement).
 - Statut : validé
+
+### D36 · 2026-10-10 · Connexion Microsoft : navigateur + PKCE, jetons découpés dans le coffre, hors ligne après possession
+- Connexion dans le **navigateur système** (D9) : code d'autorisation + PKCE (S256), réponse reçue par un petit serveur local d'un seul usage sur `http://localhost:<port aléatoire>` (l'application Azure accepte `http://localhost` sur tout port). Pas de code à recopier ; `state` vérifié ; page « Connexion réussie » dans l'onglet. Annulable, abandonnée après 15 min.
+- Chaîne : Microsoft → Xbox Live → XSTS → `login_with_xbox` → droits (`entitlements/mcstore`) + profil. Un compte qui ne possède pas le jeu est refusé (D9) ; erreurs XSTS expliquées (pas de profil Xbox, compte enfant, pays, vérification d'âge) avec le lien utile.
+- Jetons (refresh Microsoft + jeton Minecraft et son expiration) dans le coffre du système **uniquement**, découpés en morceaux de 1 000 caractères (Windows limite un secret à 2 560 octets). La base ne garde que le pseudo, l'UUID et la tête du skin. Jeton renouvelé avant le lancement s'il expire dans moins de 10 min (une seule renouvellement à la fois : Microsoft fait tourner le refresh token) ; sans réseau, l'ancien jeton sert (le solo marche) ; refresh refusé → « session expirée » et la fenêtre Comptes s'ouvre.
+- Tête du joueur : skin officiel téléchargé depuis `textures.minecraft.net` uniquement, visage 8×8 + calque du chapeau découpés en local (pas de service tiers type Crafatar qui recevrait l'UUID).
+- Comptes hors ligne : ajout et lancement permis seulement si un compte Microsoft (qui possède forcément le jeu) est connecté, comme Prism. Les outils de développement (exemples) n'appliquent pas cette règle.
+- Interface : fenêtre « Comptes » unique (liste, connexion pas à pas, hors ligne), carte de la barre latérale avec la vraie tête et changement rapide, bouton blanc « Se connecter avec Microsoft » au logo officiel (seul logo de marque utilisé, comme le demandent les règles de Microsoft pour ce bouton).
+- Statut : validé
