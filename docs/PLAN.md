@@ -156,10 +156,11 @@ Choix tranchés :
 - [x] Avertissement si les instances diffèrent (version, loader, mods)
 - [x] Page « Jouer à deux » (inviter / rejoindre), messages clairs (compte Microsoft requis, monde pas encore ouvert, code inconnu)
 
-- [ ] **Test réel à deux** (deux PC, deux réseaux, deux comptes Microsoft) : Raphaël + un ami
+- [x] **Test réel à deux** (deux PC, deux comptes Microsoft) : Raphaël + un ami, invité en 4G (≈ 30 ms) et en Wi-Fi (≈ 3 ms), exclusion et inversion des rôles OK — [TEST-DUO.md](TEST-DUO.md#résultats-du-premier-test-réel-10-octobre-2026)
 
 ### 6b — Ensuite
 - [ ] Synchroniser les mods de l'invité sur ceux de l'hôte (Modrinth d'abord, sinon envoyés par l'hôte)
+- [ ] Peaufinage : accessibilité, moins de frictions (retours du premier test)
 - [ ] (plus tard) Synchro du monde / « host migration »
 - [ ] (plus tard) Relais Tandem en option
 
@@ -314,4 +315,18 @@ Choix tranchés :
 - Vérifié sur ce PC : exemple `duo selftest` (vrai multicast LAN, code résolu sur le relais pkarr, ping de la liste des serveurs à travers le tunnel en 0,15 ms, refus d'un code inconnu, fin de session signalée) ; vrais jeux lancés sur un faux monde : Fabulously Optimized 1.21.4 (quickPlay) et Create Forge 1.19.2 (`--server`) se connectent tout seuls. Page testée dans l'aperçu (backend simulé).
 - Pas vérifié : une vraie partie entre deux PC sur deux réseaux (hole punching réel, relais, connexion authentifiée au monde LAN).
 - Prochaine étape : test réel par Raphaël et un ami, puis 6b (synchroniser les mods).
+
+
+### 2026-10-10 (reprise Codex : livraison pour test duo)
+- À la demande explicite de Raphaël : compilation locale des installateurs Windows x64 EXE et MSI 0.1.0 pour partage privé avec un ami.
+- `docs/TEST-DUO.md` complété : prérequis, grille des scénarios, diagnostic et fiche de retour.
+- Vérifié : TypeScript, fmt, Clippy, 134 tests Rust, `duo selftest` via le réseau et démarrage de la release sur des données isolées (UI 490 ms).
+- Emballage final réussi via `pnpm tauri bundle --bundles nsis,msi`, après un verrou temporaire de l'exécutable lors du premier essai. Avertissement Tauri sur le marqueur de type de bundle déjà patché ; aucun plugin updater dans ce projet.
+- Livrables copiés dans le dossier outputs du chat Codex du 10 octobre 2026 (`he`) avec archive ZIP et SHA-256. Aucun tag ni publication GitHub.
+- Prochaine étape : vraie partie entre les deux PC ; la case du test réel de la Phase 6a reste ouverte.
+
+### 2026-10-10 (Windows, suite : test réel du jeu à deux)
+- Premier vrai test par Raphaël et un ami : inviter, rejoindre et jouer marchent, l'invité en 4G (≈ 30 ms, autre réseau) comme en Wi-Fi (≈ 3 ms) ; exclusion et inversion des rôles OK ; longue partie fluide. Phase 6a validée.
+- Pas relevé : liaison directe ou relais en 4G, partie avec un modpack.
+- Prochaine étape : 6b (synchroniser les mods) et peaufinage de l'expérience (accessibilité, moins de frictions), au choix de Raphaël.
 
