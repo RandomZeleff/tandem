@@ -574,6 +574,7 @@ export interface DuoInstance {
   gameVersion: string;
   loader: string;
   loaderVersion: string | null;
+  pack?: { projectId: string; versionId: string };
   mods: DuoModRef[];
 }
 
@@ -605,6 +606,7 @@ export interface DuoGuest {
 export type DuoHostEvent =
   | { type: "world"; world: LanWorld | null }
   | { type: "guestJoined"; guest: DuoGuest }
+  | { type: "guestInstance"; id: string; diff: InstanceDiff | null }
   | { type: "guestLeft"; id: string }
   | { type: "link"; id: string; link: LinkStatus };
 
@@ -613,7 +615,8 @@ export interface DuoJoinView {
   hostInstance: DuoInstance | null;
   world: { motd: string } | null;
   port: number;
-  instanceId: string;
+  /** Null when none of the player's instances has the host's version and loader. */
+  instanceId: string | null;
   diff: InstanceDiff | null;
   link: LinkStatus | null;
 }
@@ -652,7 +655,8 @@ export const api = {
     invoke<void>("set_instance_memory", { id, memoryMb }),
   openDataFolder: () => invoke<void>("open_data_folder"),
   openInstanceFolder: (id: string) => invoke<void>("open_instance_folder", { id }),
-  launchInstance: (id: string) => invoke<void>("launch_instance", { id }),
+  /** `world`: folder in saves/ to open at once (1.20+). */
+  launchInstance: (id: string, world?: string) => invoke<void>("launch_instance", { id, world: world ?? null }),
   stopInstance: (id: string) => invoke<boolean>("stop_instance", { id }),
   /** `false` when the user dismisses macOS's password prompt. */
   installRosetta: () => invoke<boolean>("install_rosetta"),
@@ -722,7 +726,9 @@ export const api = {
   duoHost: (instanceId: string | null) => invoke<DuoHostView>("duo_host", { instanceId }),
   duoStopHost: () => invoke<void>("duo_stop_host"),
   duoKick: (id: string) => invoke<void>("duo_kick", { id }),
-  duoJoin: (code: string, instanceId: string) => invoke<DuoJoinView>("duo_join", { code, instanceId }),
+  /** Without an instance, the one that best matches the host's is picked. */
+  duoJoin: (code: string, instanceId: string | null = null) => invoke<DuoJoinView>("duo_join", { code, instanceId }),
+  duoSetInstance: (instanceId: string) => invoke<DuoJoinView>("duo_set_instance", { instanceId }),
   duoLeave: () => invoke<void>("duo_leave"),
   /** Launches the joined session's instance straight into the host's world. */
   duoPlay: () => invoke<void>("duo_play"),

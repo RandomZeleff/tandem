@@ -1,26 +1,30 @@
-import { createMemo, createSignal, For, type JSX, Match, onMount, Show, Switch } from "solid-js";
+import { createMemo, createResource, createSignal, For, type JSX, Match, onMount, Show, Switch } from "solid-js";
 import Alert from "../components/Alert";
 import { AccountAvatar } from "../components/accounts/AccountVisuals";
 import InstanceSlot from "../components/InstanceSlot";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
 import Select from "../components/Select";
-import { Icon, LoaderTag, SkinHead } from "../components/pixel";
+import { Checkbox, Icon, LoaderTag, SkinHead } from "../components/pixel";
 import { openAccounts } from "../lib/accounts";
-import { errorMessage, type InstanceDiff, type LinkStatus } from "../lib/api";
+import { api, errorMessage, type InstanceDiff, type LinkStatus } from "../lib/api";
 import {
+  autoLaunch,
+  changeInstance,
+  diffMatches,
   duo,
   formatCode,
   joinFriend,
   kickGuest,
   leaveFriend,
   playWithFriend,
+  setAutoLaunch,
   startDuoEvents,
   startHosting,
   stopHosting,
 } from "../lib/duo";
 import { loaderLabel } from "../lib/format";
-import { gameState } from "../lib/games";
+import { gameState, output } from "../lib/games";
 import { skinLook } from "../lib/look";
 import { activeAccount, instances, remembered } from "../lib/store";
 import { toast } from "../lib/toast";
@@ -91,6 +95,23 @@ function Step(props: { done: boolean; current: boolean; title: string; children?
   );
 }
 
+/** 1.20+ (and the year-numbered versions after 1.21) open a world straight from the launch. */
+function opensWorldAtLaunch(gameVersion: string): boolean {
+  const [major, minor] = gameVersion.split(".").map(Number);
+  return major > 1 || (major === 1 && minor >= 20);
+}
+
+/** The host is in a world of their game, judging by its log (any version, any loader). */
+function inWorld(instanceId: string): boolean {
+  const lines = output[instanceId] ?? [];
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i].line;
+    if (line.includes("Stopping server")) return false;
+    if (line.includes("Starting integrated minecraft server")) return true;
+  }
+  return false;
+}
+
 function instanceOptions() {
   return instances().map((i) => ({
     value: i.id,
@@ -127,16 +148,37 @@ function AccountGate(props: { children: JSX.Element }) {
 
 function Start() {
   const [hostInstance, setHostInstance] = remembered<string>("duo-host-instance", instances()[0]?.id ?? "");
-  const [guestInstance, setGuestInstance] = remembered<string>("duo-guest-instance", instances()[0]?.id ?? "");
+  const [world, setWorld] = remembered<string>("duo-host-world", "");
   const [code, setCode] = createSignal("");
   const [busy, setBusy] = createSignal<"host" | "join" | null>(null);
   const [error, setError] = createSignal<string | null>(null);
+
+  const chosen = createMemo(() => instances().find((i) => i.id === hostInstance()));
+  const quickPlay = () => !!chosen() && opensWorldAtLaunch(chosen()!.gameVersion);
+  const [worlds] = createResource(
+    () => (quickPlay() ? hostInstance() : null),
+    async (id) => {
+      const list = await api.listWorlds(id).catch(() => []);
+      return [...list].sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0));
+    },
+  );
+  /** The world picked, or the last one played when none (or one since deleted) is. */
+  const pickedWorld = () => {
+    if (world() === "menu") return null;
+    const list = worlds() ?? [];
+    return list.find((w) => w.folder === world()) ?? list[0] ?? null;
+  };
+  const worldOptions = () => [
+    ...(worlds() ?? []).map((w) => ({ value: w.folder, label: w.name })),
+    { value: "menu", label: "Je choisis dans le jeu" },
+  ];
+  const running = () => !!hostInstance() && gameState(hostInstance()).status !== "idle";
 
   async function host() {
     setBusy("host");
     setError(null);
     try {
-      await startHosting(hostInstance() || null);
+      await startHosting(hostInstance() || null, quickPlay() ? pickedWorld()?.folder : undefined);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -148,7 +190,7 @@ function Start() {
     setBusy("join");
     setError(null);
     try {
-      await joinFriend(code(), guestInstance());
+      await joinFriend(code());
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -173,19 +215,28 @@ function Start() {
             <span class="text-xs text-muted">Instance où tu joues</span>
             <Select class="h-10 w-full text-sm" value={hostInstance()} options={instanceOptions()} onChange={setHostInstance} />
           </label>
+          <Show when={quickPlay() && !running() && (worlds()?.length ?? 0) > 0}>
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs text-muted">Monde</span>
+              <Select class="h-10 w-full text-sm" value={pickedWorld()?.folder ?? "menu"} options={worldOptions()} onChange={setWorld} />
+            </label>
+          </Show>
           <button class="btn btn-gold px-corners mt-auto h-11" disabled={busy() !== null || !hostInstance()} onClick={() => void host()}>
             <Icon name="invite" size={14} />
-            {busy() === "host" ? "Création de l'invitation…" : "Créer une invitation"}
+            {busy() === "host" ? "Création de l'invitation…" : running() ? "Créer une invitation" : "Inviter et lancer le jeu"}
           </button>
         </section>
 
         <section class="panel px-corners-md flex flex-col gap-4 p-5">
           <div class="flex flex-col gap-1">
             <h2 class="panel-title text-gold!">Rejoindre un ami</h2>
-            <p class="text-sm text-chalk-2">Entre le code que ton ami t'a donné.</p>
+            <p class="text-sm text-chalk-2">
+              Entre le code que ton ami t'a donné. Tandem prend ton instance qui correspond à la sienne et lance le jeu
+              dès que son monde est ouvert.
+            </p>
           </div>
           <form
-            class="flex flex-col gap-4"
+            class="mt-auto flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
               void join();
@@ -204,14 +255,10 @@ function Start() {
                 setCode(formatted);
               }}
             />
-            <label class="flex flex-col gap-1.5">
-              <span class="text-xs text-muted">Avec l'instance</span>
-              <Select class="h-10 w-full text-sm" value={guestInstance()} options={instanceOptions()} onChange={setGuestInstance} />
-            </label>
             <button
               type="submit"
               class="btn btn-primary px-corners h-11"
-              disabled={busy() !== null || code().replace("-", "").length !== 8 || !guestInstance()}
+              disabled={busy() !== null || code().replace("-", "").length !== 8}
             >
               {busy() === "join" ? "Connexion…" : "Rejoindre"}
             </button>
@@ -230,6 +277,7 @@ function Hosting() {
   const host = () => duo.host!;
   const instance = createMemo(() => instances().find((i) => i.id === host().instanceId));
   const running = () => (host().instanceId ? gameState(host().instanceId!).status === "running" : false);
+  const playing = () => running() && inWorld(host().instanceId!);
   const [copied, setCopied] = createSignal(false);
 
   async function copy() {
@@ -275,10 +323,23 @@ function Hosting() {
             <Show
               when={host().world}
               fallback={
-                <span class="text-xs text-muted">
-                  Dans le jeu, une fois dans ton monde : Échap → <strong>Ouvrir au réseau local</strong> →{" "}
-                  <strong>Démarrer le monde en LAN</strong>. Tandem le détecte tout seul.
-                </span>
+                <div class="flex flex-col gap-1.5 text-xs">
+                  <Show when={playing()}>
+                    <span class="font-semibold text-gold">Tu es dans ton monde : il ne reste que cette étape.</span>
+                  </Show>
+                  <ol class="flex flex-col gap-0.5 text-chalk-2">
+                    <li>
+                      1. Appuie sur <kbd class="chip px-1.5 font-mono text-[11px]">Échap</kbd>
+                    </li>
+                    <li>
+                      2. Clique sur <strong>Ouvrir au réseau local</strong>
+                    </li>
+                    <li>
+                      3. Clique sur <strong>Démarrer le monde en LAN</strong>
+                    </li>
+                  </ol>
+                  <span class="text-muted">Tandem le détecte tout seul.</span>
+                </div>
               }
             >
               {(world) => <span class="text-xs text-xp-text">Monde ouvert : {world().motd}</span>}
@@ -326,8 +387,29 @@ function Hosting() {
 function Joined() {
   const guest = () => duo.guest!;
   const instance = createMemo(() => instances().find((i) => i.id === guest().instanceId));
-  const state = () => gameState(guest().instanceId);
+  const state = () => (guest().instanceId ? gameState(guest().instanceId!) : null);
+  const busy = () => state()?.status === "preparing" || state()?.status === "running";
   const open = () => !!guest().world;
+  const matches = () => !guest().diff || diffMatches(guest().diff!);
+  const [changing, setChanging] = createSignal(false);
+
+  async function change(id: string) {
+    setChanging(true);
+    try {
+      await changeInstance(id);
+    } catch (err) {
+      toast(errorMessage(err), { tone: "error" });
+    } finally {
+      setChanging(false);
+    }
+  }
+
+  const playLabel = () => {
+    const status = state()?.status;
+    if (status === "preparing") return "Préparation…";
+    if (status === "running") return "En jeu";
+    return matches() ? "Jouer" : "Jouer quand même";
+  };
 
   return (
     <div class="flex flex-col gap-5">
@@ -348,29 +430,67 @@ function Joined() {
       </section>
 
       <section class="panel px-corners-md flex flex-col gap-4 p-5">
-        <div class="flex items-center gap-4">
-          <Show when={instance()}>{(i) => <InstanceSlot instance={i()} size={48} />}</Show>
-          <div class="flex min-w-0 flex-1 flex-col">
-            <span class="truncate font-semibold">{instance()?.name ?? "Instance supprimée"}</span>
-            <Show when={instance()}>
-              {(i) => (
+        <Show
+          when={instance()}
+          fallback={
+            <div class="flex flex-col gap-1">
+              <span class="font-semibold">Aucune de tes instances ne correspond</span>
+              <Show
+                when={guest().hostInstance}
+                fallback={<span class="text-sm text-chalk-2">Choisis l'instance avec laquelle jouer.</span>}
+              >
+                {(h) => (
+                  <span class="text-sm text-chalk-2">
+                    {guest().hostPlayer} joue à « {h().name} » : Minecraft {h().gameVersion} avec {loaderLabel(h().loader)}.
+                    Crée la même instance dans Instances, ou choisis-en une ci-dessous.
+                  </span>
+                )}
+              </Show>
+            </div>
+          }
+        >
+          {(i) => (
+            <div class="flex items-center gap-4">
+              <InstanceSlot instance={i()} size={48} />
+              <div class="flex min-w-0 flex-1 flex-col">
+                <span class="truncate font-semibold">{i().name}</span>
                 <span class="flex items-center gap-1.5 text-xs text-muted">
                   Minecraft {i().gameVersion} · <LoaderTag loader={i().loader} />
                 </span>
-              )}
-            </Show>
-          </div>
-          <button
-            class="btn btn-primary px-corners h-12 px-6 text-base"
-            disabled={!open() || state().status !== "idle" || !instance()}
-            onClick={playWithFriend}
-            title={open() ? "Lance le jeu directement dans le monde de ton ami" : "Attends que ton ami ouvre son monde"}
-          >
-            <Icon name="play" size={14} />
-            {state().status === "preparing" ? "Préparation…" : state().status === "running" ? "En jeu" : "Jouer"}
-          </button>
-        </div>
+              </div>
+              <button
+                class="btn btn-primary px-corners h-12 px-6 text-base"
+                disabled={!open() || state()?.status !== "idle"}
+                onClick={playWithFriend}
+                title={open() ? "Lance le jeu directement dans le monde de ton ami" : "Attends que ton ami ouvre son monde"}
+              >
+                <Icon name="play" size={14} />
+                {playLabel()}
+              </button>
+            </div>
+          )}
+        </Show>
         <DiffNote diff={guest().diff} who={`Par rapport à ${guest().hostPlayer}, ton instance a`} />
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <label class="flex min-w-[280px] flex-1 items-center gap-3">
+            <span class="shrink-0 text-xs text-muted">{instance() ? "Autre instance" : "Instance"}</span>
+            <Select
+              class="h-9 w-full text-sm"
+              value={guest().instanceId ?? ""}
+              placeholder="Choisir…"
+              label="Instance avec laquelle jouer"
+              options={instanceOptions()}
+              disabled={changing() || busy()}
+              onChange={(id) => void change(id)}
+            />
+          </label>
+          <Checkbox
+            class="text-xs text-chalk-2"
+            checked={autoLaunch()}
+            label="Lancer le jeu dès que le monde est ouvert"
+            onChange={setAutoLaunch}
+          />
+        </div>
         <p class="text-xs text-muted">
           Déjà en jeu ? La partie apparaît aussi dans Multijoueur, sous « Parties en réseau local ».
         </p>

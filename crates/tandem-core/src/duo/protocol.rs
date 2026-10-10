@@ -31,6 +31,14 @@ pub struct ModRef {
     pub sha1: String,
 }
 
+/// The Modrinth modpack an instance was installed from.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PackRef {
+    pub project_id: String,
+    pub version_id: String,
+}
+
 /// What a player plays with, to check both sides match.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -39,6 +47,9 @@ pub struct InstanceSummary {
     pub game_version: String,
     pub loader: String,
     pub loader_version: Option<String>,
+    /// Absent from older Tandem versions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pack: Option<PackRef>,
     /// Enabled mods only.
     pub mods: Vec<ModRef>,
 }
@@ -66,6 +77,9 @@ pub enum Message {
     Refused { reason: String },
     /// Host → guest, whenever the world is opened or closed.
     World { world: Option<WorldInfo> },
+    /// Guest → host, when the guest plays with another instance (picked after the
+    /// welcome, or changed). Older hosts skip it.
+    Instance { instance: Option<InstanceSummary> },
 }
 
 pub async fn write(send: &mut SendStream, message: &Message) -> Result<()> {
@@ -126,5 +140,19 @@ mod tests {
                 world: Some(WorldInfo { motd: "M".into() })
             }
         );
+    }
+
+    #[test]
+    fn reads_summaries_of_older_versions() {
+        // Tandem 0.1.0 sends no `pack`.
+        let old = r#"{"type":"instance","instance":{"name":"I","gameVersion":"1.21.1","loader":"fabric","loaderVersion":null,"mods":[]}}"#;
+        let Message::Instance {
+            instance: Some(summary),
+        } = serde_json::from_str(old).unwrap()
+        else {
+            panic!("not an instance message");
+        };
+        assert_eq!(summary.pack, None);
+        assert!(!serde_json::to_string(&summary).unwrap().contains("pack"));
     }
 }

@@ -21,7 +21,7 @@ use tokio::net::TcpStream;
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::instance::Instance;
-use protocol::{InstanceSummary, ModRef};
+use protocol::{InstanceSummary, ModRef, PackRef};
 
 /// iroh application protocol of Tandem's sessions.
 pub const ALPN: &[u8] = b"tandem/duo/1";
@@ -98,8 +98,61 @@ pub async fn summary(ctx: &Context, instance: &Instance) -> Result<InstanceSumma
         game_version: instance.game_version.clone(),
         loader: instance.loader.to_string(),
         loader_version: instance.loader_version.clone(),
+        pack: instance
+            .pack_project_id
+            .clone()
+            .zip(instance.pack_version_id.clone())
+            .map(|(project_id, version_id)| PackRef {
+                project_id,
+                version_id,
+            }),
         mods,
     })
+}
+
+/// The player's instance that best matches the host's: same Minecraft version and loader,
+/// then the same modpack version, then the fewest differing mods. `None` when no instance
+/// has the host's version and loader.
+pub async fn best_match(
+    ctx: &Context,
+    host: &InstanceSummary,
+) -> Result<Option<(Instance, InstanceSummary, InstanceDiff)>> {
+    let mut candidates: Vec<Instance> = ctx
+        .db
+        .list_instances()
+        .await?
+        .into_iter()
+        .filter(|i| i.game_version == host.game_version && i.loader.to_string() == host.loader)
+        .collect();
+    // Same modpack first (same version before), then the most recently played.
+    let pack_rank = |i: &Instance| match &host.pack {
+        Some(pack) if i.pack_project_id.as_deref() == Some(pack.project_id.as_str()) => {
+            if i.pack_version_id.as_deref() == Some(pack.version_id.as_str()) {
+                0
+            } else {
+                1
+            }
+        }
+        _ => 2,
+    };
+    candidates.sort_by(|a, b| {
+        pack_rank(a)
+            .cmp(&pack_rank(b))
+            .then_with(|| b.last_played_at.cmp(&a.last_played_at))
+    });
+    let mut best: Option<(Instance, InstanceSummary, InstanceDiff)> = None;
+    for instance in candidates {
+        let mine = summary(ctx, &instance).await?;
+        let diff = compare(&mine, host);
+        if diff.matches() {
+            return Ok(Some((instance, mine, diff)));
+        }
+        let gap = |d: &InstanceDiff| d.missing.len() + d.extra.len();
+        if best.as_ref().is_none_or(|(_, _, b)| gap(&diff) < gap(b)) {
+            best = Some((instance, mine, diff));
+        }
+    }
+    Ok(best)
 }
 
 fn hash_mods(dir: &Path) -> Vec<ModRef> {
@@ -172,6 +225,7 @@ mod tests {
             game_version: game.into(),
             loader: "fabric".into(),
             loader_version: None,
+            pack: None,
             mods: mods
                 .iter()
                 .map(|s| ModRef {

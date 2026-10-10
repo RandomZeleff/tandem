@@ -50,6 +50,11 @@ pub enum HostEvent {
     GuestJoined {
         guest: GuestInfo,
     },
+    /// A guest now plays with another instance.
+    GuestInstance {
+        id: String,
+        instance: Option<InstanceSummary>,
+    },
     GuestLeft {
         id: String,
     },
@@ -295,6 +300,21 @@ async fn welcome(incoming: Incoming, shared: Arc<Shared>) {
         }
     });
 
+    // The guest's instance, picked after the welcome or changed later.
+    let messages = tokio::spawn({
+        let (shared, id) = (shared.clone(), id.clone());
+        async move {
+            while let Ok(Some(message)) = reader.next().await {
+                if let Message::Instance { instance } = message {
+                    (shared.emit)(HostEvent::GuestInstance {
+                        id: id.clone(),
+                        instance,
+                    });
+                }
+            }
+        }
+    });
+
     // Each game connection of the guest arrives as a new stream.
     while let Ok((send, mut recv)) = conn.accept_bi().await {
         let world = shared.world.borrow().clone();
@@ -317,6 +337,7 @@ async fn welcome(incoming: Incoming, shared: Arc<Shared>) {
 
     updates.abort();
     links.abort();
+    messages.abort();
     lock(&shared.guests).remove(&id);
     tracing::info!(guest = %player, "guest left");
     (shared.emit)(HostEvent::GuestLeft { id });

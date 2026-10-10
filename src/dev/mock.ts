@@ -708,16 +708,30 @@ export function installMocks() {
           setTimeout(() => void emit("duo://guest", { type: "world", world: { motd: "Léo - Monde créatif" } }), 3000);
           const timer = setInterval(() => void emit("duo://guest", { type: "link", link: { pingMs: 31, direct: true } }), 2000);
           setTimeout(() => clearInterval(timer), 120_000);
+          const hostInstance = { name: "Create: Above and Beyond", gameVersion: "1.21.1", loader: "neoforge", loaderVersion: null, mods: [] };
+          // Codes starting with 9: none of the player's instances matches the host's.
+          const none = String(args.code).startsWith("9");
           return {
             hostPlayer: "Léo",
-            hostInstance: null,
+            hostInstance,
             world: null,
             port: 51999,
-            instanceId: args.instanceId,
-            diff: { sameGame: false, sameLoader: true, missing: [], extra: [{ fileName: "x.jar", sha1: "x" }] },
+            instanceId: none ? null : (args.instanceId ?? instances[0].id),
+            diff: none ? null : { sameGame: true, sameLoader: true, missing: [], extra: [] },
             link: null,
           };
         }
+        case "duo_set_instance":
+          await new Promise((r) => setTimeout(r, 400));
+          return {
+            hostPlayer: "Léo",
+            hostInstance: { name: "Create: Above and Beyond", gameVersion: "1.21.1", loader: "neoforge", loaderVersion: null, mods: [] },
+            world: { motd: "Léo - Monde créatif" },
+            port: 51999,
+            instanceId: args.instanceId,
+            diff: { sameGame: false, sameLoader: true, missing: [], extra: [{ fileName: "x.jar", sha1: "x" }] },
+            link: { pingMs: 31, direct: true },
+          };
         case "duo_play":
           void fakeLaunch(instances[0].id);
           return null;

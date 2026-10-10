@@ -22,8 +22,18 @@ pub struct LaunchSpec<'a> {
     pub extra_jvm_args: Vec<String>,
     /// Game window size, `None` for the game's default.
     pub window: Option<(u32, u32)>,
-    /// Server to join right away (`host`, `port`), e.g. a friend's world through Tandem.
-    pub join: Option<(String, u16)>,
+    /// Where the game goes right after starting, instead of the title screen.
+    pub quick_play: Option<QuickPlay>,
+}
+
+/// Where the game goes right after starting.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum QuickPlay {
+    /// A server (`host`, `port`), e.g. a friend's world through Tandem. Every version.
+    Server(String, u16),
+    /// A world of `saves/`, by folder name. 1.20+ only: older versions show the title
+    /// screen.
+    World(String),
 }
 
 #[derive(Debug, Clone)]
@@ -34,12 +44,20 @@ pub struct GameCommand {
 }
 
 pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
-    // 1.20+ joins a server with its own `--quickPlayMultiplayer` argument, behind a feature.
+    // 1.20+ has its own `--quickPlay…` arguments, each behind a feature.
     let mut env = spec.prepared.env.clone();
-    if spec.join.is_some() {
-        env.features
-            .insert("is_quick_play_multiplayer".into(), true);
+    let feature = match &spec.quick_play {
+        Some(QuickPlay::Server(..)) => Some("is_quick_play_multiplayer"),
+        Some(QuickPlay::World(_)) => Some("is_quick_play_singleplayer"),
+        None => None,
+    };
+    if let Some(feature) = feature {
+        env.features.insert(feature.into(), true);
     }
+    let server = match &spec.quick_play {
+        Some(QuickPlay::Server(host, port)) => Some((host, port)),
+        _ => None,
+    };
     let env = &env;
     let version = &spec.prepared.version;
     let separator = if cfg!(windows) { ";" } else { ":" };
@@ -74,10 +92,16 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
         ("launcher_name", "Tandem".to_owned()),
         (
             "quickPlayMultiplayer",
-            spec.join
-                .as_ref()
+            server
                 .map(|(host, port)| format!("{host}:{port}"))
                 .unwrap_or_default(),
+        ),
+        (
+            "quickPlaySingleplayer",
+            match &spec.quick_play {
+                Some(QuickPlay::World(folder)) => folder.clone(),
+                _ => String::new(),
+            },
         ),
         ("launcher_version", crate::version().to_owned()),
     ]);
@@ -131,7 +155,7 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
         _ => {}
     }
     // Older versions take the server as `--server` / `--port`.
-    if let Some((host, port)) = &spec.join {
+    if let Some((host, port)) = server {
         if !args.iter().any(|a| a == "--quickPlayMultiplayer") {
             args.extend([
                 "--server".to_owned(),

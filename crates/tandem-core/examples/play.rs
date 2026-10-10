@@ -96,10 +96,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         extra_jvm_args: Vec::new(),
         window: None,
         // `TANDEM_JOIN=127.0.0.1:25565`: the game joins that server at once.
-        join: std::env::var("TANDEM_JOIN").ok().and_then(|addr| {
-            let (host, port) = addr.rsplit_once(':')?;
-            Some((host.to_owned(), port.parse().ok()?))
-        }),
+        // `TANDEM_WORLD=<folder>`: the game opens that world at once (1.20+).
+        quick_play: std::env::var("TANDEM_JOIN")
+            .ok()
+            .and_then(|addr| {
+                let (host, port) = addr.rsplit_once(':')?;
+                Some(launch::QuickPlay::Server(
+                    host.to_owned(),
+                    port.parse().ok()?,
+                ))
+            })
+            .or_else(|| {
+                std::env::var("TANDEM_WORLD")
+                    .ok()
+                    .map(launch::QuickPlay::World)
+            }),
     });
     let mut child = launch::spawn(&command)?;
     let group = tandem_core::process::ProcessGroup::track(&child);

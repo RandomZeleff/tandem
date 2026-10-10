@@ -6,11 +6,11 @@ use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
 
-use iroh::endpoint::{ApplicationClose, Connection, ConnectionError};
+use iroh::endpoint::{ApplicationClose, Connection, ConnectionError, SendStream};
 use iroh::Endpoint;
 use serde::Serialize;
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::watch;
+use tokio::sync::{watch, Mutex};
 use tokio::task::JoinHandle;
 
 use super::lan::{self, LanWorld};
@@ -52,6 +52,8 @@ pub enum GuestEvent {
 pub struct Guest {
     endpoint: Endpoint,
     conn: Connection,
+    /// Control stream to the host.
+    control: Mutex<SendStream>,
     port: u16,
     tasks: Vec<JoinHandle<()>>,
 }
@@ -222,6 +224,7 @@ impl Guest {
             Guest {
                 endpoint,
                 conn,
+                control: Mutex::new(send),
                 port,
                 tasks,
             },
@@ -241,6 +244,15 @@ impl Guest {
 
     pub fn link(&self) -> Option<LinkStatus> {
         link_status(&self.conn)
+    }
+
+    /// Tells the host which instance the player now plays with.
+    pub async fn set_instance(&self, instance: Option<InstanceSummary>) -> Result<()> {
+        protocol::write(
+            &mut *self.control.lock().await,
+            &Message::Instance { instance },
+        )
+        .await
     }
 
     pub async fn leave(self) {

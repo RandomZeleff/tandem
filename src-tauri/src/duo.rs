@@ -7,6 +7,7 @@ use tandem_core::duo::host::{GuestInfo, Host, HostConfig, HostEvent};
 use tandem_core::duo::lan::LanWorld;
 use tandem_core::duo::protocol::InstanceSummary;
 use tandem_core::duo::{self, InstanceDiff, LinkStatus};
+use tandem_core::launch::QuickPlay;
 use tandem_core::Context;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::Mutex;
@@ -35,8 +36,20 @@ struct Joining {
     session: u64,
     guest: Guest,
     joined: Joined,
-    instance_id: String,
+    /// `None` until the player picks one (none of theirs matched the host's).
+    instance_id: Option<String>,
     diff: Option<InstanceDiff>,
+}
+
+impl Joining {
+    fn view(&self) -> JoinView {
+        JoinView {
+            joined: self.joined.clone(),
+            instance_id: self.instance_id.clone(),
+            diff: self.diff.clone(),
+            link: self.guest.link(),
+        }
+    }
 }
 
 /// A guest as the host sees them, with how their instance differs.
@@ -61,7 +74,7 @@ pub struct HostView {
 pub struct JoinView {
     #[serde(flatten)]
     pub joined: Joined,
-    pub instance_id: String,
+    pub instance_id: Option<String>,
     pub diff: Option<InstanceDiff>,
     pub link: Option<LinkStatus>,
 }
@@ -70,10 +83,23 @@ pub struct JoinView {
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 enum HostPayload {
-    World { world: Option<LanWorld> },
-    GuestJoined { guest: GuestView },
-    GuestLeft { id: String },
-    Link { id: String, link: LinkStatus },
+    World {
+        world: Option<LanWorld>,
+    },
+    GuestJoined {
+        guest: GuestView,
+    },
+    GuestInstance {
+        id: String,
+        diff: Option<InstanceDiff>,
+    },
+    GuestLeft {
+        id: String,
+    },
+    Link {
+        id: String,
+        link: LinkStatus,
+    },
 }
 
 /// The name both players see: the active account, which must be a Microsoft one (the
@@ -136,6 +162,13 @@ pub async fn duo_host(
                         guest: GuestView { guest, diff },
                     }
                 }
+                HostEvent::GuestInstance { id, instance } => HostPayload::GuestInstance {
+                    id,
+                    diff: instance
+                        .as_ref()
+                        .zip(mine.as_ref())
+                        .map(|(theirs, mine)| duo::compare(theirs, mine)),
+                },
                 HostEvent::GuestLeft { id } => HostPayload::GuestLeft { id },
                 HostEvent::Link { id, link } => HostPayload::Link { id, link },
             };
@@ -168,12 +201,14 @@ pub async fn duo_kick(state: State<'_, AppState>, id: String) -> CommandResult<(
     Ok(())
 }
 
+/// Joins the host behind `code`. Without `instance_id`, the instance that best matches the
+/// host's is picked once welcomed.
 #[tauri::command]
 pub async fn duo_join(
     app: AppHandle,
     state: State<'_, AppState>,
     code: String,
-    instance_id: String,
+    instance_id: Option<String>,
 ) -> CommandResult<JoinView> {
     if state.duo.host.lock().await.is_some() {
         return Err(CommandError::msg(
@@ -185,14 +220,17 @@ pub async fn duo_join(
         previous.guest.leave().await;
     }
     let name = player(&state.ctx).await?;
-    let summary = summary_of(&state.ctx, &instance_id).await?;
+    let chosen = match &instance_id {
+        Some(id) => Some(summary_of(&state.ctx, id).await?),
+        None => None,
+    };
     let session = SESSIONS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let emitter = app.clone();
     let (guest, joined) = Guest::join(
         state.ctx.http.clone(),
         &code,
         &name,
-        Some(summary.clone()),
+        chosen.clone(),
         move |event| {
             if let GuestEvent::Closed { .. } = &event {
                 // The session is over: forget it so a new one can start.
@@ -215,24 +253,58 @@ pub async fn duo_join(
         },
     )
     .await?;
-    let diff = joined
-        .host_instance
-        .as_ref()
-        .map(|host| duo::compare(&summary, host));
-    let view = JoinView {
-        joined: joined.clone(),
-        instance_id: instance_id.clone(),
-        diff: diff.clone(),
-        link: guest.link(),
+    let (instance_id, diff) = match (instance_id, chosen, &joined.host_instance) {
+        (Some(id), Some(mine), host) => {
+            let diff = host.as_ref().map(|host| duo::compare(&mine, host));
+            (Some(id), diff)
+        }
+        (_, _, Some(host)) => match duo::best_match(&state.ctx, host).await {
+            Ok(Some((instance, mine, diff))) => {
+                if let Err(err) = guest.set_instance(Some(mine)).await {
+                    tracing::warn!(error = %err, "instance not sent to the host");
+                }
+                (Some(instance.id), Some(diff))
+            }
+            Ok(None) => (None, None),
+            Err(err) => {
+                tracing::warn!(error = %err, "no instance picked");
+                (None, None)
+            }
+        },
+        // An older host that says nothing of its instance: the player picks.
+        _ => (None, None),
     };
-    *joining = Some(Joining {
+    let current = Joining {
         session,
         guest,
         joined,
         instance_id,
         diff,
-    });
+    };
+    let view = current.view();
+    *joining = Some(current);
     Ok(view)
+}
+
+/// The guest plays with another instance: tells the host, returns the new differences.
+#[tauri::command]
+pub async fn duo_set_instance(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<JoinView> {
+    let mine = summary_of(&state.ctx, &instance_id).await?;
+    let mut joining = state.duo.guest.lock().await;
+    let joining = joining
+        .as_mut()
+        .ok_or_else(|| CommandError::msg("Aucune partie rejointe"))?;
+    joining.diff = joining
+        .joined
+        .host_instance
+        .as_ref()
+        .map(|host| duo::compare(&mine, host));
+    joining.instance_id = Some(instance_id);
+    joining.guest.set_instance(Some(mine)).await?;
+    Ok(joining.view())
 }
 
 #[tauri::command]
@@ -251,14 +323,18 @@ pub async fn duo_play(app: AppHandle, state: State<'_, AppState>) -> CommandResu
         let joining = joining
             .as_ref()
             .ok_or_else(|| CommandError::msg("Aucune partie rejointe"))?;
-        (joining.instance_id.clone(), joining.guest.port())
+        let instance_id = joining
+            .instance_id
+            .clone()
+            .ok_or_else(|| CommandError::msg("Choisis d'abord l'instance avec laquelle jouer"))?;
+        (instance_id, joining.guest.port())
     };
     game::launch(
         app,
         state.ctx.clone(),
         state.games.clone(),
         instance_id,
-        Some(port),
+        Some(QuickPlay::Server("127.0.0.1".to_owned(), port)),
     )
     .await
 }
@@ -278,12 +354,7 @@ pub async fn duo_state(state: State<'_, AppState>) -> CommandResult<DuoState> {
         instance_id: h.instance_id.clone(),
         world: h.host.world(),
     });
-    let guest = state.duo.guest.lock().await.as_ref().map(|g| JoinView {
-        joined: g.joined.clone(),
-        instance_id: g.instance_id.clone(),
-        diff: g.diff.clone(),
-        link: g.guest.link(),
-    });
+    let guest = state.duo.guest.lock().await.as_ref().map(Joining::view);
     Ok(DuoState { host, guest })
 }
 

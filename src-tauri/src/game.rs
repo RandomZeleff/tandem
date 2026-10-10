@@ -11,7 +11,7 @@ use tandem_core::auth;
 use tandem_core::crash::{self, CrashAnalysis};
 use tandem_core::install::{self, InstallProgress, Stage};
 use tandem_core::jvm;
-use tandem_core::launch::{self, LaunchSpec};
+use tandem_core::launch::{self, LaunchSpec, QuickPlay};
 use tandem_core::process::ProcessGroup;
 use tandem_core::stats::{ProcessSampler, ProcessStats};
 use tandem_core::{worlds, Context, Error};
@@ -157,14 +157,14 @@ pub fn progress_emitter(
     }
 }
 
-/// Starts an instance; `join` is a local port to connect the game to at once (a friend's
-/// world through Tandem).
+/// Starts an instance; `quick_play` says where the game goes at once (a friend's world
+/// through Tandem, or one of the player's worlds).
 pub async fn launch(
     app: AppHandle,
     ctx: Context,
     games: Games,
     id: String,
-    join: Option<u16>,
+    quick_play: Option<QuickPlay>,
 ) -> CommandResult<()> {
     {
         let mut slots = games.lock();
@@ -173,7 +173,7 @@ pub async fn launch(
         }
         slots.insert(id.clone(), Slot::Preparing);
     }
-    match start(&app, &ctx, &id, join).await {
+    match start(&app, &ctx, &id, quick_play).await {
         Ok((child, game_dir)) => {
             let (stop_tx, stop_rx) = oneshot::channel();
             games.lock().insert(id.clone(), Slot::Running(stop_tx));
@@ -194,7 +194,7 @@ async fn start(
     app: &AppHandle,
     ctx: &Context,
     id: &str,
-    join: Option<u16>,
+    quick_play: Option<QuickPlay>,
 ) -> Result<(Child, PathBuf), Error> {
     let instance = ctx.db.get_instance(id).await?;
     let account = ctx
@@ -240,7 +240,7 @@ async fn start(
             .map(|a| a.split_whitespace().map(str::to_owned).collect())
             .unwrap_or_default(),
         window: instance.window_width.zip(instance.window_height),
-        join: join.map(|port| ("127.0.0.1".to_owned(), port)),
+        quick_play,
     });
     tracing::info!(
         instance = %id,

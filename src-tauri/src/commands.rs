@@ -854,8 +854,10 @@ pub async fn launch_instance(
     app: AppHandle,
     state: State<'_, AppState>,
     id: String,
+    world: Option<String>,
 ) -> CommandResult<()> {
-    game::launch(app, state.ctx.clone(), state.games.clone(), id, None).await
+    let quick_play = world.map(tandem_core::launch::QuickPlay::World);
+    game::launch(app, state.ctx.clone(), state.games.clone(), id, quick_play).await
 }
 
 /// Installs Rosetta 2 behind macOS's administrator prompt. `false` if the user
