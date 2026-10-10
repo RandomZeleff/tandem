@@ -621,6 +621,15 @@ export interface DuoJoinView {
   link: LinkStatus | null;
 }
 
+export interface DuoSyncReport {
+  downloaded: number;
+  fromHost: number;
+  enabled: number;
+  disabled: number;
+  /** Host mods that could not be fetched (file names). */
+  unavailable: string[];
+}
+
 export type DuoGuestEvent =
   | { type: "world"; world: { motd: string } | null }
   | { type: "link"; link: LinkStatus }
@@ -729,6 +738,8 @@ export const api = {
   /** Without an instance, the one that best matches the host's is picked. */
   duoJoin: (code: string, instanceId: string | null = null) => invoke<DuoJoinView>("duo_join", { code, instanceId }),
   duoSetInstance: (instanceId: string) => invoke<DuoJoinView>("duo_set_instance", { instanceId }),
+  /** An instance like the host's (their modpack, then their exact mods). */
+  duoPrepareCopy: () => invoke<{ view: DuoJoinView; report: DuoSyncReport }>("duo_prepare_copy"),
   duoLeave: () => invoke<void>("duo_leave"),
   /** Launches the joined session's instance straight into the host's world. */
   duoPlay: () => invoke<void>("duo_play"),

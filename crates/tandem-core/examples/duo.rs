@@ -4,6 +4,10 @@
 //! cargo run -p tandem-core --example duo -- host [name]   # host the world opened to LAN
 //! cargo run -p tandem-core --example duo -- join <code> [name]
 //! cargo run -p tandem-core --example duo -- stand-in       # fake world, logs who connects
+//! cargo run -p tandem-core --example duo -- copytest <instance-id>
+//!
+//! `copytest` hosts a copy of the instance's mods (plus one mod Modrinth does not know)
+//! and syncs them into an empty folder through a real session, as a guest's copy would.
 //!
 //! `selftest` opens a stand-in "world" answering Minecraft's server list ping, announces
 //! it like the game does, hosts it, joins it by its code and pings it through the tunnel.
@@ -13,6 +17,10 @@ use std::time::{Duration, Instant};
 use tandem_core::duo::guest::{Guest, GuestEvent};
 use tandem_core::duo::host::{Host, HostConfig, HostEvent};
 use tandem_core::duo::lan::{self, LanWorld};
+use tandem_core::duo::protocol::{InstanceSummary, ModRef};
+use tandem_core::duo::sync;
+use tandem_core::paths::DataDir;
+use tandem_core::Context;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::watch;
@@ -131,13 +139,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }));
             tokio::spawn(lan::announce(announces));
 
+            // A mod the guest will ask the host for (3 MB, not on Modrinth).
+            let mods = tempfile::tempdir()?;
+            let jar: Vec<u8> = (0..3_000_000u32).map(|i| (i * 7 % 251) as u8).collect();
+            std::fs::write(mods.path().join("my-tweaks.jar"), &jar)?;
+            let jar_sha1 = sha1_smol::Sha1::from(&jar).digest().to_string();
+            let summary = InstanceSummary {
+                name: "Test".into(),
+                game_version: "1.21.1".into(),
+                loader: "fabric".into(),
+                loader_version: None,
+                pack: None,
+                mods: vec![ModRef {
+                    file_name: "my-tweaks.jar".into(),
+                    sha1: jar_sha1.clone(),
+                }],
+            };
+
             let started = Instant::now();
             let (world_tx, mut world_rx) = watch::channel(None);
             let host = Host::start(
                 http.clone(),
                 HostConfig {
                     player: "Zeleff".into(),
-                    instance: None,
+                    instance: Some(summary),
+                    mods_dir: Some(mods.path().to_owned()),
                 },
                 move |event| {
                     if let HostEvent::World { world } = &event {
@@ -185,11 +211,98 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let (_, rtt) = ping(guest.port()).await?;
             println!("second ping: {rtt:?}");
 
+            // A mod sent by the host, then one it does not have.
+            let started = Instant::now();
+            let mut received = Vec::new();
+            guest.fetch_mod(&jar_sha1, &mut received).await?;
+            let same = sha1_smol::Sha1::from(&received).digest().to_string() == jar_sha1;
+            println!(
+                "mod received: {} bytes in {:?}, same file: {same}",
+                received.len(),
+                started.elapsed()
+            );
+            let unknown = guest.fetch_mod(&"0".repeat(40), &mut Vec::new()).await;
+            println!("unknown mod: {:?}", unknown.err().map(|e| e.to_string()));
+
             // The guest's announce must reach this computer's LAN list.
             let wrong = Guest::join(http.clone(), "0000-0000", "X", None, |_| {}).await;
             println!("unknown code: {:?}", wrong.err().map(|e| e.to_string()));
             host.stop().await;
             tokio::time::sleep(Duration::from_millis(500)).await;
+            guest.leave().await;
+        }
+        Some("copytest") => {
+            let id = args.get(1).ok_or("usage: duo copytest <instance-id>")?;
+            let ctx = Context::init(DataDir::from_env()?).await?;
+            let instance = ctx.db.get_instance(id).await?;
+
+            // The host's mods: the instance's, and one only the host has.
+            let host_dir = tempfile::tempdir()?;
+            let host_mods = host_dir.path().join("mods");
+            std::fs::create_dir_all(&host_mods)?;
+            for entry in std::fs::read_dir(ctx.data.instance_dir(id).join("mods"))? {
+                let path = entry?.path();
+                if path.extension().is_some_and(|e| e == "jar") {
+                    std::fs::copy(&path, host_mods.join(path.file_name().unwrap()))?;
+                }
+            }
+            let private: Vec<u8> = (0..2_000_000u32).map(|i| (i * 13 % 241) as u8).collect();
+            std::fs::write(host_mods.join("host-only-tweaks.jar"), &private)?;
+            let mut host_copy = instance.clone();
+            host_copy.id = "host-copy".into();
+            let summary = tandem_core::duo::summary_of_dir(&host_copy, &host_mods).await?;
+            println!("host: {} mods", summary.mods.len());
+
+            // The guest: an extra mod to switch off, one of the host's mods switched off.
+            let guest_dir = tempfile::tempdir()?;
+            let guest_mods = guest_dir.path().join("mods");
+            std::fs::create_dir_all(&guest_mods)?;
+            std::fs::write(guest_mods.join("guest-only.jar"), b"not the host's")?;
+            let first = &summary.mods[0];
+            std::fs::copy(
+                host_mods.join(&first.file_name),
+                guest_mods.join(format!("{}.disabled", first.file_name)),
+            )?;
+
+            let host = Host::start(
+                http.clone(),
+                HostConfig {
+                    player: "Zeleff".into(),
+                    instance: Some(summary.clone()),
+                    mods_dir: Some(host_mods.clone()),
+                },
+                |_| {},
+            )
+            .await?;
+            let (guest, _) = Guest::join(http.clone(), &host.code(), "Léo", None, |_| {}).await?;
+            let started = Instant::now();
+            let report = sync::sync_mods(&ctx, &guest, guest_dir.path(), &summary, |p| {
+                if p.download.total_files > 0 && p.download.done_files == p.download.total_files {
+                    println!(
+                        "  {:?} {}/{}",
+                        p.stage, p.download.done_files, p.download.total_files
+                    );
+                }
+            })
+            .await?;
+            println!(
+                "synced in {:?}: {}",
+                started.elapsed(),
+                serde_json::to_string(&report)?
+            );
+            let after = tandem_core::duo::summary_of_dir(&host_copy, &guest_mods).await?;
+            let diff = tandem_core::duo::compare(&after, &summary);
+            println!(
+                "same mods as the host: {} (missing {}, extra {})",
+                diff.matches(),
+                diff.missing.len(),
+                diff.extra.len()
+            );
+            println!(
+                "guest-only.jar switched off: {}",
+                guest_mods.join("guest-only.jar.disabled").exists()
+            );
+            host.stop().await;
             guest.leave().await;
         }
         Some("stand-in") => {
@@ -204,6 +317,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 HostConfig {
                     player: name,
                     instance: None,
+                    mods_dir: None,
                 },
                 |event| {
                     println!(

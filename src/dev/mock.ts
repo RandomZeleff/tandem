@@ -721,6 +721,32 @@ export function installMocks() {
             link: null,
           };
         }
+        case "duo_prepare_copy": {
+          const created = { ...instances[1], id: "copy-leo", name: "Create: Above and Beyond (Léo)", lastPlayedAt: null };
+          instances.push(created);
+          await emit("instances://changed");
+          for (let i = 0; i <= 10; i++) {
+            await new Promise((r) => setTimeout(r, 200));
+            await emit("install://progress", { instanceId: created.id, stage: "downloading", doneFiles: i * 12, totalFiles: 120, doneBytes: i * 31e6, totalBytes: 310e6 });
+          }
+          for (let i = 0; i <= 3; i++) {
+            await new Promise((r) => setTimeout(r, 400));
+            await emit("install://progress", { instanceId: created.id, stage: "copying", doneFiles: i, totalFiles: 3, doneBytes: 0, totalBytes: 0 });
+          }
+          await emit("install://finished", created.id);
+          return {
+            view: {
+              hostPlayer: "Léo",
+              hostInstance: { name: "Create: Above and Beyond", gameVersion: "1.21.1", loader: "neoforge", loaderVersion: null, mods: [] },
+              world: { motd: "Léo - Monde créatif" },
+              port: 51999,
+              instanceId: created.id,
+              diff: { sameGame: true, sameLoader: true, missing: [], extra: [] },
+              link: { pingMs: 31, direct: true },
+            },
+            report: { downloaded: 120, fromHost: 2, enabled: 0, disabled: 0, unavailable: ["secret-tweaks.jar"] },
+          };
+        }
         case "duo_set_instance":
           await new Promise((r) => setTimeout(r, 400));
           return {

@@ -22,6 +22,8 @@ use super::{
 use crate::error::Result;
 
 const LINK_EVERY: Duration = Duration::from_secs(2);
+/// Largest mod accepted from the host.
+const MAX_MOD_BYTES: u64 = 512 * 1024 * 1024;
 
 /// What the host told the guest on arrival.
 #[derive(Debug, Clone, Serialize)]
@@ -246,6 +248,33 @@ impl Guest {
         link_status(&self.conn)
     }
 
+    /// Receives one of the host's mods, by SHA-1, into `out` (unchecked: the caller checks
+    /// the hash).
+    pub async fn fetch_mod(
+        &self,
+        sha1: &str,
+        out: &mut (impl tokio::io::AsyncWrite + Unpin),
+    ) -> Result<()> {
+        let (mut send, mut recv) = self.conn.open_bi().await.map_err(fail)?;
+        send.write_all(&[protocol::STREAM_MOD])
+            .await
+            .map_err(fail)?;
+        send.write_all(sha1.as_bytes()).await.map_err(fail)?;
+        let _ = send.finish();
+        let mut status = [0u8; 1];
+        if recv.read_exact(&mut status).await.is_err() {
+            return Err(fail(
+                "la version de Tandem de l'hôte ne sait pas encore envoyer ses mods",
+            ));
+        }
+        if status[0] != protocol::MOD_FOUND {
+            return Err(fail("l'hôte n'a plus ce fichier"));
+        }
+        let mut limited = tokio::io::AsyncReadExt::take(recv, MAX_MOD_BYTES);
+        tokio::io::copy(&mut limited, out).await.map_err(fail)?;
+        Ok(())
+    }
+
     /// Tells the host which instance the player now plays with.
     pub async fn set_instance(&self, instance: Option<InstanceSummary>) -> Result<()> {
         protocol::write(
@@ -255,7 +284,7 @@ impl Guest {
         .await
     }
 
-    pub async fn leave(self) {
+    pub async fn leave(&self) {
         self.conn.close(0u32.into(), b"left");
         // Let the "closed" event out before the tasks go.
         tokio::time::sleep(Duration::from_millis(100)).await;

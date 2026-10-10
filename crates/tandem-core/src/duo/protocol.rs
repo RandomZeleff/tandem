@@ -15,6 +15,12 @@ pub const VERSION: u32 = 1;
 pub const STREAM_CONTROL: u8 = b'C';
 /// First byte of a stream carrying one TCP connection of the game.
 pub const STREAM_GAME: u8 = b'G';
+/// First byte of a stream asking the host for one of its mods: the guest sends the file's
+/// SHA-1 (40 hex characters); the host answers [`MOD_FOUND`] then the file, or
+/// [`MOD_MISSING`]. Older hosts close the stream.
+pub const STREAM_MOD: u8 = b'M';
+pub const MOD_FOUND: u8 = 1;
+pub const MOD_MISSING: u8 = 0;
 
 /// The world the host opened to LAN, as guests see it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

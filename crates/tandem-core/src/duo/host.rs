@@ -3,10 +3,11 @@
 
 use std::collections::HashMap;
 use std::net::Ipv4Addr;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use iroh::endpoint::{Connection, Incoming, VarInt};
+use iroh::endpoint::{Connection, Incoming, RecvStream, SendStream, VarInt};
 use iroh::Endpoint;
 use serde::Serialize;
 use tokio::net::TcpStream;
@@ -28,6 +29,8 @@ const LINK_EVERY: Duration = Duration::from_secs(2);
 pub struct HostConfig {
     pub player: String,
     pub instance: Option<InstanceSummary>,
+    /// Folder of the mods listed in `instance`, which guests may ask for.
+    pub mods_dir: Option<PathBuf>,
 }
 
 /// A guest, as the host's interface shows it.
@@ -315,22 +318,18 @@ async fn welcome(incoming: Incoming, shared: Arc<Shared>) {
         }
     });
 
-    // Each game connection of the guest arrives as a new stream.
+    // Each game connection of the guest, and each mod it asks for, is a new stream.
     while let Ok((send, mut recv)) = conn.accept_bi().await {
-        let world = shared.world.borrow().clone();
+        let shared = shared.clone();
         tokio::spawn(async move {
             let mut tag = [0u8; 1];
-            if recv.read_exact(&mut tag).await.is_err() || tag[0] != protocol::STREAM_GAME {
+            if recv.read_exact(&mut tag).await.is_err() {
                 return;
             }
-            let Some(world) = world else {
-                // No world open: the guest's game shows a connection error.
-                let _ = recv.stop(VarInt::from_u32(0));
-                return;
-            };
-            match TcpStream::connect((Ipv4Addr::LOCALHOST, world.port)).await {
-                Ok(tcp) => pipe(send, recv, tcp).await,
-                Err(err) => tracing::warn!(error = %err, "LAN world unreachable"),
+            match tag[0] {
+                protocol::STREAM_GAME => relay_game(send, recv, &shared).await,
+                protocol::STREAM_MOD => send_mod(send, recv, &shared).await,
+                _ => {}
             }
         });
     }
@@ -341,4 +340,52 @@ async fn welcome(incoming: Incoming, shared: Arc<Shared>) {
     lock(&shared.guests).remove(&id);
     tracing::info!(guest = %player, "guest left");
     (shared.emit)(HostEvent::GuestLeft { id });
+}
+
+/// Carries one game connection of a guest to the world opened to LAN.
+async fn relay_game(send: SendStream, mut recv: RecvStream, shared: &Shared) {
+    let Some(world) = shared.world.borrow().clone() else {
+        // No world open: the guest's game shows a connection error.
+        let _ = recv.stop(VarInt::from_u32(0));
+        return;
+    };
+    match TcpStream::connect((Ipv4Addr::LOCALHOST, world.port)).await {
+        Ok(tcp) => pipe(send, recv, tcp).await,
+        Err(err) => tracing::warn!(error = %err, "LAN world unreachable"),
+    }
+}
+
+/// Sends a guest one of the mods of this session's instance (only those: the request is
+/// a SHA-1 looked up in the summary given to guests).
+async fn send_mod(mut send: SendStream, mut recv: RecvStream, shared: &Shared) {
+    let mut sha1 = [0u8; 40];
+    if recv.read_exact(&mut sha1).await.is_err() {
+        return;
+    }
+    let sha1 = String::from_utf8_lossy(&sha1);
+    let path = shared
+        .config
+        .instance
+        .as_ref()
+        .and_then(|i| i.mods.iter().find(|m| m.sha1 == sha1))
+        .zip(shared.config.mods_dir.as_ref())
+        .map(|(m, dir)| dir.join(&m.file_name));
+    let file = match path {
+        Some(path) => tokio::fs::File::open(&path).await.ok(),
+        None => None,
+    };
+    let Some(mut file) = file else {
+        let _ = send.write_all(&[protocol::MOD_MISSING]).await;
+        let _ = send.finish();
+        return;
+    };
+    if send.write_all(&[protocol::MOD_FOUND]).await.is_ok() {
+        match tokio::io::copy(&mut file, &mut send).await {
+            Ok(bytes) => tracing::info!(%sha1, bytes, "mod sent to a guest"),
+            Err(err) => tracing::warn!(%sha1, error = %err, "mod not sent"),
+        }
+    }
+    let _ = send.finish();
+    // Let the last bytes leave before the stream is dropped.
+    let _ = send.stopped().await;
 }

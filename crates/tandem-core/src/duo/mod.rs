@@ -8,6 +8,7 @@ pub mod host;
 pub mod invite;
 pub mod lan;
 pub mod protocol;
+pub mod sync;
 
 use std::collections::HashSet;
 use std::path::Path;
@@ -89,7 +90,12 @@ pub fn link_status(conn: &Connection) -> Option<LinkStatus> {
 
 /// The instance's version, loader and enabled mods (hashed), sent to the other player.
 pub async fn summary(ctx: &Context, instance: &Instance) -> Result<InstanceSummary> {
-    let mods_dir = ctx.data.instance_dir(&instance.id).join("mods");
+    summary_of_dir(instance, &ctx.data.instance_dir(&instance.id).join("mods")).await
+}
+
+/// Like [`summary`], with the mods of another folder.
+pub async fn summary_of_dir(instance: &Instance, mods_dir: &Path) -> Result<InstanceSummary> {
+    let mods_dir = mods_dir.to_owned();
     let mods = tokio::task::spawn_blocking(move || hash_mods(&mods_dir))
         .await
         .map_err(fail)?;
@@ -163,10 +169,9 @@ fn hash_mods(dir: &Path) -> Vec<ModRef> {
                 .map(|e| e.path())
                 .filter(|p| p.extension().is_some_and(|e| e == "jar"))
                 .filter_map(|p| {
-                    let bytes = std::fs::read(&p).ok()?;
                     Some(ModRef {
                         file_name: p.file_name()?.to_string_lossy().into_owned(),
-                        sha1: sha1_smol::Sha1::from(&bytes).digest().to_string(),
+                        sha1: hash_file(&p)?,
                     })
                 })
                 .collect()
@@ -174,6 +179,12 @@ fn hash_mods(dir: &Path) -> Vec<ModRef> {
         .unwrap_or_default();
     mods.sort_by(|a, b| a.file_name.cmp(&b.file_name));
     mods
+}
+
+/// SHA-1 of a file, lowercase hex.
+pub(crate) fn hash_file(path: &Path) -> Option<String> {
+    let bytes = std::fs::read(path).ok()?;
+    Some(sha1_smol::Sha1::from(&bytes).digest().to_string())
 }
 
 /// How a guest's instance differs from the host's.

@@ -183,6 +183,7 @@ pub fn run() {
             duo::duo_kick,
             duo::duo_join,
             duo::duo_set_instance,
+            duo::duo_prepare_copy,
             duo::duo_leave,
             duo::duo_play,
             duo::duo_state,

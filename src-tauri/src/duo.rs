@@ -1,19 +1,23 @@
 //! Playing together (D37): one hosting session or one joined session at a time.
 
+use std::sync::Arc;
+
 use serde::Serialize;
 use tandem_core::account::AccountKind;
 use tandem_core::duo::guest::{Guest, GuestEvent, Joined};
 use tandem_core::duo::host::{GuestInfo, Host, HostConfig, HostEvent};
 use tandem_core::duo::lan::LanWorld;
 use tandem_core::duo::protocol::InstanceSummary;
+use tandem_core::duo::sync::{self, SyncReport};
 use tandem_core::duo::{self, InstanceDiff, LinkStatus};
+use tandem_core::instance::{self, InstanceSettings, NewInstance};
 use tandem_core::launch::QuickPlay;
 use tandem_core::Context;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::Mutex;
 
 use crate::error::{CommandError, CommandResult};
-use crate::{game, AppState};
+use crate::{game, modpack, AppState};
 
 pub const HOST_EVENT: &str = "duo://host";
 pub const GUEST_EVENT: &str = "duo://guest";
@@ -34,7 +38,8 @@ struct Hosting {
 struct Joining {
     /// Tells this session's events from those of an earlier one.
     session: u64,
-    guest: Guest,
+    /// Shared with a mod sync running without the lock.
+    guest: Arc<Guest>,
     joined: Joined,
     /// `None` until the player picks one (none of theirs matched the host's).
     instance_id: Option<String>,
@@ -149,6 +154,9 @@ pub async fn duo_host(
         HostConfig {
             player: name,
             instance: summary,
+            mods_dir: instance_id
+                .as_ref()
+                .map(|id| state.ctx.data.instance_dir(id).join("mods")),
         },
         move |event| {
             let payload = match event {
@@ -276,7 +284,7 @@ pub async fn duo_join(
     };
     let current = Joining {
         session,
-        guest,
+        guest: Arc::new(guest),
         joined,
         instance_id,
         diff,
@@ -305,6 +313,143 @@ pub async fn duo_set_instance(
     joining.instance_id = Some(instance_id);
     joining.guest.set_instance(Some(mine)).await?;
     Ok(joining.view())
+}
+
+/// What preparing the host's instance did.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CopyResult {
+    pub view: JoinView,
+    pub report: SyncReport,
+}
+
+/// Settings key of the copy of a host's instance made on this computer.
+fn copy_key(host_player: &str, host_instance: &str) -> String {
+    format!("duo_copy:{host_player}:{host_instance}")
+}
+
+/// Makes the guest an instance like the host's: its Modrinth modpack when it has one
+/// (else an empty instance of the same version and loader), then the host's exact mods.
+/// A copy made earlier for the same host and instance is brought up to date instead.
+#[tauri::command]
+pub async fn duo_prepare_copy(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CommandResult<CopyResult> {
+    let (guest, host_player, host) = {
+        let joining = state.duo.guest.lock().await;
+        let joining = joining
+            .as_ref()
+            .ok_or_else(|| CommandError::msg("Aucune partie rejointe"))?;
+        let host =
+            joining.joined.host_instance.clone().ok_or_else(|| {
+                CommandError::msg("L'hôte n'a pas lancé d'instance : rien à copier")
+            })?;
+        (
+            joining.guest.clone(),
+            joining.joined.host_player.clone(),
+            host,
+        )
+    };
+    let ctx = &state.ctx;
+    let key = copy_key(&host_player, &host.name);
+    let earlier = match ctx.db.get_setting::<String>(&key).await? {
+        Some(id) => ctx.db.get_instance(&id).await.ok(),
+        None => None,
+    };
+    let copy = match earlier {
+        Some(copy)
+            if copy.game_version == host.game_version && copy.loader.to_string() == host.loader =>
+        {
+            copy
+        }
+        _ => create_copy(&app, &state, &host_player, &host).await?,
+    };
+    ctx.db.set_setting(&key, &copy.id).await?;
+
+    if !state.games.begin(&copy.id) {
+        return Err(CommandError::msg(
+            "Cette instance est en cours d'utilisation",
+        ));
+    }
+    let synced = sync::sync_mods(
+        ctx,
+        &guest,
+        &ctx.data.instance_dir(&copy.id),
+        &host,
+        game::progress_emitter(&app, &copy.id),
+    )
+    .await;
+    state.games.end(&copy.id);
+    let _ = app.emit(modpack::INSTALL_FINISHED_EVENT, &copy.id);
+    let _ = app.emit(modpack::INSTANCES_CHANGED_EVENT, ());
+    let report = synced?;
+
+    let mine = summary_of(ctx, &copy.id).await?;
+    let mut joining = state.duo.guest.lock().await;
+    let joining = joining
+        .as_mut()
+        .filter(|j| Arc::ptr_eq(&j.guest, &guest))
+        .ok_or_else(|| CommandError::msg("La partie s'est terminée pendant la préparation"))?;
+    joining.diff = Some(duo::compare(&mine, &host));
+    joining.instance_id = Some(copy.id.clone());
+    joining.guest.set_instance(Some(mine)).await?;
+    Ok(CopyResult {
+        view: joining.view(),
+        report,
+    })
+}
+
+/// A new instance for the host's: their modpack version when Modrinth has it.
+async fn create_copy(
+    app: &AppHandle,
+    state: &AppState,
+    host_player: &str,
+    host: &InstanceSummary,
+) -> CommandResult<tandem_core::instance::Instance> {
+    let name: String = format!("{} ({host_player})", host.name)
+        .chars()
+        .take(64)
+        .collect();
+    if let Some(pack) = &host.pack {
+        match modpack::install_from_modrinth(
+            app,
+            &state.ctx,
+            &state.games,
+            &pack.project_id,
+            Some(&pack.version_id),
+        )
+        .await
+        {
+            Ok(installed) => {
+                let settings = InstanceSettings {
+                    name,
+                    java_path: installed.java_path.clone(),
+                    jvm_args: installed.jvm_args.clone(),
+                    window_width: installed.window_width,
+                    window_height: installed.window_height,
+                };
+                return Ok(instance::update_settings(&state.ctx, &installed.id, &settings).await?);
+            }
+            Err(err) => {
+                tracing::warn!(error = ?err, "host's modpack not installed, copying mods only")
+            }
+        }
+    }
+    let loader = serde_json::from_value(serde_json::Value::String(host.loader.clone()))
+        .map_err(|_| CommandError::msg(format!("Loader inconnu : {}", host.loader)))?;
+    let created = instance::create(
+        &state.ctx,
+        NewInstance {
+            name,
+            game_version: host.game_version.clone(),
+            loader,
+            loader_version: host.loader_version.clone(),
+        },
+    )
+    .await?;
+    let _ = app.emit(modpack::INSTANCES_CHANGED_EVENT, ());
+    Ok(created)
 }
 
 #[tauri::command]

@@ -7,10 +7,13 @@ import Scene from "../components/Scene";
 import Select from "../components/Select";
 import { Checkbox, Icon, LoaderTag, SkinHead } from "../components/pixel";
 import { openAccounts } from "../lib/accounts";
-import { api, errorMessage, type InstanceDiff, type LinkStatus } from "../lib/api";
+import { api, errorMessage, type InstallProgress, type InstanceDiff, type LinkStatus } from "../lib/api";
 import {
   autoLaunch,
   changeInstance,
+  copying,
+  copyProgress,
+  copyReport,
   diffMatches,
   duo,
   formatCode,
@@ -18,6 +21,7 @@ import {
   kickGuest,
   leaveFriend,
   playWithFriend,
+  prepareCopy,
   setAutoLaunch,
   startDuoEvents,
   startHosting,
@@ -384,6 +388,87 @@ function Hosting() {
   );
 }
 
+/** Where the copy of the host's instance stands, in a few words. */
+function copyStep(p: InstallProgress | null): { label: string; ratio: number | null } {
+  if (!p) return { label: "Préparation…", ratio: null };
+  switch (p.stage) {
+    case "downloading":
+      return { label: `Téléchargement des mods (${p.doneFiles}/${p.totalFiles})`, ratio: p.totalBytes > 0 ? p.doneBytes / p.totalBytes : null };
+    case "copying":
+      return {
+        label: p.totalBytes > 0 ? "Installation du modpack" : `Fichiers envoyés par l'hôte (${p.doneFiles}/${p.totalFiles})`,
+        ratio: p.totalBytes > 0 ? p.doneBytes / p.totalBytes : p.totalFiles > 0 ? p.doneFiles / p.totalFiles : null,
+      };
+    default:
+      return { label: "Préparation…", ratio: null };
+  }
+}
+
+/** Offers an instance like the host's when the player has none that matches. */
+function CopyOffer(props: { hostPlayer: string }) {
+  const [error, setError] = createSignal<string | null>(null);
+  const step = () => copyStep(copyProgress());
+
+  async function prepare() {
+    setError(null);
+    try {
+      const done = await prepareCopy();
+      const fetched = done.downloaded + done.fromHost;
+      toast(fetched > 0 ? `Instance prête : ${fetched} mod${fetched > 1 ? "s" : ""} installé${fetched > 1 ? "s" : ""}` : "Instance prête");
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
+  return (
+    <div class="flex flex-col gap-3 bg-slate-900/60 p-4 shadow-[inset_0_0_0_1px_var(--color-gold-deep)]">
+      <Show
+        when={copying()}
+        fallback={
+          <div class="flex items-center gap-4">
+            <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="text-sm font-semibold">Jouer avec les mêmes mods que {props.hostPlayer}</span>
+              <span class="text-xs text-chalk-2">
+                Tandem prépare une instance comme la sienne : son modpack et ses mods, depuis Modrinth ou envoyés par{" "}
+                {props.hostPlayer}. Tes instances ne changent pas.
+              </span>
+            </div>
+            <button class="btn btn-gold px-corners h-10 shrink-0 px-4 text-sm" onClick={() => void prepare()}>
+              <Icon name="download" size={12} />
+              Préparer l'instance
+            </button>
+          </div>
+        }
+      >
+        <div class="flex flex-col gap-2" role="status" aria-live="polite">
+          <span class="text-sm font-semibold">{step().label}</span>
+          <div class="h-2 bg-slate-800">
+            <div
+              class="h-full bg-xp transition-[width] duration-200"
+              classList={{ "step-pulse": step().ratio === null }}
+              style={{ width: `${Math.round((step().ratio ?? 1) * 100)}%` }}
+            />
+          </div>
+        </div>
+      </Show>
+      <Show when={error()}>
+        <p class="text-xs text-redstone-text">{error()}</p>
+      </Show>
+    </div>
+  );
+}
+
+/** Host mods the copy could not get. */
+function Unavailable(props: { files: string[]; hostPlayer: string }) {
+  return (
+    <p class="text-xs text-gold">
+      {props.files.length === 1 ? "Un fichier n'a pas pu être récupéré" : `${props.files.length} fichiers n'ont pas pu être récupérés`} :{" "}
+      {props.files.join(", ")}. Demande à {props.hostPlayer} de mettre Tandem à jour, ou {props.files.length === 1 ? "ajoute-le" : "ajoute-les"} à la main dans
+      l'onglet Contenu.
+    </p>
+  );
+}
+
 function Joined() {
   const guest = () => duo.guest!;
   const instance = createMemo(() => instances().find((i) => i.id === guest().instanceId));
@@ -442,7 +527,6 @@ function Joined() {
                 {(h) => (
                   <span class="text-sm text-chalk-2">
                     {guest().hostPlayer} joue à « {h().name} » : Minecraft {h().gameVersion} avec {loaderLabel(h().loader)}.
-                    Crée la même instance dans Instances, ou choisis-en une ci-dessous.
                   </span>
                 )}
               </Show>
@@ -471,6 +555,12 @@ function Joined() {
           )}
         </Show>
         <DiffNote diff={guest().diff} who={`Par rapport à ${guest().hostPlayer}, ton instance a`} />
+        <Show when={guest().hostInstance && (copying() || !instance() || !matches())}>
+          <CopyOffer hostPlayer={guest().hostPlayer} />
+        </Show>
+        <Show when={copyReport()?.unavailable.length}>
+          <Unavailable files={copyReport()!.unavailable} hostPlayer={guest().hostPlayer} />
+        </Show>
         <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
           <label class="flex min-w-[280px] flex-1 items-center gap-3">
             <span class="shrink-0 text-xs text-muted">{instance() ? "Autre instance" : "Instance"}</span>

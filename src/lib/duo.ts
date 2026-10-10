@@ -8,8 +8,10 @@ import {
   type DuoHostEvent,
   type DuoHostView,
   type DuoJoinView,
+  type DuoSyncReport,
   EVENTS,
   type GameOutput,
+  type InstallProgress,
   type InstanceDiff,
   type LinkStatus,
 } from "./api";
@@ -129,6 +131,9 @@ export async function startDuoEvents() {
         break;
     }
   });
+  await listen<InstallProgress>(EVENTS.progress, ({ payload }) => {
+    if (copying()) setCopyProgress(payload);
+  });
   // The host entered a world but has not opened it to LAN yet: a reminder over the game.
   await listen<GameOutput>(EVENTS.output, ({ payload }) => {
     const host = duo.host;
@@ -167,8 +172,32 @@ export const kickGuest = (id: string) => api.duoKick(id);
 /** Joins with the instance that best matches the host's; plays at once when possible. */
 export async function joinFriend(code: string) {
   autoLaunched = false;
+  setCopyReport(null);
   setDuo("guest", await api.duoJoin(code));
   maybeAutoLaunch();
+}
+
+/** The copy of the host's instance being prepared, and its progress. */
+const [copying, setCopying] = createSignal(false);
+const [copyProgress, setCopyProgress] = createSignal<InstallProgress | null>(null);
+/** What the last copy did, shown until the session ends. */
+const [copyReport, setCopyReport] = createSignal<DuoSyncReport | null>(null);
+export { copying, copyProgress, copyReport };
+
+/** Makes an instance like the host's, plays with it, and starts it when the world is open. */
+export async function prepareCopy(): Promise<DuoSyncReport> {
+  setCopying(true);
+  setCopyProgress(null);
+  try {
+    const { view, report } = await api.duoPrepareCopy();
+    setCopyReport(report);
+    autoLaunched = false;
+    setDuo("guest", view);
+    maybeAutoLaunch();
+    return report;
+  } finally {
+    setCopying(false);
+  }
 }
 
 /** Plays with another instance than the one picked. */
