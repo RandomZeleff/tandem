@@ -327,6 +327,5 @@ Choix tranchés :
 
 ### 2026-10-10 (Windows, suite : test réel du jeu à deux)
 - Premier vrai test par Raphaël et un ami : inviter, rejoindre et jouer marchent, l'invité en 4G (≈ 30 ms, autre réseau) comme en Wi-Fi (≈ 3 ms) ; exclusion et inversion des rôles OK ; longue partie fluide. Phase 6a validée.
-- Pas relevé : liaison directe ou relais en 4G, partie avec un modpack.
+- Second essai : liaison affichée « direct » ; avertissement des mods manquants vérifié (jaune avec une instance différente, rien avec la bonne).
 - Prochaine étape : 6b (synchroniser les mods) et peaufinage de l'expérience (accessibilité, moins de frictions), au choix de Raphaël.
-

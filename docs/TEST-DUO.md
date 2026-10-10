@@ -91,6 +91,8 @@ Raphaël et un ami, deux PC, deux comptes Microsoft, installeurs de la livraison
 - Exclure l'invité : marche.
 - Inversion des rôles (chacun héberge à son tour) : marche.
 - Longue partie en cours au moment du retour, fluide.
-- Pas relevé : « direct » ou « relais » en 4G, durée exacte avant l'arrivée dans le monde, partie avec un modpack.
+- Liaison : affichée **« direct »** (relevé par Raphaël lors du second essai).
+- Instances différentes : les mods manquants s'affichent en jaune ; avec la bonne instance, plus aucun avertissement. Comportement attendu.
+- Pas relevé : durée exacte avant l'arrivée dans le monde.
 - Retour de Raphaël : rien à corriger côté fonctionnement ; à peaufiner plus tard pour l'accessibilité et réduire les frictions.
 
