@@ -358,7 +358,10 @@ pub async fn perf_suggestions(
     instance_id: String,
 ) -> CommandResult<Vec<perf::PerfSuggestion>> {
     let instance = state.ctx.db.get_instance(&instance_id).await?;
-    Ok(perf::suggestions(&state.ctx, &instance).await?)
+    Ok(state
+        .ctx
+        .background(perf::suggestions(&state.ctx, &instance))
+        .await?)
 }
 
 #[tauri::command]
@@ -367,7 +370,10 @@ pub async fn check_content_updates(
     instance_id: String,
 ) -> CommandResult<Vec<ContentUpdate>> {
     let instance = state.ctx.db.get_instance(&instance_id).await?;
-    Ok(content::check_updates(&state.ctx, &instance).await?)
+    Ok(state
+        .ctx
+        .background(content::check_updates(&state.ctx, &instance))
+        .await?)
 }
 
 /// Updates the given projects, or every outdated one when `project_ids` is absent.
@@ -665,7 +671,10 @@ pub async fn modpack_updates(
     instance_id: String,
 ) -> CommandResult<Vec<mrpack::PackVersion>> {
     let instance = state.ctx.db.get_instance(&instance_id).await?;
-    Ok(content::pack_update::newer_versions(&state.ctx, &instance).await?)
+    Ok(state
+        .ctx
+        .background(content::pack_update::newer_versions(&state.ctx, &instance))
+        .await?)
 }
 
 #[tauri::command]

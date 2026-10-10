@@ -10,7 +10,7 @@ pub enum Error {
     Migrate(#[from] sqlx::migrate::MigrateError),
     #[error("Données illisibles : {0}")]
     Json(#[from] serde_json::Error),
-    #[error("Erreur réseau, vérifie ta connexion ({0})")]
+    #[error("{}", http_message(.0))]
     Http(#[from] reqwest::Error),
     #[error("Pas de connexion à Internet pour l'instant")]
     Offline,
@@ -64,6 +64,20 @@ pub enum Error {
     Translation(String),
     #[error("{0}")]
     InvalidInput(String),
+}
+
+/// What the player sees for a request that failed: no URL or library jargon (the full
+/// error goes to the log where it is caught).
+fn http_message(err: &reqwest::Error) -> String {
+    if err.is_timeout() {
+        "Le serveur met trop de temps à répondre, réessaie dans un instant".into()
+    } else if err.is_connect() || err.is_request() {
+        "Pas de connexion à Internet (ou le serveur ne répond pas)".into()
+    } else if err.is_decode() || err.is_body() {
+        "Réponse du serveur interrompue ou illisible, réessaie".into()
+    } else {
+        "Erreur réseau, réessaie dans un instant".into()
+    }
 }
 
 impl Error {

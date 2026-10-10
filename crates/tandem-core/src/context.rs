@@ -63,6 +63,21 @@ impl Context {
         result
     }
 
+    /// Runs a background check (updates, suggestions) that may as well not happen: skipped
+    /// right away while the network is known to be down, no time limit otherwise.
+    pub async fn background<T>(&self, request: impl Future<Output = Result<T>>) -> Result<T> {
+        if self.recently_offline() {
+            return Err(Error::Offline);
+        }
+        let result = request.await;
+        if let Err(err) = &result {
+            if err.is_network() {
+                *self.lock_offline() = Some(Instant::now());
+            }
+        }
+        result
+    }
+
     fn recently_offline(&self) -> bool {
         self.lock_offline()
             .is_some_and(|since| since.elapsed() < OFFLINE_GRACE)

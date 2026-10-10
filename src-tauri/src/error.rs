@@ -20,6 +20,11 @@ impl From<tandem_core::Error> for CommandError {
     fn from(err: tandem_core::Error) -> Self {
         match err {
             tandem_core::Error::RosettaMissing => Self::msg(ROSETTA_MISSING),
+            tandem_core::Error::Http(ref detail) => {
+                // The player gets the short message; the log keeps what failed.
+                tracing::warn!(error = ?detail, "network request failed");
+                Self(err.to_string())
+            }
             err => Self(err.to_string()),
         }
     }
