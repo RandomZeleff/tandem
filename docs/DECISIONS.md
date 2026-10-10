@@ -253,3 +253,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Protocole : nouveau message `instance` (invité → hôte) et champ facultatif `pack` dans le résumé d'instance. `VERSION` reste à 1 : un hôte plus ancien ignore le message, un résumé sans `pack` se lit toujours (testé).
 - Hôte : un seul bouton crée l'invitation et lance le jeu directement dans le monde choisi (`--quickPlaySingleplayer`, 1.20+ et versions numérotées par année ; avant, menu du jeu). On ne peut pas ouvrir le monde en LAN à la place du joueur sans mod (`/publish` exige les cheats) : Tandem repère l'entrée dans le monde dans le journal du jeu (`Starting integrated minecraft server`) et envoie une notification système de rappel ; arrivées et départs aussi notifiés, seulement quand le launcher n'est pas au premier plan (`tauri-plugin-notification`).
 - Statut : validé
+
+### D39 · 2026-10-10 · Jeu à deux : l'invité reçoit une copie de l'instance de l'hôte (6b)
+- Jamais de modification des instances du joueur : la synchro ne s'applique qu'à une **copie** créée par Tandem (nommée « <instance> (<hôte>) », retrouvée par le réglage `duo_copy:<hôte>:<instance>` et mise à jour la fois suivante).
+- Création : la version exacte du modpack Modrinth de l'hôte si son instance en vient (`pack` du résumé, D38) ; sinon une instance vide de même version de Minecraft, même loader et même version du loader.
+- Mods : identiques au fichier près (SHA-1). Modrinth d'abord (`version_files`, plus rapide, épargne l'envoi de l'hôte), le reste demandé à l'hôte par un flux `M` (il ne sert que les fichiers de son résumé, l'invité vérifie l'empreinte). Mods en trop renommés `.disabled`.
+- Fichiers de pack : les mods ne suffisent pas toujours (scripts KubeJS/CraftTweaker qui ajoutent des objets, datapacks globaux, configs partagées). Dossiers recopiés quand ils diffèrent : `config`, `defaultconfigs`, `kubejs`, `scripts`, `global_packs`, `datapacks`. `kubejs` et `scripts` sont rendus identiques (fichiers en trop supprimés). Flux `F` (liste) puis `P` (un fichier par chemin) ; l'hôte ne sert que les chemins listés dans ces dossiers, sans `..` ni chemin absolu.
+- Pas de sauvegardes, d'options du joueur ni de packs de ressources : la copie sert à rejoindre, pas à cloner.
+- Compatibilité : `VERSION` reste 1 ; un hôte plus ancien ferme les flux inconnus, l'invité le dit (« la version de Tandem de l'hôte ne sait pas encore… ») et garde ce qu'il a pu obtenir.
+- Statut : validé

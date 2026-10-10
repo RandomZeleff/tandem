@@ -159,10 +159,10 @@ Choix tranchés :
 - [x] **Test réel à deux** (deux PC, deux comptes Microsoft) : Raphaël + un ami, invité en 4G (≈ 30 ms) et en Wi-Fi (≈ 3 ms), exclusion et inversion des rôles OK — [TEST-DUO.md](TEST-DUO.md#résultats-du-premier-test-réel-10-octobre-2026)
 
 ### 6b — Ensuite
-- [ ] Synchroniser les mods de l'invité sur ceux de l'hôte (Modrinth d'abord, sinon envoyés par l'hôte)
+- [x] Synchroniser l'invité sur l'hôte (D39) : « Préparer l'instance » crée une copie (modpack Modrinth de l'hôte s'il en a un), puis mêmes mods (Modrinth par SHA-1, sinon envoyés par l'hôte) et mêmes fichiers de pack (configs, scripts, datapacks globaux)
 - [x] Moins de clics (D38) : l'invité rejoint sans choisir d'instance (Tandem prend celle qui correspond) et le jeu se lance dès que le monde est ouvert ; l'hôte invite et arrive directement dans son monde en un clic (1.20+)
 - [x] Étape LAN mieux guidée : Tandem voit que l'hôte est dans son monde, notification de rappel par-dessus le jeu ; arrivées et départs notifiés
-- [ ] Test réel des nouveautés à deux PC (notifications Windows, choix automatique de l'instance, lancement automatique)
+- [ ] Test réel des nouveautés à deux PC (notifications Windows, choix automatique de l'instance, lancement automatique, préparation de la copie)
 - [ ] (plus tard) Synchro du monde / « host migration »
 - [ ] (plus tard) Relais Tandem en option
 
@@ -338,3 +338,10 @@ Choix tranchés :
 - Vérifié : vrai jeu NeoForge 1.21.1 (Cobblemon) ouvert directement dans « Tutorial World v4 » (en jeu en 61 s, ligne de journal repérée) ; parcours hôte et invité dans l'aperçu (backend simulé) : lancement automatique, aucune instance correspondante, changement d'instance (pas de lancement automatique si les mods diffèrent) ; app Tauri démarrée avec le plugin de notification ; fmt, Clippy, 135 tests.
 - Pas vérifié : les notifications dans la vraie fenêtre et par-dessus le jeu, le choix automatique sur deux vrais PC.
 - Prochaine étape : 6b, synchroniser les mods de l'invité (le champ `pack` permet déjà d'installer le même modpack Modrinth chez l'invité).
+
+### 2026-10-10 (Windows, suite : 6b, synchroniser l'invité)
+- Choix de Raphaël : la 6b avant l'agent Java d'ouverture LAN automatique (gardé pour une session dédiée, voir les notes).
+- Fait (D39) : bouton « Préparer l'instance » chez l'invité quand rien ne correspond. Copie = modpack Modrinth de l'hôte (même version) s'il en a un, sinon instance vide de même version et loader ; puis mods identiques (Modrinth par SHA-1, sinon envoyés par l'hôte, 4 à la fois), mods en trop désactivés, et fichiers de pack (`config`, `defaultconfigs`, `kubejs`, `scripts`, `global_packs`, `datapacks`) recopiés quand ils diffèrent. Copie réutilisée et mise à jour pour le même hôte. Progression et fichiers non récupérés affichés.
+- Vérifié à travers une vraie session iroh (exemple `duo copytest`) : Fabulously Optimized 49 mods en 4,6 s ; DawnCraft 299 mods (143 envoyés par l'hôte) + 3 809 fichiers de pack, identiques, en 37 s. Corrigé en route : fichiers identiques reçus en parallèle sous le même nom temporaire. Vraie copie de DawnCraft (`duo copyinto`) lancée jusqu'au menu en 42 s, puis supprimée. Parcours dans l'aperçu (backend simulé). fmt, Clippy, 136 tests, `duo selftest`.
+- Pas vérifié : la commande dans la vraie fenêtre entre deux PC (création depuis un modpack Modrinth, puis connexion au monde de l'hôte).
+- Prochaine étape : test réel à deux PC (nouvel installeur des deux côtés), puis la session « agent Java » pour ouvrir le monde en LAN automatiquement.
