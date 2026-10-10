@@ -16,6 +16,11 @@ pub fn to_safe_html(markdown: &str) -> String {
     sanitizer().clean(&replace_frames(&rendered)).to_string()
 }
 
+/// Sanitizes HTML that did not come from [`to_safe_html`] (e.g. a translated copy).
+pub fn sanitize(html: &str) -> String {
+    sanitizer().clean(html).to_string()
+}
+
 fn sanitizer() -> Builder<'static> {
     let mut builder = Builder::default();
     builder

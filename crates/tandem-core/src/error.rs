@@ -56,6 +56,8 @@ pub enum Error {
     ContentUnavailable { title: String, game_version: String },
     #[error("content not found: {0}")]
     ContentNotFound(String),
+    #[error("{0}")]
+    Translation(String),
     #[error("invalid input: {0}")]
     InvalidInput(String),
 }

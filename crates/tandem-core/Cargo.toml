@@ -10,6 +10,7 @@ dirs = "6"
 fastnbt = "2"
 flate2 = "1"
 futures-util = "0.3"
+keyring = { version = "3", default-features = false, features = ["windows-native", "apple-native"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 md5 = "0.7"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }

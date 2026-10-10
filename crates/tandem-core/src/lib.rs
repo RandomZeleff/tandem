@@ -18,8 +18,10 @@ pub mod meta;
 pub mod paths;
 pub mod process;
 pub mod screenshots;
+pub mod secrets;
 pub mod stats;
 pub mod store;
+pub mod translate;
 pub mod worlds;
 
 pub use context::Context;
