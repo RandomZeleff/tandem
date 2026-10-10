@@ -8,10 +8,13 @@ import {
   type DuoHostEvent,
   type DuoHostView,
   type DuoJoinView,
+  EVENTS,
+  type GameOutput,
   type InstanceDiff,
   type LinkStatus,
 } from "./api";
 import { gameState, launch } from "./games";
+import { notifyInGame } from "./notify";
 import { toast } from "./toast";
 
 export interface HostingState extends DuoHostView {
@@ -54,6 +57,12 @@ function maybeAutoLaunch() {
   playWithFriend();
 }
 
+/** Line of the game's log when it enters a world (every version and loader). */
+const WORLD_STARTED = "Starting integrated minecraft server";
+/** Time left to open the world to LAN by oneself before the reminder. */
+const LAN_REMINDER_MS = 5000;
+let lanReminder: ReturnType<typeof setTimeout> | undefined;
+
 let started = false;
 
 /** Listens to session events and loads the session already running, once. */
@@ -69,6 +78,7 @@ export async function startDuoEvents() {
       case "guestJoined":
         setDuo("host", "guests", (list) => [...list.filter((g) => g.id !== payload.guest.id), payload.guest]);
         toast(`${payload.guest.player} a rejoint ta partie`);
+        void notifyInGame(`${payload.guest.player} a rejoint ta partie`, "Son jeu se connecte à ton monde.");
         break;
       case "guestInstance":
         setDuo(
@@ -83,7 +93,10 @@ export async function startDuoEvents() {
       case "guestLeft": {
         const left = duo.host.guests.find((g) => g.id === payload.id);
         setDuo("host", "guests", (list) => list.filter((g) => g.id !== payload.id));
-        if (left) toast(`${left.player} est parti`, { tone: "info" });
+        if (left) {
+          toast(`${left.player} a quitté ta partie`, { tone: "info" });
+          void notifyInGame(`${left.player} a quitté ta partie`, "Ton code reste valable pour revenir.");
+        }
         break;
       }
       case "link":
@@ -111,9 +124,24 @@ export async function startDuoEvents() {
         break;
       case "closed":
         toast(payload.reason, { tone: "info", durationMs: 8000 });
+        void notifyInGame("Partie terminée", payload.reason);
         setDuo("guest", null);
         break;
     }
+  });
+  // The host entered a world but has not opened it to LAN yet: a reminder over the game.
+  await listen<GameOutput>(EVENTS.output, ({ payload }) => {
+    const host = duo.host;
+    if (!host || payload.instanceId !== host.instanceId || host.world) return;
+    if (!payload.lines.some((line) => line.includes(WORLD_STARTED))) return;
+    clearTimeout(lanReminder);
+    lanReminder = setTimeout(() => {
+      if (duo.host && !duo.host.world)
+        void notifyInGame(
+          "Ouvre ton monde au réseau local",
+          "Échap → Ouvrir au réseau local → Démarrer le monde en LAN. Ton ami pourra alors te rejoindre.",
+        );
+    }, LAN_REMINDER_MS);
   });
   setAutoLaunchSignal((await api.getSetting<boolean>(AUTO_LAUNCH_SETTING).catch(() => null)) ?? true);
   const current = await api.duoState().catch(() => null);
