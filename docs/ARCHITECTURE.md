@@ -17,6 +17,8 @@
 │   ├─ instance   CRUD, config, lancement, process     │
 │   ├─ auth       Microsoft → Xbox → XSTS → MC         │
 │   ├─ content    Modrinth, fiches, mrpack, dépendances│
+│   │             CurseForge (.zip, clé du joueur)     │
+│   ├─ launchers  import Modrinth App, Prism, CF, Mojang│
 │   ├─ translate  extraction, LLM, resource pack       │
 │   └─ p2p        détection LAN, tunnel iroh           │
 ├─────────────────────────────────────────────────────┤

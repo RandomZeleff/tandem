@@ -131,7 +131,7 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - [x] Datapacks par monde (Modrinth)
 - [x] Détection des incompatibilités entre mods (déclarées dans les jars et sur Modrinth)
 - [x] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte, sinon téléchargés à la main et repris dans Téléchargements — D34
-- [ ] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel)
+- [x] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel, ou dossier choisi) — D35
 - [ ] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne
 
 ## Phase 6 — Multijoueur P2P sans serveur
