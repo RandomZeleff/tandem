@@ -558,6 +558,7 @@ export function installMocks() {
           return created;
         }
         case "plugin:dialog|open": {
+          if ((args.options as { directory?: boolean })?.directory) return "C:/Users/mock/PrismLauncher/instances/Better MC";
           const filters = ((args.options as { filters?: { extensions: string[] }[] })?.filters ?? []).flatMap((f) => f.extensions);
           return filters.includes("zip") ? "C:/Users/mock/Downloads/All the Mods 9-0.2.60.zip" : null;
         }
@@ -599,6 +600,43 @@ export function installMocks() {
             { name: "Mekanism", fileName: "Mekanism-1.20.1-10.4.5.19.jar", sha1: "b", size: 10_812_004, url: "https://www.curseforge.com/minecraft/mc-mods/mekanism/files/5134493", folder: "mods" },
             { name: "Stoneholm", fileName: "Stoneholm-1.20.1-forge-1.4.10.jar", sha1: "c", size: 98_210, url: "https://www.curseforge.com/minecraft/mc-mods/stoneholm/files/4993040", folder: "mods" },
           ];
+          await emit("install://finished", created.id);
+          return created;
+        }
+        case "scan_other_launchers":
+          await new Promise((r) => setTimeout(r, 400));
+          return [
+            { source: "modrinthApp", name: "Prominence™ II: Hasturian Era", gameDir: "C:/Users/mock/AppData/Roaming/ModrinthApp/profiles/Prominence II", gameVersion: "1.20.1", loader: "fabric", loaderVersion: "0.19.3", packProjectId: "EGs3lC8D", packVersionId: "3uZ1MN34", icon: null, mods: 444, worlds: 1, lastPlayed: Date.now() - 3 * 86_400_000 },
+            { source: "curseForge", name: "DawnCraft - Echoes of Legends", gameDir: "C:/Users/mock/curseforge/minecraft/Instances/DawnCraft", gameVersion: "1.18.2", loader: "forge", loaderVersion: "40.2.17", packProjectId: null, packVersionId: null, icon: null, mods: 298, worlds: 1, lastPlayed: Date.now() - 40 * 86_400_000 },
+            { source: "official", name: "Minecraft (dernière version)", gameDir: "C:/Users/mock/AppData/Roaming/.minecraft", gameVersion: "latest-release", loader: "vanilla", loaderVersion: null, packProjectId: null, packVersionId: null, icon: null, mods: 0, worlds: 3, lastPlayed: null },
+          ];
+        case "inspect_launcher_folder":
+          await new Promise((r) => setTimeout(r, 300));
+          return [
+            { source: "prism", name: "Better MC", gameDir: `${args.path}/.minecraft`, gameVersion: "1.20.1", loader: "forge", loaderVersion: "47.3.0", packProjectId: null, packVersionId: null, icon: null, mods: 212, worlds: 2, lastPlayed: Date.now() - 86_400_000 },
+          ];
+        case "import_from_launcher": {
+          const found = args.found as { name: string; gameVersion: string; loader: Instance["loader"]; loaderVersion: string | null };
+          const created: Instance = {
+            ...instances[0],
+            id: found.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            name: found.name,
+            gameVersion: found.gameVersion.startsWith("latest") ? "26.3" : found.gameVersion,
+            loader: found.loader,
+            loaderVersion: found.loaderVersion,
+            icon: null,
+            createdAt: new Date().toISOString(),
+            lastPlayedAt: null,
+            packProjectId: null,
+            packVersionId: null,
+            packVersion: null,
+          };
+          instances.unshift(created);
+          await emit("instances://changed");
+          for (let i = 0; i <= 20; i++) {
+            await new Promise((r) => setTimeout(r, 150));
+            await emit("install://progress", { instanceId: created.id, stage: "copying", doneFiles: i * 265, totalFiles: 5300, doneBytes: i * 56e6, totalBytes: 1120e6 });
+          }
           await emit("install://finished", created.id);
           return created;
         }

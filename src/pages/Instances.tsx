@@ -1,6 +1,7 @@
 import { createSignal, For, Show } from "solid-js";
 import Alert from "../components/Alert";
 import InstanceCard from "../components/InstanceCard";
+import LauncherImportDialog from "../components/LauncherImportDialog";
 import Tabs, { tabPanel } from "../components/Tabs";
 import { Icon } from "../components/pixel";
 import { errorMessage } from "../lib/api";
@@ -19,6 +20,7 @@ export default function Instances() {
   const [filter, setFilter] = remembered<Filter>("filter", "all");
   const [importing, setImporting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
+  const [launcherImport, setLauncherImport] = createSignal(false);
 
   async function importFile() {
     setImporting(true);
@@ -44,7 +46,16 @@ export default function Instances() {
           <span class="text-[13px] text-muted">Chaque instance a son propre dossier, ses mondes et ses réglages.</span>
         </div>
         <div class="flex gap-2">
-          <button class="btn px-corners h-10 px-4" disabled={importing()} onClick={() => void importFile()}>
+          <button class="btn px-corners h-10 px-4" onClick={() => setLauncherImport(true)} title="Modrinth App, Prism, CurseForge, launcher officiel…">
+            <Icon name="arrow" size={12} />
+            Depuis un autre launcher
+          </button>
+          <button
+            class="btn px-corners h-10 px-4"
+            disabled={importing()}
+            onClick={() => void importFile()}
+            title="Fichier .mrpack (Modrinth) ou .zip (CurseForge)"
+          >
             <Icon name="folder" size={12} />
             {importing() ? "Import…" : "Importer un modpack"}
           </button>
@@ -57,6 +68,10 @@ export default function Instances() {
 
       <Show when={error()}>
         <Alert onClose={() => setError(null)}>{error()}</Alert>
+      </Show>
+
+      <Show when={launcherImport()}>
+        <LauncherImportDialog onClose={() => setLauncherImport(false)} />
       </Show>
 
       <Tabs label="Filtrer" idPrefix="instances-filter" variant="segmented" tabClass="h-7" items={FILTERS} value={filter()} onChange={setFilter} />

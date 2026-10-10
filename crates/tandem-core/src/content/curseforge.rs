@@ -87,23 +87,10 @@ impl Manifest {
             .iter()
             .find(|l| l.primary)
             .or(self.minecraft.mod_loaders.first());
-        let (loader, loader_version) =
-            match loader.map(|l| l.id.split_once('-').unwrap_or((l.id.as_str(), ""))) {
-                None => (Loader::Vanilla, None),
-                Some(("forge", v)) => (Loader::Forge, Some(v)),
-                Some(("neoforge", v)) => (Loader::NeoForge, Some(v)),
-                Some(("fabric", v)) => (Loader::Fabric, Some(v)),
-                Some(("quilt", v)) => (Loader::Quilt, Some(v)),
-                Some((other, _)) => return Err(Error::LoaderNotSupported(other.to_owned())),
-            };
-        // NeoForge 1.20.1 ids carry the game version: `neoforge-1.20.1-47.1.99`.
-        let loader_version = loader_version
-            .map(|v| {
-                v.strip_prefix(&format!("{}-", self.minecraft.version))
-                    .unwrap_or(v)
-                    .to_owned()
-            })
-            .filter(|v| !v.is_empty());
+        let (loader, loader_version) = match loader {
+            Some(l) => crate::launchers::parse_loader_id(&l.id, &self.minecraft.version)?,
+            None => (Loader::Vanilla, None),
+        };
         Ok(NewInstance {
             name: if self.name.trim().is_empty() {
                 "Modpack CurseForge".into()

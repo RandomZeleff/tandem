@@ -8,6 +8,7 @@ use tandem_core::content::mrpack::{self, PackIndex};
 use tandem_core::content::pack_update::{self, UpdateReport};
 use tandem_core::instance::NewInstance;
 use tandem_core::instance::{self, Instance, PackOrigin};
+use tandem_core::launchers::{self, Found};
 use tandem_core::Context;
 use tauri::{AppHandle, Emitter};
 
@@ -204,6 +205,38 @@ async fn install(
         Ok(instance) => Ok(instance),
         Err(err) => {
             tracing::error!(instance = %id, error = %err, "modpack install failed, rolling back");
+            if let Err(cleanup) = instance::delete(ctx, &id).await {
+                tracing::warn!(instance = %id, error = %cleanup, "rollback incomplete");
+            }
+            let _ = app.emit(INSTANCES_CHANGED_EVENT, ());
+            Err(err.into())
+        }
+    }
+}
+
+/// Copies an instance of another launcher into a new Tandem instance.
+pub async fn import_from_launcher(
+    app: &AppHandle,
+    ctx: &Context,
+    games: &Games,
+    found: &Found,
+) -> CommandResult<Instance> {
+    let created = instance::create(ctx, launchers::new_instance(ctx, found).await?).await?;
+    let id = created.id.clone();
+    games.begin(&id);
+    let _ = app.emit(INSTANCES_CHANGED_EVENT, ());
+    let result = async {
+        launchers::import(ctx, found, &created, progress_emitter(app, &id)).await?;
+        ctx.db.get_instance(&id).await
+    }
+    .await;
+    games.end(&id);
+    let _ = app.emit(INSTALL_FINISHED_EVENT, &id);
+    let _ = app.emit(INSTANCES_CHANGED_EVENT, ());
+    match result {
+        Ok(instance) => Ok(instance),
+        Err(err) => {
+            tracing::error!(instance = %id, error = %err, "import failed, rolling back");
             if let Err(cleanup) = instance::delete(ctx, &id).await {
                 tracing::warn!(instance = %id, error = %cleanup, "rollback incomplete");
             }

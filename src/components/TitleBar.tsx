@@ -1,3 +1,4 @@
+import { isTransferStage } from "../lib/api";
 import { createMemo, Show } from "solid-js";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { games } from "../lib/games";
@@ -30,7 +31,7 @@ export default function TitleBar() {
       if (state.status !== "preparing") continue;
       const p = state.progress;
       const ratio =
-        p && p.stage === "downloading" && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
+        p && isTransferStage(p.stage) && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
       const name = instances().find((i) => i.id === id)?.name ?? id;
       return { id, name, ratio };
     }

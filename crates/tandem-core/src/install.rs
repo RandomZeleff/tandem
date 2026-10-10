@@ -24,6 +24,8 @@ pub enum Stage {
     Finalizing,
     /// Running the Forge / NeoForge installer steps (first launch only).
     Processing,
+    /// Copying files from another launcher's instance.
+    Copying,
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]

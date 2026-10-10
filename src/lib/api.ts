@@ -150,7 +150,10 @@ export interface Account {
   isActive: boolean;
 }
 
-export type InstallStage = "metadata" | "downloading" | "finalizing" | "processing";
+export type InstallStage = "metadata" | "downloading" | "finalizing" | "processing" | "copying";
+
+/** Stages whose progress is a byte count (a bar can be drawn). */
+export const isTransferStage = (stage: InstallStage) => stage === "downloading" || stage === "copying";
 
 export interface InstallProgress {
   instanceId: string;
@@ -522,6 +525,26 @@ export interface ManualFile {
   folder: string;
 }
 
+export type LauncherSource = "modrinthApp" | "prism" | "curseForge" | "official" | "folder";
+
+/** An instance of another launcher, ready to be imported. */
+export interface FoundInstance {
+  source: LauncherSource;
+  name: string;
+  gameDir: string;
+  /** A version id, or `latest-release` / `latest-snapshot` (official launcher profiles). */
+  gameVersion: string;
+  loader: Loader;
+  loaderVersion: string | null;
+  packProjectId: string | null;
+  packVersionId: string | null;
+  icon: string | null;
+  mods: number;
+  worlds: number;
+  /** Unix milliseconds. */
+  lastPlayed: number | null;
+}
+
 export const api = {
   appInfo: () => invoke<AppInfo>("app_info"),
   getLogs: () => invoke<LogEntry[]>("get_logs"),
@@ -610,6 +633,9 @@ export const api = {
   modpackRollbackVersion: (instanceId: string) => invoke<string | null>("modpack_rollback_version", { instanceId }),
   rollbackModpack: (instanceId: string) => invoke<void>("rollback_modpack", { instanceId }),
   importModpack: (path: string) => invoke<Instance>("import_modpack", { path }),
+  scanOtherLaunchers: () => invoke<FoundInstance[]>("scan_other_launchers"),
+  inspectLauncherFolder: (path: string) => invoke<FoundInstance[]>("inspect_launcher_folder", { path }),
+  importFromLauncher: (found: FoundInstance) => invoke<Instance>("import_from_launcher", { found }),
   modpackKind: (path: string) => invoke<"modrinth" | "curseforge">("modpack_kind", { path }),
   curseforgeKeySaved: () => invoke<boolean>("curseforge_key_saved"),
   /** Checks the key with CurseForge, then saves it; `""` deletes it. */

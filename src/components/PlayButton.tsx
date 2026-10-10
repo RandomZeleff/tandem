@@ -1,3 +1,4 @@
+import { isTransferStage } from "../lib/api";
 import { Match, Switch } from "solid-js";
 import { gameState, launch, stop } from "../lib/games";
 import { Icon } from "./pixel";
@@ -8,7 +9,7 @@ export default function PlayButton(props: { id: string; size?: "lg" | "md" | "ic
   const size = () => props.size ?? "md";
   const ratio = () => {
     const p = state().progress;
-    return p && p.stage === "downloading" && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
+    return p && isTransferStage(p.stage) && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
   };
 
   const sizeClass = () =>

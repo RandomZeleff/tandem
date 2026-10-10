@@ -133,10 +133,11 @@ struct ExitedPayload {
 }
 
 /// Forwards install progress to the UI, throttled except on stage changes and completion.
-pub fn progress_emitter<'a>(
-    app: &'a AppHandle,
-    id: &'a str,
-) -> impl Fn(InstallProgress) + Send + Sync + 'a {
+pub fn progress_emitter(
+    app: &AppHandle,
+    id: &str,
+) -> impl Fn(InstallProgress) + Send + Sync + 'static {
+    let (app, id) = (app.clone(), id.to_owned());
     let last_emit = Mutex::new((Instant::now() - PROGRESS_INTERVAL, Stage::Metadata));
     move |progress| {
         let mut last = last_emit.lock().unwrap_or_else(|e| e.into_inner());
@@ -146,7 +147,7 @@ pub fn progress_emitter<'a>(
             let _ = app.emit(
                 PROGRESS_EVENT,
                 ProgressPayload {
-                    instance_id: id,
+                    instance_id: &id,
                     progress,
                 },
             );

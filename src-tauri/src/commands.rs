@@ -756,6 +756,30 @@ pub async fn collect_manual_downloads(
     Ok(curseforge::collect_from_downloads(&dir).await?)
 }
 
+/// Instances of other launchers found at their usual places.
+#[tauri::command]
+pub async fn scan_other_launchers() -> CommandResult<Vec<tandem_core::launchers::Found>> {
+    Ok(tandem_core::launchers::scan().await)
+}
+
+/// Instances in a folder picked by the player (a launcher's folder, an instance, a game folder).
+#[tauri::command]
+pub async fn inspect_launcher_folder(
+    state: State<'_, AppState>,
+    path: String,
+) -> CommandResult<Vec<tandem_core::launchers::Found>> {
+    Ok(tandem_core::launchers::inspect_folder(&state.ctx, std::path::Path::new(&path)).await?)
+}
+
+#[tauri::command]
+pub async fn import_from_launcher(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    found: tandem_core::launchers::Found,
+) -> CommandResult<Instance> {
+    modpack::import_from_launcher(&app, &state.ctx, &state.games, &found).await
+}
+
 #[tauri::command]
 pub async fn export_modpack(
     state: State<'_, AppState>,

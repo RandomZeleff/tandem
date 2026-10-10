@@ -1,5 +1,5 @@
 import { Show } from "solid-js";
-import type { Instance } from "../lib/api";
+import { isTransferStage, type Instance } from "../lib/api";
 import { formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { blockLook } from "../lib/look";
@@ -13,8 +13,9 @@ export default function InstanceCard(props: { instance: Instance }) {
   const state = () => gameState(props.instance.id);
   const ratio = () => {
     const p = state().progress;
-    return p && p.stage === "downloading" && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
+    return p && isTransferStage(p.stage) && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
   };
+  const task = () => (state().progress?.stage === "copying" ? "Copie" : "Installation");
 
   return (
     <article
@@ -71,9 +72,9 @@ export default function InstanceCard(props: { instance: Instance }) {
           }
         >
           <div class="flex flex-col gap-1.5">
-            <XpBar value={ratio()} label={`Installation de ${props.instance.name}`} />
+            <XpBar value={ratio()} label={`${task()} de ${props.instance.name}`} />
             <div class="flex justify-between font-mono text-xs">
-              <span class="text-xp-text">Installation</span>
+              <span class="text-xp-text">{task()}</span>
               <span class="text-muted">{Math.round(ratio() * 100)} %</span>
             </div>
           </div>

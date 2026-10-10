@@ -15,6 +15,7 @@ pub mod java;
 pub mod java_detect;
 pub mod jvm;
 pub mod launch;
+pub mod launchers;
 pub mod logging;
 pub mod meta;
 pub mod paths;

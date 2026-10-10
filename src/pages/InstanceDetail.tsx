@@ -17,7 +17,7 @@ import Scene from "../components/Scene";
 import ScreenshotsTab from "../components/ScreenshotsTab";
 import Tabs, { tabPanel } from "../components/Tabs";
 import TranslationTab from "../components/translation/TranslationTab";
-import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
+import { api, errorMessage, type InstallProgress, type Instance, isTransferStage } from "../lib/api";
 import { formatBytes } from "../lib/format";
 import { gameState } from "../lib/games";
 import { navigate, refetchInstances, remembered } from "../lib/store";
@@ -29,6 +29,8 @@ function stageLabel(p: InstallProgress | undefined): string {
   if (p.stage === "finalizing") return "Finalisation…";
   if (p.stage === "processing") return "Préparation du loader (premier lancement, ~30 s)…";
   if (p.totalFiles === 0) return "Vérification des fichiers…";
+  if (p.stage === "copying")
+    return `Copie depuis l'autre launcher : ${p.doneFiles} / ${p.totalFiles} fichiers · ${formatBytes(p.doneBytes)} / ${formatBytes(p.totalBytes)}`;
   return `${p.doneFiles} / ${p.totalFiles} fichiers · ${formatBytes(p.doneBytes)} / ${formatBytes(p.totalBytes)}`;
 }
 
@@ -39,7 +41,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
   const state = () => gameState(props.instance.id);
   const ratio = () => {
     const p = state().progress;
-    return p && p.stage === "downloading" && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
+    return p && isTransferStage(p.stage) && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
   };
 
   async function remove() {
