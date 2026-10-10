@@ -137,13 +137,29 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 
 ## Phase 6 — Multijoueur P2P sans serveur
 
-- [ ] Détection d'un monde ouvert en LAN (écoute multicast `224.0.2.60:4445`)
-- [ ] Tunnel P2P QUIC via `iroh` (hole punching + relais de secours)
-- [ ] Codes d'invitation courts (`CRAFT-7K2P`)
-- [ ] Côté invité : faux serveur local `127.0.0.1:<port>` + annonce LAN
-- [ ] Vérif que les deux ont la même instance (version/loader/mods) → proposer de synchroniser
-- [ ] Indicateurs : ping, type de connexion (direct/relais)
+Cadrage (2026-10-10, avec Raphaël, D37) : on livre d'abord **le tunnel seul** (6a), puis la synchronisation des mods (6b). L'hôte ouvre son monde au réseau local dans le jeu, comme d'habitude ; Tandem le transporte chez l'invité, dont le jeu le voit comme une partie du réseau local. Aucun mod, toutes versions et loaders.
+
+Choix tranchés :
+- Le code suffit pour entrer ; l'hôte est prévenu de chaque arrivée et peut exclure un invité.
+- Mise en relation et relais de secours : serveurs publics et gratuits de n0 (auteurs d'iroh). Pas de serveur Tandem. Un relais à nous reste possible plus tard.
+- Les deux joueurs ont besoin d'un compte Microsoft (le monde LAN vérifie les comptes auprès de Mojang) : expliqué dans l'interface, aucun contournement.
+- Quand l'hôte quitte, la partie s'arrête pour tous. Pas de transfert du monde en 6a.
+- Tests réels : deux PC sur deux réseaux, deux comptes (Raphaël et un ami). Claude teste seul en simulation et sur un vrai serveur Minecraft local.
+
+### 6a — Le tunnel
+- [x] Détection d'un monde ouvert en LAN (écoute multicast `224.0.2.60:4445`)
+- [x] Codes d'invitation courts (`7K2P-QX9M`), publiés sur le relais pkarr public d'iroh, sans serveur à nous
+- [ ] Session hôte : publie le code, accepte les invités, relaie chaque connexion du jeu vers le monde LAN
+- [ ] Session invité : résout le code, se connecte, faux serveur local + annonce LAN
+- [ ] Rejoindre en un clic : l'invité choisit une instance, Tandem lance le jeu directement sur la partie
+- [ ] Indicateurs : ping, liaison directe ou par relais ; arrivées et départs ; exclure un invité
+- [ ] Avertissement si les instances diffèrent (version, loader, mods)
+- [ ] Page « Jouer à deux » (inviter / rejoindre), messages clairs (compte Microsoft requis, monde pas encore ouvert, code inconnu)
+
+### 6b — Ensuite
+- [ ] Synchroniser les mods de l'invité sur ceux de l'hôte (Modrinth d'abord, sinon envoyés par l'hôte)
 - [ ] (plus tard) Synchro du monde / « host migration »
+- [ ] (plus tard) Relais Tandem en option
 
 ## Portage macOS
 

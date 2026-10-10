@@ -237,3 +237,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Comptes hors ligne : ajout et lancement permis seulement si un compte Microsoft (qui possède forcément le jeu) est connecté, comme Prism. Les outils de développement (exemples) n'appliquent pas cette règle.
 - Interface : fenêtre « Comptes » unique (liste, connexion pas à pas, hors ligne), carte de la barre latérale avec la vraie tête et changement rapide, bouton blanc « Se connecter avec Microsoft » au logo officiel (seul logo de marque utilisé, comme le demandent les règles de Microsoft pour ce bouton).
 - Statut : validé
+
+### D37 · 2026-10-10 · Jeu à deux : tunnel du LAN vanilla, code court sans serveur Tandem
+- Complète D5. L'hôte ouvre son monde au réseau local dans le jeu ; Tandem repère l'annonce LAN de **ce** PC (le jeu répond sur `127.0.0.1`) et relaie chaque connexion TCP du jeu dans un flux QUIC iroh (ALPN `tandem/duo/1`). Chez l'invité, un faux serveur local transmet au flux, et une annonce LAN fait apparaître la partie dans « Parties en réseau local ». Tandem peut aussi lancer le jeu directement dessus.
+- Code d'invitation `XXXX-XXXX` (40 bits, alphabet de Crockford : pas de I, L, O ni U ; les lettres qui ressemblent à des chiffres sont lues comme ces chiffres). L'hôte signe « mon endpoint iroh est X » avec une clé dérivée du code (SHA-256) et le publie sur le relais pkarr public d'iroh (`dns.iroh.link`, adossé au DHT Mainline). L'invité recalcule la clé et lit l'enregistrement : sans le code, impossible de trouver l'hôte. Il prouve ensuite qu'il connaît le code (empreinte envoyée dans `hello`).
+- Le code suffit pour entrer ; l'hôte voit les arrivées et peut exclure. Relais et mise en relation : serveurs publics et gratuits de n0, pas de serveur Tandem.
+- Comptes Microsoft obligatoires des deux côtés (le monde LAN vérifie les comptes auprès de Mojang) ; pas de contournement.
+- Mesuré (preuve de concept, iroh 1.3, deux points sur un même PC) : code résolu en 0,2 s, connexion en 0,7 s, chemin direct choisi automatiquement.
+- Statut : validé (périmètre 6a avec Raphaël)
+
