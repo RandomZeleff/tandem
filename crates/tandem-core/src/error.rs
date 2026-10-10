@@ -49,6 +49,8 @@ pub enum Error {
     OwnershipRequired,
     #[error("{0}")]
     Auth(String),
+    #[error("Jeu à deux : {0}")]
+    Duo(String),
     #[error("{0} n'est pas encore pris en charge")]
     LoaderNotSupported(String),
     #[error("{loader} n'existe pas pour Minecraft {game_version}")]
