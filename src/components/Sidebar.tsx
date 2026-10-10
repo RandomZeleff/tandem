@@ -1,6 +1,7 @@
 import { createResource, createSignal, For, type JSX, Show } from "solid-js";
 import { api, errorMessage } from "../lib/api";
 import { gameState } from "../lib/games";
+import { duoActive } from "../lib/duo";
 import { toast } from "../lib/toast";
 import { openAccounts, signInWithMicrosoft } from "../lib/accounts";
 import { AccountAvatar, AccountKindLabel, MicrosoftLogo } from "./accounts/AccountVisuals";
@@ -13,7 +14,6 @@ interface NavItem {
   label: string;
   icon: IconName;
   to: Route;
-  soon?: boolean;
   /** Shown in the tooltip. */
   shortcut?: string;
 }
@@ -24,7 +24,7 @@ const NAV: NavItem[] = [
   { label: "Accueil", icon: "home", to: { page: "home" } },
   { label: "Instances", icon: "grid", to: { page: "instances" } },
   { label: "Découvrir", icon: "search", to: { page: "discover" }, shortcut: "K" },
-  { label: "Jouer à deux", icon: "duo", to: { page: "multi" }, soon: true },
+  { label: "Jouer à deux", icon: "duo", to: { page: "multi" } },
 ];
 
 function isActive(item: NavItem): boolean {
@@ -184,8 +184,8 @@ export default function Sidebar() {
             >
               <Icon name={item.icon} size={18} color={isActive(item) ? "var(--color-xp)" : undefined} />
               <span class="flex-1">{item.label}</span>
-              <Show when={item.soon}>
-                <span class="bg-slate-700 px-1.5 py-px font-pixel text-[11px] tracking-wide text-faint">BIENTÔT</span>
+              <Show when={item.to.page === "multi" && duoActive()}>
+                <span class="step-pulse size-2 bg-gold" title="Partie à deux en cours" />
               </Show>
             </button>
           )}

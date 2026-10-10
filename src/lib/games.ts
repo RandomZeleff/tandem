@@ -128,13 +128,14 @@ export async function startGameEvents() {
   }
 }
 
-export async function launch(id: string) {
+/** Starts an instance; `start` replaces the plain launch (e.g. joining a friend's world). */
+export async function launch(id: string, start: () => Promise<void> = () => api.launchInstance(id)) {
   setGames(id, { status: "preparing", error: undefined, lastExit: undefined, progress: undefined });
   setOutput(id, []);
   setStats(id, []);
   setConsoleInstance(id);
   try {
-    await api.launchInstance(id);
+    await start();
   } catch (err) {
     const message = errorMessage(err);
     if (message === LOGIN_REQUIRED || message === ACCOUNT_NEEDED) {

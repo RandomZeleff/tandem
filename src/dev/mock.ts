@@ -673,6 +673,56 @@ export function installMocks() {
         }
         case "cancel_microsoft_login":
           return null;
+        case "duo_host": {
+          await new Promise((r) => setTimeout(r, 900));
+          const instanceId = args.instanceId as string | null;
+          const link = (pingMs: number, direct: boolean) => ({ pingMs, direct });
+          setTimeout(() => void emit("duo://host", { type: "world", world: { motd: "Zeleff - Survie", port: 51234 } }), 4000);
+          setTimeout(
+            () =>
+              void emit("duo://host", {
+                type: "guestJoined",
+                guest: {
+                  id: "57460a3016",
+                  player: "Léo",
+                  instance: null,
+                  diff: { sameGame: true, sameLoader: true, missing: [{ fileName: "sodium.jar", sha1: "a" }, { fileName: "iris.jar", sha1: "b" }], extra: [] },
+                },
+              }),
+            7000,
+          );
+          let pings = 0;
+          const timer = setInterval(() => {
+            if (pings++ > 60) clearInterval(timer);
+            void emit("duo://host", { type: "link", id: "57460a3016", link: pings < 3 ? link(171, false) : link(23 + (pings % 5), true) });
+          }, 2000);
+          return { code: "7K2P-QX9M", instanceId, world: null };
+        }
+        case "duo_stop_host":
+        case "duo_kick":
+        case "duo_leave":
+          return null;
+        case "duo_join": {
+          await new Promise((r) => setTimeout(r, 1500));
+          if (String(args.code).startsWith("0000")) throw "Jeu à deux : aucune partie avec ce code. Vérifie-le, ou demande à l'hôte s'il a bien lancé l'invitation.";
+          setTimeout(() => void emit("duo://guest", { type: "world", world: { motd: "Léo - Monde créatif" } }), 3000);
+          const timer = setInterval(() => void emit("duo://guest", { type: "link", link: { pingMs: 31, direct: true } }), 2000);
+          setTimeout(() => clearInterval(timer), 120_000);
+          return {
+            hostPlayer: "Léo",
+            hostInstance: null,
+            world: null,
+            port: 51999,
+            instanceId: args.instanceId,
+            diff: { sameGame: false, sameLoader: true, missing: [], extra: [{ fileName: "x.jar", sha1: "x" }] },
+            link: null,
+          };
+        }
+        case "duo_play":
+          void fakeLaunch(instances[0].id);
+          return null;
+        case "duo_state":
+          return { host: null, guest: null };
         case "manual_downloads":
           return manualFiles[args.instanceId as string] ?? [];
         case "collect_manual_downloads": {

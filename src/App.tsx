@@ -10,6 +10,7 @@ import { onGamePlayed, rosettaPrompt, setRosettaPrompt, startGameEvents } from "
 import type { ProjectType } from "./lib/api";
 import { startLogStream } from "./lib/logs";
 import { startTranslationEvents } from "./lib/translation";
+import { startDuoEvents } from "./lib/duo";
 import {
   currentEntry,
   goBack,
@@ -27,7 +28,7 @@ import Home from "./pages/Home";
 import InstanceDetail from "./pages/InstanceDetail";
 import Instances from "./pages/Instances";
 import Settings from "./pages/Settings";
-import Soon from "./pages/Soon";
+import Duo from "./pages/Duo";
 
 /** Loaded on first visit: keeps it out of the startup bundle. */
 const Project = lazy(() => import("./pages/Project"));
@@ -54,6 +55,7 @@ function App() {
     void startLogStream();
     void startGameEvents();
     void startTranslationEvents();
+    void startDuoEvents();
     onGamePlayed(() => void refetchInstances());
 
     // Back / Forward: mouse side buttons, Alt+arrows, and Cmd+[ / Cmd+] on macOS.
@@ -129,7 +131,7 @@ function App() {
               <Project {...(route() as { id: string; instanceId?: string })} />
             </Match>
             <Match when={route().page === "multi"}>
-              <Soon feature="multi" />
+              <Duo />
             </Match>
             <Match when={route().page === "settings"}>
               <Settings />

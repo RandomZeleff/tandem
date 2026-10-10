@@ -558,6 +558,71 @@ export interface FoundInstance {
   lastPlayed: number | null;
 }
 
+/** Jeu à deux (D37). */
+export interface LanWorld {
+  motd: string;
+  port: number;
+}
+
+export interface DuoModRef {
+  fileName: string;
+  sha1: string;
+}
+
+export interface DuoInstance {
+  name: string;
+  gameVersion: string;
+  loader: string;
+  loaderVersion: string | null;
+  mods: DuoModRef[];
+}
+
+export interface InstanceDiff {
+  sameGame: boolean;
+  sameLoader: boolean;
+  missing: DuoModRef[];
+  extra: DuoModRef[];
+}
+
+export interface LinkStatus {
+  pingMs: number;
+  direct: boolean;
+}
+
+export interface DuoHostView {
+  code: string;
+  instanceId: string | null;
+  world: LanWorld | null;
+}
+
+export interface DuoGuest {
+  id: string;
+  player: string;
+  instance: DuoInstance | null;
+  diff: InstanceDiff | null;
+}
+
+export type DuoHostEvent =
+  | { type: "world"; world: LanWorld | null }
+  | { type: "guestJoined"; guest: DuoGuest }
+  | { type: "guestLeft"; id: string }
+  | { type: "link"; id: string; link: LinkStatus };
+
+export interface DuoJoinView {
+  hostPlayer: string;
+  hostInstance: DuoInstance | null;
+  world: { motd: string } | null;
+  port: number;
+  instanceId: string;
+  diff: InstanceDiff | null;
+  link: LinkStatus | null;
+}
+
+export type DuoGuestEvent =
+  | { type: "world"; world: { motd: string } | null }
+  | { type: "link"; link: LinkStatus }
+  | { type: "closed"; reason: string };
+
 export const api = {
   appInfo: () => invoke<AppInfo>("app_info"),
   getLogs: () => invoke<LogEntry[]>("get_logs"),
@@ -654,6 +719,14 @@ export const api = {
     invoke<void>("set_local_content_enabled", { instanceId, kind, fileName, enabled }),
   removeLocalContent: (instanceId: string, kind: ContentKind, fileName: string) =>
     invoke<void>("remove_local_content", { instanceId, kind, fileName }),
+  duoHost: (instanceId: string | null) => invoke<DuoHostView>("duo_host", { instanceId }),
+  duoStopHost: () => invoke<void>("duo_stop_host"),
+  duoKick: (id: string) => invoke<void>("duo_kick", { id }),
+  duoJoin: (code: string, instanceId: string) => invoke<DuoJoinView>("duo_join", { code, instanceId }),
+  duoLeave: () => invoke<void>("duo_leave"),
+  /** Launches the joined session's instance straight into the host's world. */
+  duoPlay: () => invoke<void>("duo_play"),
+  duoState: () => invoke<{ host: DuoHostView | null; guest: DuoJoinView | null }>("duo_state"),
   modpackKind: (path: string) => invoke<"modrinth" | "curseforge">("modpack_kind", { path }),
   curseforgeKeySaved: () => invoke<boolean>("curseforge_key_saved"),
   /** Checks the key with CurseForge, then saves it; `""` deletes it. */

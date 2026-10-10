@@ -157,7 +157,15 @@ pub fn progress_emitter(
     }
 }
 
-pub async fn launch(app: AppHandle, ctx: Context, games: Games, id: String) -> CommandResult<()> {
+/// Starts an instance; `join` is a local port to connect the game to at once (a friend's
+/// world through Tandem).
+pub async fn launch(
+    app: AppHandle,
+    ctx: Context,
+    games: Games,
+    id: String,
+    join: Option<u16>,
+) -> CommandResult<()> {
     {
         let mut slots = games.lock();
         if slots.contains_key(&id) {
@@ -165,7 +173,7 @@ pub async fn launch(app: AppHandle, ctx: Context, games: Games, id: String) -> C
         }
         slots.insert(id.clone(), Slot::Preparing);
     }
-    match start(&app, &ctx, &id).await {
+    match start(&app, &ctx, &id, join).await {
         Ok((child, game_dir)) => {
             let (stop_tx, stop_rx) = oneshot::channel();
             games.lock().insert(id.clone(), Slot::Running(stop_tx));
@@ -182,7 +190,12 @@ pub async fn launch(app: AppHandle, ctx: Context, games: Games, id: String) -> C
     }
 }
 
-async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathBuf), Error> {
+async fn start(
+    app: &AppHandle,
+    ctx: &Context,
+    id: &str,
+    join: Option<u16>,
+) -> Result<(Child, PathBuf), Error> {
     let instance = ctx.db.get_instance(id).await?;
     let account = ctx
         .db
@@ -227,6 +240,7 @@ async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathB
             .map(|a| a.split_whitespace().map(str::to_owned).collect())
             .unwrap_or_default(),
         window: instance.window_width.zip(instance.window_height),
+        join: join.map(|port| ("127.0.0.1".to_owned(), port)),
     });
     tracing::info!(
         instance = %id,

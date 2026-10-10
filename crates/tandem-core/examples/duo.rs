@@ -3,6 +3,7 @@
 //! cargo run -p tandem-core --example duo -- selftest      # host + guest in one process
 //! cargo run -p tandem-core --example duo -- host [name]   # host the world opened to LAN
 //! cargo run -p tandem-core --example duo -- join <code> [name]
+//! cargo run -p tandem-core --example duo -- stand-in       # fake world, logs who connects
 //!
 //! `selftest` opens a stand-in "world" answering Minecraft's server list ping, announces
 //! it like the game does, hosts it, joins it by its code and pings it through the tunnel.
@@ -71,7 +72,12 @@ async fn stand_in_world() -> std::io::Result<u16> {
     tokio::spawn(async move {
         while let Ok((mut tcp, _)) = listener.accept().await {
             tokio::spawn(async move {
-                let _handshake = read_packet(&mut tcp).await?;
+                let handshake = read_packet(&mut tcp).await?;
+                // Last byte: 1 = server list ping, 2 = joining the game.
+                if handshake.last() == Some(&2) {
+                    println!("[world] a game is joining (login started)");
+                    return Ok(());
+                }
                 let _request = read_packet(&mut tcp).await?;
                 let mut body = Vec::new();
                 string(
@@ -186,6 +192,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tokio::time::sleep(Duration::from_millis(500)).await;
             guest.leave().await;
         }
+        Some("stand-in") => {
+            let port = stand_in_world().await?;
+            println!("stand-in world on 127.0.0.1:{port} (Ctrl+C to stop)");
+            tokio::signal::ctrl_c().await?;
+        }
         Some("host") => {
             let name = args.get(1).cloned().unwrap_or_else(|| "Hôte".into());
             let host = Host::start(
@@ -225,7 +236,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tokio::signal::ctrl_c().await?;
             guest.leave().await;
         }
-        _ => println!("usage: duo selftest | host [name] | join <code> [name]"),
+        _ => println!("usage: duo selftest | stand-in | host [name] | join <code> [name]"),
     }
     Ok(())
 }

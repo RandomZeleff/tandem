@@ -1,5 +1,6 @@
 mod accounts;
 mod commands;
+mod duo;
 mod error;
 mod game;
 mod modpack;
@@ -33,6 +34,7 @@ pub struct AppState {
     pub projects: ProjectCache,
     pub translations: tandem_core::translate::service::Service,
     pub logins: accounts::Logins,
+    pub duo: duo::Duo,
     _log_guard: WorkerGuard,
 }
 
@@ -74,6 +76,7 @@ pub fn run() {
                 projects: ProjectCache::default(),
                 translations: Default::default(),
                 logins: Default::default(),
+                duo: Default::default(),
                 _log_guard: log_guard,
             });
             // Tauri creates the window and its webview before `setup`: most of this is theirs.
@@ -174,7 +177,22 @@ pub fn run() {
             accounts::begin_microsoft_login,
             accounts::finish_microsoft_login,
             accounts::cancel_microsoft_login,
+            duo::duo_host,
+            duo::duo_stop_host,
+            duo::duo_kick,
+            duo::duo_join,
+            duo::duo_leave,
+            duo::duo_play,
+            duo::duo_state,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            // Guests are told the session ended instead of waiting for a timeout.
+            if let tauri::RunEvent::Exit = event {
+                if let Some(state) = app.try_state::<AppState>() {
+                    tauri::async_runtime::block_on(duo::shutdown(&state));
+                }
+            }
+        });
 }

@@ -22,6 +22,8 @@ pub struct LaunchSpec<'a> {
     pub extra_jvm_args: Vec<String>,
     /// Game window size, `None` for the game's default.
     pub window: Option<(u32, u32)>,
+    /// Server to join right away (`host`, `port`), e.g. a friend's world through Tandem.
+    pub join: Option<(String, u16)>,
 }
 
 #[derive(Debug, Clone)]
@@ -32,7 +34,13 @@ pub struct GameCommand {
 }
 
 pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
-    let env = &spec.prepared.env;
+    // 1.20+ joins a server with its own `--quickPlayMultiplayer` argument, behind a feature.
+    let mut env = spec.prepared.env.clone();
+    if spec.join.is_some() {
+        env.features
+            .insert("is_quick_play_multiplayer".into(), true);
+    }
+    let env = &env;
     let version = &spec.prepared.version;
     let separator = if cfg!(windows) { ";" } else { ":" };
     let classpath = spec
@@ -64,6 +72,13 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
         ("classpath_separator", separator.to_owned()),
         ("classpath", classpath),
         ("launcher_name", "Tandem".to_owned()),
+        (
+            "quickPlayMultiplayer",
+            spec.join
+                .as_ref()
+                .map(|(host, port)| format!("{host}:{port}"))
+                .unwrap_or_default(),
+        ),
         ("launcher_version", crate::version().to_owned()),
     ]);
 
@@ -114,6 +129,17 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
         ),
         (_, Some(legacy)) => args.extend(legacy.split_whitespace().map(|v| substitute(v, &vars))),
         _ => {}
+    }
+    // Older versions take the server as `--server` / `--port`.
+    if let Some((host, port)) = &spec.join {
+        if !args.iter().any(|a| a == "--quickPlayMultiplayer") {
+            args.extend([
+                "--server".to_owned(),
+                host.clone(),
+                "--port".to_owned(),
+                port.to_string(),
+            ]);
+        }
     }
     // Every version since 1.6 reads these, whatever its own arguments say.
     if let Some((width, height)) = spec.window {

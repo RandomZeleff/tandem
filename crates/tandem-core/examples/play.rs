@@ -95,6 +95,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         memory_mb: jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir)),
         extra_jvm_args: Vec::new(),
         window: None,
+        // `TANDEM_JOIN=127.0.0.1:25565`: the game joins that server at once.
+        join: std::env::var("TANDEM_JOIN").ok().and_then(|addr| {
+            let (host, port) = addr.rsplit_once(':')?;
+            Some((host.to_owned(), port.parse().ok()?))
+        }),
     });
     let mut child = launch::spawn(&command)?;
     let group = tandem_core::process::ProcessGroup::track(&child);
