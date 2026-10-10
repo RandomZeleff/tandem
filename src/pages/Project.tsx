@@ -114,6 +114,13 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
   };
 
   const installed = () => (instanceId() ? installedContent(instanceId()).find((c) => c.projectId === d().id) : undefined);
+  // Mods the recommended version declares incompatible, among those already installed.
+  const [incompatible] = createResource(
+    () => (d().projectType === "mod" && recommended() && instanceId() ? { version: recommended()!.id, instance: instanceId() } : false),
+    ({ version }) => api.versionDependencies(d().id, version).catch(() => []),
+  );
+  const clashes = () =>
+    (incompatible() ?? []).filter((dep) => dep.kind === "incompatible" && isInstalled(instanceId(), dep.project.id)).map((dep) => dep.project.title);
 
   const tabs = () => {
     const list: { id: Tab; label: JSX.Element }[] = [{ id: "description", label: "Description" }];
@@ -223,6 +230,7 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
                 versionsError={!!versions.error}
                 installedVersion={installed()?.versionNumber ?? null}
                 update={updateFor(instanceId(), d().id)?.newVersion ?? null}
+                clashes={clashes()}
                 busy={busy()}
                 onInstall={() => void install()}
                 onUpdate={() => void update()}
@@ -446,6 +454,8 @@ function ContentAction(props: {
   versionsError: boolean;
   installedVersion: string | null;
   update: string | null;
+  /** Installed mods this one declares incompatible. */
+  clashes: string[];
   busy: boolean;
   onInstall: () => void;
   onUpdate: () => void;
@@ -530,6 +540,9 @@ function ContentAction(props: {
               </Match>
             </Switch>
           </span>
+          <Show when={props.clashes.length > 0}>
+            <span class="text-xs text-redstone-text">Incompatible avec {props.clashes.join(", ")}, déjà dans cette instance.</span>
+          </Show>
           <Show when={needsIris()}>
             <span class="text-xs text-muted">
               Les shaders ont besoin d'

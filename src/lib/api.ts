@@ -395,6 +395,14 @@ export interface Dependent {
   fileName: string;
 }
 
+/** Two enabled mods that cannot run together. */
+export interface ModConflict {
+  name: string;
+  fileName: string;
+  otherName: string;
+  otherFileName: string;
+}
+
 /** The jar behind a mod id. `fileName` is without `.disabled`. */
 export interface ModProvider {
   modId: string;
@@ -571,6 +579,7 @@ export const api = {
   contentDependents: (instanceId: string, projectId: string) =>
     invoke<Dependent[]>("content_dependents", { instanceId, projectId }),
   modProviders: (instanceId: string, modIds: string[]) => invoke<ModProvider[]>("mod_providers", { instanceId, modIds }),
+  contentConflicts: (instanceId: string) => invoke<ModConflict[]>("content_conflicts", { instanceId }),
   perfSuggestions: (instanceId: string) => invoke<PerfSuggestion[]>("perf_suggestions", { instanceId }),
   checkContentUpdates: (instanceId: string) => invoke<ContentUpdate[]>("check_content_updates", { instanceId }),
   /** Every outdated project when `projectIds` is omitted. */

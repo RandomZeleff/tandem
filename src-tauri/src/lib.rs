@@ -128,6 +128,7 @@ pub fn run() {
             commands::set_content_enabled,
             commands::warm_mod_dependencies,
             commands::content_dependents,
+            commands::content_conflicts,
             commands::mod_providers,
             commands::install_modpack,
             commands::modpack_versions,

@@ -1,4 +1,4 @@
-import { createSignal, For, onMount, Show } from "solid-js";
+import { createResource, createSignal, For, onMount, Show } from "solid-js";
 import Alert from "./Alert";
 import { api, errorMessage, type ContentKind, type Dependent, type InstalledContent, type Instance } from "../lib/api";
 import {
@@ -38,6 +38,11 @@ export default function ContentList(props: { instance: Instance; locked: boolean
   /** Removed but still undoable: hidden until the removal is committed. */
   const [removing, setRemoving] = createSignal<ReadonlySet<string>>(new Set());
   const items = () => installedContent(props.instance.id).filter((i) => !removing().has(i.projectId));
+  // Re-checked whenever the set of enabled mods changes.
+  const [conflicts] = createResource(
+    () => (contentLoaded(props.instance.id) ? items().filter((i) => i.enabled).map((i) => i.fileName).sort().join("|") : false),
+    () => api.contentConflicts(props.instance.id).catch(() => []),
+  );
 
   /** A disable or removal waiting for confirmation because other mods need the item. */
   const [needed, setNeeded] = createSignal<{
@@ -168,6 +173,44 @@ export default function ContentList(props: { instance: Instance; locked: boolean
       </Show>
 
       <PerfSuggestions instance={props.instance} locked={props.locked} onError={setError} />
+
+      <Show when={(conflicts() ?? []).length > 0}>
+        <div class="panel px-corners-md flex flex-col gap-2 p-3.5 shadow-[inset_0_0_0_1px_var(--color-danger-line)]">
+          <span class="flex items-center gap-2 text-sm">
+            <span class="size-2 bg-redstone" />
+            {conflicts()!.length === 1 ? "Deux mods ne peuvent pas tourner ensemble" : `${conflicts()!.length} paires de mods incompatibles`}
+          </span>
+          <ul class="flex flex-col gap-1.5">
+            <For each={conflicts()}>
+              {(c) => {
+                const first = () => items().find((i) => i.fileName === c.fileName);
+                const second = () => items().find((i) => i.fileName === c.otherFileName);
+                return (
+                  <li class="flex flex-wrap items-center gap-2 text-[13px] text-chalk-2">
+                    <span class="mr-auto">
+                      <strong class="text-chalk">{c.name}</strong> et <strong class="text-chalk">{c.otherName}</strong> : le jeu risque de ne pas démarrer.
+                    </span>
+                    <Show when={first()}>
+                      {(item) => (
+                        <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.locked} onClick={() => toggle(item(), false)}>
+                          Désactiver {c.name}
+                        </button>
+                      )}
+                    </Show>
+                    <Show when={second()}>
+                      {(item) => (
+                        <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.locked} onClick={() => toggle(item(), false)}>
+                          Désactiver {c.otherName}
+                        </button>
+                      )}
+                    </Show>
+                  </li>
+                );
+              }}
+            </For>
+          </ul>
+        </div>
+      </Show>
 
       <Show when={updates().length > 0}>
         <div class="panel px-corners-md flex items-center justify-between gap-4 p-3.5 shadow-[inset_0_0_0_1px_var(--color-xp-deep)]">

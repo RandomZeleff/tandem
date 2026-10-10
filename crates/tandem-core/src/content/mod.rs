@@ -595,6 +595,71 @@ pub(crate) mod tests_support {
     }
 }
 
+/// Enabled content that cannot run together: declared in the jars (with the installed
+/// versions checked) or on Modrinth for the installed versions. Each pair once.
+pub async fn conflicts(ctx: &Context, instance: &Instance) -> Result<Vec<deps::Conflict>> {
+    let (data, id, dir) = (
+        ctx.data.clone(),
+        instance.id.clone(),
+        ctx.data.instance_dir(&instance.id),
+    );
+    let mut found =
+        tokio::task::spawn_blocking(move || deps::conflicts(&deps::scan_cached(&data, &id, &dir)))
+            .await
+            .map_err(|e| Error::Io(std::io::Error::other(e)))?;
+
+    let enabled: Vec<InstalledContent> = ctx
+        .db
+        .list_content(&instance.id)
+        .await?
+        .into_iter()
+        .filter(|c| c.enabled)
+        .collect();
+    let by_project: HashMap<&str, &InstalledContent> =
+        enabled.iter().map(|c| (c.project_id.as_str(), c)).collect();
+    let ids: Vec<String> = enabled.iter().map(|c| c.version_id.clone()).collect();
+    // Offline, the jars' own declarations still count.
+    let versions = modrinth::versions(ctx, &ids).await.unwrap_or_default();
+    let mut seen: HashSet<(String, String)> = found
+        .iter()
+        .map(|c| ordered(&c.file_name, &c.other_file_name))
+        .collect();
+    for version in versions {
+        let Some(item) = by_project.get(version.project_id.as_str()) else {
+            continue;
+        };
+        for dep in version
+            .dependencies
+            .iter()
+            .filter(|d| d.dependency_type == "incompatible")
+        {
+            let Some(other) = dep.project_id.as_deref().and_then(|p| by_project.get(p)) else {
+                continue;
+            };
+            if other.project_id == item.project_id
+                || !seen.insert(ordered(&item.file_name, &other.file_name))
+            {
+                continue;
+            }
+            found.push(deps::Conflict {
+                name: item.title.clone(),
+                file_name: item.file_name.clone(),
+                other_name: other.title.clone(),
+                other_file_name: other.file_name.clone(),
+            });
+        }
+    }
+    Ok(found)
+}
+
+fn ordered(a: &str, b: &str) -> (String, String) {
+    if a < b {
+        (a.to_owned(), b.to_owned())
+    } else {
+        (b.to_owned(), a.to_owned())
+    }
+}
+
 /// Copies the content rows of an instance to another (after its files were copied).
 pub async fn copy_content(db: &Database, from: &str, to: &str) -> Result<()> {
     for item in db.list_content(from).await? {

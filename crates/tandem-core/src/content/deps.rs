@@ -2,7 +2,7 @@
 //! `quilt.mod.json`, `mods.toml`, `neoforge.mods.toml`), so disabling a library that
 //! other mods need can be flagged before the game refuses to start.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::io::{Cursor, Read, Seek};
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
@@ -23,6 +23,22 @@ pub struct ModDeps {
     pub provides: BTreeSet<String>,
     /// Mod ids it cannot start without (loader, game and Java excluded).
     pub requires: BTreeSet<String>,
+    /// Versions of the ids it provides, when the jar says.
+    #[serde(default)]
+    pub versions: BTreeMap<String, String>,
+    /// Mod ids it refuses to run with, and the versions concerned (`*` for all).
+    #[serde(default)]
+    pub breaks: BTreeMap<String, String>,
+}
+
+/// Two enabled mods that cannot run together.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Conflict {
+    pub name: String,
+    pub file_name: String,
+    pub other_name: String,
+    pub other_file_name: String,
 }
 
 /// A mod that needs another one.
@@ -73,7 +89,8 @@ pub fn scan_cached(data: &DataDir, instance_id: &str, game_dir: &Path) -> Vec<Mo
     let cache_path = data
         .cache()
         .join("deps")
-        .join(format!("{instance_id}.json"));
+        // `v2`: entries also hold versions and incompatibilities.
+        .join(format!("{instance_id}.v2.json"));
     let previous: HashMap<String, Cached> = std::fs::read(&cache_path)
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
@@ -241,6 +258,16 @@ fn read_jar<R: Read + Seek>(reader: R, depth: u8) -> Option<ModDeps> {
     if let Some(json) = entry_text(&mut archive, "fabric.mod.json") {
         let meta: FabricMeta = serde_json::from_str(&json).ok()?;
         deps.name = meta.name.unwrap_or_else(|| meta.id.clone());
+        if !meta.version.is_empty() {
+            for id in std::iter::once(&meta.id).chain(&meta.provides) {
+                deps.versions.insert(id.clone(), meta.version.clone());
+            }
+        }
+        deps.breaks.extend(
+            meta.breaks
+                .into_iter()
+                .map(|(id, range)| (id, fabric_range(&range))),
+        );
         deps.provides.insert(meta.id);
         deps.provides.extend(meta.provides);
         deps.requires.extend(meta.depends.into_keys());
@@ -252,6 +279,21 @@ fn read_jar<R: Read + Seek>(reader: R, depth: u8) -> Option<ModDeps> {
             .metadata
             .and_then(|m| m.name)
             .unwrap_or_else(|| loader.id.clone());
+        if !loader.version.is_empty() {
+            deps.versions
+                .insert(loader.id.clone(), loader.version.clone());
+        }
+        deps.breaks.extend(loader.breaks.into_iter().map(|b| {
+            match b {
+                QuiltBreak::Id(id) => (id, "*".to_owned()),
+                QuiltBreak::Full { id, versions } => (
+                    id,
+                    versions
+                        .as_ref()
+                        .map_or_else(|| "*".to_owned(), fabric_range),
+                ),
+            }
+        }));
         deps.provides.insert(loader.id);
         deps.provides
             .extend(loader.provides.into_iter().map(QuiltRef::id));
@@ -269,6 +311,12 @@ fn read_jar<R: Read + Seek>(reader: R, depth: u8) -> Option<ModDeps> {
             .find_map(|name| entry_text(&mut archive, name))?;
         let parsed = parse_mods_toml(&toml);
         deps.name = parsed.name.unwrap_or_default();
+        for (id, version) in parsed.ids.iter().zip(&parsed.versions) {
+            if let Some(version) = version {
+                deps.versions.insert(id.clone(), version.clone());
+            }
+        }
+        deps.breaks.extend(parsed.incompatible);
         deps.provides.extend(parsed.ids);
         deps.requires.extend(parsed.requires);
         nested.extend(
@@ -290,6 +338,9 @@ fn read_jar<R: Read + Seek>(reader: R, depth: u8) -> Option<ModDeps> {
             if read.is_some() {
                 if let Some(inner) = read_jar(Cursor::new(bytes), 1) {
                     deps.provides.extend(inner.provides);
+                    for (id, version) in inner.versions {
+                        deps.versions.entry(id).or_insert(version);
+                    }
                 }
             }
         }
@@ -314,6 +365,10 @@ fn entry_text<R: Read + Seek>(archive: &mut zip::ZipArchive<R>, name: &str) -> O
 struct FabricMeta {
     id: String,
     #[serde(default)]
+    version: String,
+    #[serde(default)]
+    breaks: BTreeMap<String, serde_json::Value>,
+    #[serde(default)]
     name: Option<String>,
     #[serde(default)]
     provides: Vec<String>,
@@ -337,6 +392,10 @@ struct QuiltMeta {
 struct QuiltLoader {
     id: String,
     #[serde(default)]
+    version: String,
+    #[serde(default)]
+    breaks: Vec<QuiltBreak>,
+    #[serde(default)]
     metadata: Option<QuiltMetadata>,
     #[serde(default)]
     provides: Vec<QuiltRef>,
@@ -349,6 +408,210 @@ struct QuiltLoader {
 #[derive(Deserialize)]
 struct QuiltMetadata {
     name: Option<String>,
+}
+
+/// `"id"` or `{ "id": …, "versions": … }`.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum QuiltBreak {
+    Id(String),
+    Full {
+        id: String,
+        #[serde(default)]
+        versions: Option<serde_json::Value>,
+    },
+}
+
+/// A Fabric/Quilt version requirement as one string: alternatives joined with `||`.
+fn fabric_range(value: &serde_json::Value) -> String {
+    match value {
+        serde_json::Value::String(s) => s.clone(),
+        serde_json::Value::Array(items) => items
+            .iter()
+            .filter_map(|v| v.as_str())
+            .collect::<Vec<_>>()
+            .join(" || "),
+        _ => "*".to_owned(),
+    }
+}
+
+/// A version as Fabric reads it: numeric core, then the dot-separated part after `-`
+/// (`1.20-3.1.43` is core 1.20 with 3.1.43 after the dash; build metadata after `+`
+/// is ignored).
+#[derive(Debug, PartialEq, Eq)]
+struct Version {
+    core: Vec<u64>,
+    pre: Vec<String>,
+}
+
+fn parse_version(version: &str) -> Option<Version> {
+    let text = version.trim().trim_start_matches(['v', 'V']);
+    let text = text.split('+').next().unwrap_or("");
+    let (core_text, pre_text) = text.split_once('-').unwrap_or((text, ""));
+    let core: Vec<u64> = core_text
+        .split('.')
+        .map_while(|p| {
+            let digits: String = p.chars().take_while(|c| c.is_ascii_digit()).collect();
+            digits.parse().ok()
+        })
+        .collect();
+    if core.is_empty() {
+        return None;
+    }
+    let pre = if pre_text.is_empty() {
+        Vec::new()
+    } else {
+        pre_text.split(['.', '-']).map(str::to_owned).collect()
+    };
+    Some(Version { core, pre })
+}
+
+/// Semver order, lenient on the core length (`1.20` = `1.20.0`).
+fn compare(a: &Version, b: &Version) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    for i in 0..a.core.len().max(b.core.len()) {
+        let ord = a.core.get(i).unwrap_or(&0).cmp(b.core.get(i).unwrap_or(&0));
+        if ord != Ordering::Equal {
+            return ord;
+        }
+    }
+    match (a.pre.is_empty(), b.pre.is_empty()) {
+        (true, true) => return Ordering::Equal,
+        // A version with a dash part comes before the plain one.
+        (true, false) => return Ordering::Greater,
+        (false, true) => return Ordering::Less,
+        _ => {}
+    }
+    for (x, y) in a.pre.iter().zip(&b.pre) {
+        let ord = match (x.parse::<u64>(), y.parse::<u64>()) {
+            (Ok(x), Ok(y)) => x.cmp(&y),
+            (Ok(_), Err(_)) => Ordering::Less,
+            (Err(_), Ok(_)) => Ordering::Greater,
+            (Err(_), Err(_)) => x.cmp(y),
+        };
+        if ord != Ordering::Equal {
+            return ord;
+        }
+    }
+    a.pre.len().cmp(&b.pre.len())
+}
+
+/// Whether `version` is in `range`: Fabric predicates (`*`, `>=1.2 <2`, `~1.2`,
+/// `^1.2`, `1.x`, alternatives with `||`) or Maven ranges (`[1.0,2.0)`, `(,1.5]`).
+/// `None` when either cannot be read: no conflict is claimed then.
+pub fn in_range(range: &str, version: &str) -> Option<bool> {
+    let range = range.trim();
+    if range.is_empty() || range == "*" {
+        return Some(true);
+    }
+    let v = parse_version(version)?;
+    if range.starts_with('[') || range.starts_with('(') {
+        return maven_in_range(range, &v);
+    }
+    let mut any_known = false;
+    for alternative in range.split("||") {
+        let mut all = true;
+        for predicate in alternative.split_whitespace() {
+            let (op, rest) = ["<=", ">=", "<", ">", "=", "~", "^"]
+                .iter()
+                .find_map(|op| predicate.strip_prefix(op).map(|rest| (*op, rest)))
+                .unwrap_or(("", predicate));
+            if rest == "*" {
+                continue;
+            }
+            // `1.20.x`: the leading parts must match.
+            if rest.ends_with(".x") || rest.ends_with(".X") || rest.ends_with(".*") {
+                let prefix = parse_version(&rest[..rest.len() - 2])?.core;
+                all &= v.core.len() >= prefix.len() && v.core[..prefix.len()] == prefix[..];
+                continue;
+            }
+            let bound = parse_version(rest)?;
+            let ord = compare(&v, &bound);
+            all &= match op {
+                "<=" => ord != std::cmp::Ordering::Greater,
+                ">=" => ord != std::cmp::Ordering::Less,
+                "<" => ord == std::cmp::Ordering::Less,
+                ">" => ord == std::cmp::Ordering::Greater,
+                "~" => {
+                    ord != std::cmp::Ordering::Less
+                        && v.core.first() == bound.core.first()
+                        && v.core.get(1) == bound.core.get(1)
+                }
+                "^" => ord != std::cmp::Ordering::Less && v.core.first() == bound.core.first(),
+                _ => ord == std::cmp::Ordering::Equal,
+            };
+        }
+        any_known = true;
+        if all {
+            return Some(true);
+        }
+    }
+    any_known.then_some(false)
+}
+
+fn maven_in_range(range: &str, v: &Version) -> Option<bool> {
+    // Several ranges (`[1,2),[3,4)`) mean any of them.
+    let mut found = false;
+    let mut rest = range;
+    while let Some(start) = rest.find(['[', '(']) {
+        let end = rest[start..].find([']', ')'])? + start;
+        let (open, close) = (&rest[start..=start], &rest[end..=end]);
+        let inner = &rest[start + 1..end];
+        let (low, high) = match inner.split_once(',') {
+            Some((low, high)) => (low.trim(), high.trim()),
+            None => (inner.trim(), inner.trim()),
+        };
+        let above = if low.is_empty() {
+            true
+        } else {
+            let ord = compare(v, &parse_version(low)?);
+            ord == std::cmp::Ordering::Greater || (open == "[" && ord == std::cmp::Ordering::Equal)
+        };
+        let below = if high.is_empty() {
+            true
+        } else {
+            let ord = compare(v, &parse_version(high)?);
+            ord == std::cmp::Ordering::Less || (close == "]" && ord == std::cmp::Ordering::Equal)
+        };
+        found |= above && below;
+        rest = &rest[end + 1..];
+    }
+    Some(found)
+}
+
+/// Enabled mods that declare they cannot run with another enabled mod (in the version
+/// installed), each pair once.
+pub fn conflicts(mods: &[ModDeps]) -> Vec<Conflict> {
+    let enabled: Vec<&ModDeps> = mods.iter().filter(|m| m.enabled).collect();
+    let mut seen = BTreeSet::new();
+    let mut found = Vec::new();
+    for m in &enabled {
+        for (id, range) in &m.breaks {
+            for other in enabled
+                .iter()
+                .filter(|o| o.file_name != m.file_name && o.provides.contains(id))
+            {
+                let hit = match other.versions.get(id) {
+                    Some(version) => in_range(range, version) == Some(true),
+                    None => range.trim() == "*" || range.trim().is_empty(),
+                };
+                let pair = if m.file_name < other.file_name {
+                    (m.file_name.clone(), other.file_name.clone())
+                } else {
+                    (other.file_name.clone(), m.file_name.clone())
+                };
+                if hit && seen.insert(pair) {
+                    found.push(Conflict {
+                        name: m.name.clone(),
+                        file_name: m.file_name.clone(),
+                        other_name: other.name.clone(),
+                        other_file_name: other.file_name.clone(),
+                    });
+                }
+            }
+        }
+    }
+    found
 }
 
 /// `"id"` or `{ "id": …, "optional": … }`.
@@ -379,7 +642,11 @@ impl QuiltRef {
 struct ModsToml {
     name: Option<String>,
     ids: Vec<String>,
+    /// Version of each id in `ids` (absent when it is a `${…}` placeholder).
+    versions: Vec<Option<String>>,
     requires: Vec<String>,
+    /// `type = "incompatible"` dependencies (NeoForge), with their version range.
+    incompatible: Vec<(String, String)>,
 }
 
 /// Just what is needed from a `mods.toml`: the `[[mods]]` ids and display name, and the
@@ -393,12 +660,20 @@ fn parse_mods_toml(toml: &str) -> ModsToml {
     }
     let mut parsed = ModsToml::default();
     let mut section = Section::Other;
-    // Current dependency: (modId, required).
-    let mut dep: Option<(Option<String>, bool)> = None;
-    let flush = |dep: &mut Option<(Option<String>, bool)>, parsed: &mut ModsToml| {
-        if let Some((Some(id), true)) = dep.take() {
-            parsed.requires.push(id);
-        }
+    // Current dependency: (modId, required, incompatible, versionRange).
+    type Dep = (Option<String>, bool, bool, String);
+    let mut dep: Option<Dep> = None;
+    let flush = |dep: &mut Option<Dep>, parsed: &mut ModsToml| match dep.take() {
+        Some((Some(id), _, true, range)) => parsed.incompatible.push((
+            id,
+            if range.is_empty() {
+                "*".to_owned()
+            } else {
+                range
+            },
+        )),
+        Some((Some(id), true, false, _)) => parsed.requires.push(id),
+        _ => {}
     };
 
     for line in toml.lines() {
@@ -408,7 +683,7 @@ fn parse_mods_toml(toml: &str) -> ModsToml {
             section = if line == "[[mods]]" {
                 Section::Mod
             } else if line.starts_with("[[dependencies.") {
-                dep = Some((None, false));
+                dep = Some((None, false, false, String::new()));
                 Section::Dependency
             } else {
                 Section::Other
@@ -422,18 +697,30 @@ fn parse_mods_toml(toml: &str) -> ModsToml {
         let value = value.trim().trim_matches('"').trim_matches('\'').trim();
         match section {
             Section::Mod => match key {
-                "modId" if !value.is_empty() => parsed.ids.push(value.to_owned()),
+                "modId" if !value.is_empty() => {
+                    parsed.ids.push(value.to_owned());
+                    parsed.versions.push(None);
+                }
+                "version" if !value.starts_with("${") => {
+                    if let Some(last) = parsed.versions.last_mut() {
+                        *last = Some(value.to_owned());
+                    }
+                }
                 "displayName" if parsed.name.is_none() && !value.starts_with("${") => {
                     parsed.name = Some(value.to_owned());
                 }
                 _ => {}
             },
             Section::Dependency => {
-                if let Some((id, required)) = dep.as_mut() {
+                if let Some((id, required, incompatible, range)) = dep.as_mut() {
                     match key {
                         "modId" => *id = Some(value.to_owned()),
                         "mandatory" => *required = value == "true",
-                        "type" => *required = value.eq_ignore_ascii_case("required"),
+                        "type" => {
+                            *required = value.eq_ignore_ascii_case("required");
+                            *incompatible = value.eq_ignore_ascii_case("incompatible");
+                        }
+                        "versionRange" => *range = value.to_owned(),
                         _ => {}
                     }
                 }
@@ -449,6 +736,83 @@ fn parse_mods_toml(toml: &str) -> ModsToml {
 mod tests {
     use super::*;
     use std::io::Write;
+
+    #[test]
+    fn checks_version_ranges() {
+        assert_eq!(in_range("*", "1.0"), Some(true));
+        assert_eq!(in_range("<0.5.0", "0.4.10+mc1.20"), Some(true));
+        assert_eq!(in_range("<0.5.0", "0.5.3"), Some(false));
+        assert_eq!(in_range(">=1.2 <2", "1.9.9"), Some(true));
+        assert_eq!(in_range("1.20.x", "1.20.4"), Some(true));
+        assert_eq!(in_range("1.20.x", "1.21"), Some(false));
+        assert_eq!(in_range("~1.2.0", "1.2.9"), Some(true));
+        assert_eq!(in_range("~1.2.0", "1.3.0"), Some(false));
+        assert_eq!(in_range("<1 || >=3", "3.1"), Some(true));
+        assert_eq!(in_range("[1.0,2.0)", "1.5"), Some(true));
+        assert_eq!(in_range("[1.0,2.0)", "2.0"), Some(false));
+        assert_eq!(in_range("(,1.5]", "1.5"), Some(true));
+        assert_eq!(in_range("[1,2),[3,4)", "3.2"), Some(true));
+        assert_eq!(in_range("<1.0", "unknown"), None);
+        // Minecraft version, dash, mod version.
+        assert_eq!(in_range("<=1.20-2.7.32", "1.20-3.1.43"), Some(false));
+        assert_eq!(in_range("<=1.20-2.7.32", "1.20-2.7.30"), Some(true));
+        assert_eq!(in_range("=1.20.1-4.5", "1.20.1-5.0"), Some(false));
+        assert_eq!(in_range("<0.5.8", "0.5.13+mc1.20.1"), Some(false));
+        assert_eq!(in_range("<1.20.1-3.8", "1.20.1-3.10"), Some(false));
+        assert_eq!(in_range("<1.0.0", "1.0.0-beta.2"), Some(true));
+    }
+
+    #[test]
+    fn finds_conflicts_in_the_installed_versions() {
+        let m = |file: &str, provides: &[(&str, &str)], breaks: &[(&str, &str)]| ModDeps {
+            file_name: file.into(),
+            name: file.trim_end_matches(".jar").into(),
+            enabled: true,
+            provides: provides.iter().map(|(id, _)| (*id).to_owned()).collect(),
+            versions: provides
+                .iter()
+                .map(|(id, v)| ((*id).to_owned(), (*v).to_owned()))
+                .collect(),
+            breaks: breaks
+                .iter()
+                .map(|(id, r)| ((*id).to_owned(), (*r).to_owned()))
+                .collect(),
+            ..Default::default()
+        };
+        let mods = vec![
+            m(
+                "optifabric.jar",
+                &[("optifabric", "1.0")],
+                &[("sodium", "*")],
+            ),
+            m("sodium.jar", &[("sodium", "0.5.3")], &[]),
+            m(
+                "old-compat.jar",
+                &[("compat", "1.0")],
+                &[("sodium", "<0.5")],
+            ),
+            m("iris.jar", &[("iris", "1.6")], &[("optifabric", "*")]),
+        ];
+        let found = conflicts(&mods);
+        let pairs: Vec<(&str, &str)> = found
+            .iter()
+            .map(|c| (c.name.as_str(), c.other_name.as_str()))
+            .collect();
+        assert_eq!(pairs, [("optifabric", "sodium"), ("iris", "optifabric")]);
+    }
+
+    #[test]
+    fn reads_incompatibilities_from_mods_toml() {
+        let parsed = parse_mods_toml(
+            "[[mods]]\nmodId=\"a\"\nversion=\"2.1\"\n[[dependencies.a]]\nmodId=\"rubidium\"\ntype=\"incompatible\"\nversionRange=\"[0.6,)\"\n",
+        );
+        assert_eq!(parsed.versions, [Some("2.1".to_owned())]);
+        assert_eq!(
+            parsed.incompatible,
+            [("rubidium".to_owned(), "[0.6,)".to_owned())]
+        );
+        assert!(parsed.requires.is_empty());
+    }
 
     fn jar(files: &[(&str, &[u8])]) -> Vec<u8> {
         let mut zip = zip::ZipWriter::new(Cursor::new(Vec::new()));

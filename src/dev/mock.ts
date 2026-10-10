@@ -394,6 +394,12 @@ export function installMocks() {
           if (list[0]?.projectId !== args.projectId) return [];
           return list.slice(1).filter((c) => c.kind === "mod" && c.enabled).map((c) => ({ name: c.title, fileName: c.fileName }));
         }
+        case "content_conflicts": {
+          const list = (content[args.instanceId as string] ?? []).filter((c) => c.kind === "mod" && c.enabled);
+          const a = list.find((c) => c.projectId === "AANobbMI");
+          const b = list.find((c) => c.projectId === "mOgUt4GM");
+          return a && b ? [{ name: a.title, fileName: a.fileName, otherName: b.title, otherFileName: b.fileName }] : [];
+        }
         case "mod_providers":
           return (args.modIds as string[]).flatMap((id) => {
             const item = (content[args.instanceId as string] ?? []).find((c) => c.title.toLowerCase().startsWith(id));

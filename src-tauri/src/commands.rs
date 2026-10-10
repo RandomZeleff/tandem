@@ -435,6 +435,16 @@ pub async fn content_dependents(
     .await
 }
 
+/// Enabled mods that cannot run together.
+#[tauri::command]
+pub async fn content_conflicts(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<deps::Conflict>> {
+    let instance = state.ctx.db.get_instance(&instance_id).await?;
+    Ok(content::conflicts(&state.ctx, &instance).await?)
+}
+
 /// The jar behind each mod id (to offer re-enabling a missing dependency).
 #[tauri::command]
 pub async fn mod_providers(
