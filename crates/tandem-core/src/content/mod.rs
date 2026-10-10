@@ -249,7 +249,9 @@ impl Plan {
     ) -> Result<()> {
         while let Some(pending) = self.queue.pop_front() {
             if self.items.len() >= MAX_PROJECTS_PER_INSTALL {
-                return Err(Error::InvalidInput("too many dependencies".into()));
+                return Err(Error::InvalidInput(
+                    "Trop de dépendances à installer".into(),
+                ));
             }
             let pinned = match &pending.version_id {
                 Some(id) => Some(modrinth::version(ctx, id).await?),
@@ -267,7 +269,7 @@ impl Plan {
             }
             let project = modrinth::project(ctx, &project_id).await?;
             let kind = ContentKind::from_modrinth(&project.project_type).ok_or_else(|| {
-                Error::InvalidInput(format!("{} cannot be installed", project.title))
+                Error::InvalidInput(format!("{} ne peut pas être installé ici", project.title))
             })?;
             let version = match pinned {
                 Some(version) => version,
@@ -289,7 +291,10 @@ impl Plan {
         let mut tasks = Vec::new();
         for item in &self.items {
             let file = item.version.primary_file().ok_or_else(|| {
-                Error::InvalidInput(format!("{} has no file", item.project.title))
+                Error::InvalidInput(format!(
+                    "{} n'a pas de fichier à télécharger",
+                    item.project.title
+                ))
             })?;
             tasks.push(DownloadTask {
                 url: file.url.clone(),
@@ -372,7 +377,7 @@ pub async fn install(
     let root = modrinth::project(ctx, project).await?;
     if known.contains(&root.id) {
         return Err(Error::InvalidInput(format!(
-            "{} is already installed",
+            "{} est déjà installé",
             root.title
         )));
     }

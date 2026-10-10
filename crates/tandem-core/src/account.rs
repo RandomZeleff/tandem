@@ -49,7 +49,7 @@ fn validate_username(username: &str) -> Result<()> {
         Ok(())
     } else {
         Err(Error::InvalidInput(
-            "username must be 3–16 characters: letters, digits or _".into(),
+            "Le pseudo doit faire 3 à 16 caractères : lettres, chiffres ou _".into(),
         ))
     }
 }

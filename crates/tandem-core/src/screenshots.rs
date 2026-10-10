@@ -88,7 +88,7 @@ pub fn path(game_dir: &Path, file_name: &str) -> Result<PathBuf> {
     let path = screenshots(game_dir).join(file_name);
     if !path.is_file() {
         return Err(Error::InvalidInput(format!(
-            "screenshot not found: {file_name}"
+            "Capture introuvable : {file_name}"
         )));
     }
     Ok(path)

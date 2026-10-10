@@ -92,11 +92,9 @@ impl PackFile {
 impl PackIndex {
     /// Game version, loader and loader version the pack needs.
     pub fn target(&self) -> Result<(String, Loader, Option<String>)> {
-        let game = self
-            .dependencies
-            .get("minecraft")
-            .cloned()
-            .ok_or_else(|| Error::InvalidInput("modpack without a Minecraft version".into()))?;
+        let game = self.dependencies.get("minecraft").cloned().ok_or_else(|| {
+            Error::InvalidInput("Ce modpack n'indique pas de version de Minecraft".into())
+        })?;
         for (key, loader) in [
             ("fabric-loader", Loader::Fabric),
             ("quilt-loader", Loader::Quilt),
@@ -146,14 +144,18 @@ pub async fn read_index(pack: &Path) -> Result<PackIndex> {
     let pack = pack.to_owned();
     blocking(move || {
         let mut archive = zip::ZipArchive::new(std::fs::File::open(&pack)?)?;
-        let mut entry = archive
-            .by_name(INDEX_FILE)
-            .map_err(|_| Error::InvalidInput(format!("{INDEX_FILE} missing: not a .mrpack")))?;
+        let mut entry = archive.by_name(INDEX_FILE).map_err(|_| {
+            Error::InvalidInput(format!(
+                "{INDEX_FILE} absent : ce n'est pas un fichier .mrpack"
+            ))
+        })?;
         let mut json = String::new();
         entry.read_to_string(&mut json)?;
         let index: PackIndex = serde_json::from_str(&json)?;
         if index.format_version != 1 || index.game != "minecraft" {
-            return Err(Error::InvalidInput("unsupported modpack format".into()));
+            return Err(Error::InvalidInput(
+                "Format de modpack non pris en charge".into(),
+            ));
         }
         Ok(index)
     })
@@ -227,24 +229,30 @@ pub async fn download(
     let project = modrinth::project(ctx, project_id).await?;
     if project.project_type != "modpack" {
         return Err(Error::InvalidInput(format!(
-            "{} is not a modpack",
+            "{} n'est pas un modpack",
             project.title
         )));
     }
     let versions = modrinth::pack_versions(ctx, &project.id, modrinth::MODPACK_LOADERS).await?;
     let index = match version_id {
         Some(id) => versions.iter().position(|v| v.id == id).ok_or_else(|| {
-            Error::InvalidInput(format!("{} has no installable version {id}", project.title))
+            Error::InvalidInput(format!(
+                "{} n'a pas de version installable {id}",
+                project.title
+            ))
         })?,
         None => default_version(&versions),
     };
     let version = versions
         .into_iter()
         .nth(index)
-        .ok_or_else(|| Error::InvalidInput(format!("{} has no version", project.title)))?;
-    let file = version
-        .primary_file()
-        .ok_or_else(|| Error::InvalidInput(format!("{} has no file", project.title)))?;
+        .ok_or_else(|| Error::InvalidInput(format!("{} n'a aucune version", project.title)))?;
+    let file = version.primary_file().ok_or_else(|| {
+        Error::InvalidInput(format!(
+            "{} n'a pas de fichier à télécharger",
+            project.title
+        ))
+    })?;
     let path = ctx
         .data
         .cache()
@@ -293,14 +301,18 @@ where
     let mut placements = Vec::new();
     let mut tasks = Vec::new();
     for file in index.files.iter().filter(|f| f.for_client()) {
-        let relative = safe_relative(&file.path)
-            .ok_or_else(|| Error::InvalidInput(format!("unsafe path in modpack: {}", file.path)))?;
+        let relative = safe_relative(&file.path).ok_or_else(|| {
+            Error::InvalidInput(format!("Chemin dangereux dans le modpack : {}", file.path))
+        })?;
         let url = file
             .downloads
             .iter()
             .find(|u| allowed_url(u))
             .ok_or_else(|| {
-                Error::InvalidInput(format!("{} has no allowed download URL", file.path))
+                Error::InvalidInput(format!(
+                    "{} n'a pas d'adresse de téléchargement autorisée",
+                    file.path
+                ))
             })?;
         let sha1 = file.hashes.sha1.to_lowercase();
         tasks.push(DownloadTask {

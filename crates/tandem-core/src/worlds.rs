@@ -114,7 +114,9 @@ fn check_world(world: &str) -> Result<()> {
     let mut components = Path::new(world).components();
     match (components.next(), components.next()) {
         (Some(Component::Normal(_)), None) => Ok(()),
-        _ => Err(Error::InvalidInput(format!("invalid world name: {world}"))),
+        _ => Err(Error::InvalidInput(format!(
+            "Nom de monde invalide : {world}"
+        ))),
     }
 }
 
@@ -221,7 +223,7 @@ pub fn backup(
     check_world(world)?;
     let source = saves(game_dir).join(world);
     if !source.join("level.dat").is_file() {
-        return Err(Error::InvalidInput(format!("world not found: {world}")));
+        return Err(Error::InvalidInput(format!("Monde introuvable : {world}")));
     }
     let dir = backups_of(data, instance_id, world);
     std::fs::create_dir_all(&dir)?;
@@ -318,7 +320,9 @@ pub fn restore(
 ) -> Result<()> {
     check_world(world)?;
     if parse_file_name(file_name).is_none() {
-        return Err(Error::InvalidInput(format!("invalid backup: {file_name}")));
+        return Err(Error::InvalidInput(format!(
+            "Sauvegarde invalide : {file_name}"
+        )));
     }
     let archive_path = backups_of(data, instance_id, world).join(file_name);
     let target = saves(game_dir).join(world);

@@ -2,63 +2,65 @@ use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("I/O error: {0}")]
+    #[error("Erreur de fichier : {0}")]
     Io(#[from] std::io::Error),
-    #[error("database error: {0}")]
+    #[error("Erreur de la base de données : {0}")]
     Database(#[from] sqlx::Error),
-    #[error("database migration failed: {0}")]
+    #[error("Mise à jour de la base de données impossible : {0}")]
     Migrate(#[from] sqlx::migrate::MigrateError),
-    #[error("JSON error: {0}")]
+    #[error("Données illisibles : {0}")]
     Json(#[from] serde_json::Error),
-    #[error("network error: {0}")]
+    #[error("Erreur réseau, vérifie ta connexion ({0})")]
     Http(#[from] reqwest::Error),
-    #[error("HTTP {status} for {url}")]
+    #[error("Le serveur a répondu {status} pour {url}")]
     HttpStatus { url: String, status: u16 },
-    #[error("checksum mismatch for {}", path.display())]
+    #[error("Fichier abîmé pendant le téléchargement : {}", path.display())]
     ChecksumMismatch { path: PathBuf },
-    #[error("archive error: {0}")]
+    #[error("Archive illisible : {0}")]
     Zip(#[from] zip::result::ZipError),
-    #[error("image error: {0}")]
+    #[error("Image illisible : {0}")]
     Image(#[from] image::ImageError),
-    #[error("could not locate the user data directory")]
+    #[error("Dossier des données introuvable")]
     NoDataDir,
-    #[error("logging setup failed: {0}")]
+    #[error("Journal impossible à créer : {0}")]
     Logging(String),
-    #[error("unknown Minecraft version: {0}")]
+    #[error("Version de Minecraft inconnue : {0}")]
     VersionNotFound(String),
-    #[error("no Java runtime `{component}` available for {platform}")]
+    #[error("Aucun Java `{component}` disponible pour {platform}")]
     JavaUnavailable { component: String, platform: String },
     #[error(
-        "this version runs through Rosetta 2, which is not installed. \
-         Install it with: softwareupdate --install-rosetta --agree-to-license"
+        "Cette version a besoin de Rosetta 2, qui n'est pas installé. \
+         Installe-le avec : softwareupdate --install-rosetta --agree-to-license"
     )]
     RosettaMissing,
-    #[error("unsupported platform: {0}")]
+    #[error("Système non pris en charge : {0}")]
     UnsupportedPlatform(String),
-    #[error("instance not found: {0}")]
+    #[error("Instance introuvable : {0}")]
     InstanceNotFound(String),
-    #[error("account not found: {0}")]
+    #[error("Compte introuvable : {0}")]
     AccountNotFound(String),
-    #[error("no active account")]
+    #[error("Aucun compte actif : ajoute un compte pour jouer")]
     NoActiveAccount,
-    #[error("{0} is not supported yet")]
+    #[error("{0} n'est pas encore pris en charge")]
     LoaderNotSupported(String),
-    #[error("{loader} is not available for Minecraft {game_version}")]
+    #[error("{loader} n'existe pas pour Minecraft {game_version}")]
     LoaderUnavailable {
         loader: String,
         game_version: String,
     },
-    #[error("installer step {processor} failed:\n{output}")]
+    #[error("Une étape de l'installateur a échoué ({processor}) :\n{output}")]
     ProcessorFailed { processor: String, output: String },
-    #[error("mods need an instance with a mod loader")]
+    #[error(
+        "Les mods ont besoin d'une instance avec un loader (Fabric, Quilt, Forge ou NeoForge)"
+    )]
     ModLoaderRequired,
-    #[error("no version of {title} is compatible with Minecraft {game_version}")]
+    #[error("Aucune version de {title} ne marche avec Minecraft {game_version}")]
     ContentUnavailable { title: String, game_version: String },
-    #[error("content not found: {0}")]
+    #[error("Contenu introuvable : {0}")]
     ContentNotFound(String),
     #[error("{0}")]
     Translation(String),
-    #[error("invalid input: {0}")]
+    #[error("{0}")]
     InvalidInput(String),
 }
 

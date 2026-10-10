@@ -79,7 +79,7 @@ impl Service {
     pub async fn set_preferences(&self, ctx: &Context, preferences: &Preferences) -> Result<()> {
         if !lang::is_supported(&preferences.locale) {
             return Err(Error::InvalidInput(format!(
-                "unknown language {}",
+                "Langue inconnue : {}",
                 preferences.locale
             )));
         }

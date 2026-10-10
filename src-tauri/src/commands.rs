@@ -101,7 +101,7 @@ pub async fn create_instance(
 pub async fn delete_instance(state: State<'_, AppState>, id: String) -> CommandResult<()> {
     if state.games.is_busy(&id) {
         return Err(CommandError::msg(
-            "stop the game before deleting this instance",
+            "Arrête le jeu avant de supprimer cette instance",
         ));
     }
     Ok(instance::delete(&state.ctx, &id).await?)
@@ -132,7 +132,7 @@ pub async fn set_instance_memory(
     memory_mb: Option<u32>,
 ) -> CommandResult<()> {
     if memory_mb.is_some_and(|mb| mb < 512) {
-        return Err(CommandError::msg("at least 512 MB of memory is needed"));
+        return Err(CommandError::msg("Il faut au moins 512 Mo de mémoire"));
     }
     Ok(state.ctx.db.set_instance_memory(&id, memory_mb).await?)
 }
@@ -162,7 +162,9 @@ pub async fn backup_world(
     world: String,
 ) -> CommandResult<Backup> {
     if state.games.is_busy(&instance_id) {
-        return Err(CommandError::msg("stop the game before backing up a world"));
+        return Err(CommandError::msg(
+            "Arrête le jeu avant de sauvegarder un monde",
+        ));
     }
     let (data, dir) = (
         state.ctx.data.clone(),
@@ -179,7 +181,9 @@ pub async fn restore_world_backup(
     file_name: String,
 ) -> CommandResult<()> {
     if state.games.is_busy(&instance_id) {
-        return Err(CommandError::msg("stop the game before restoring a world"));
+        return Err(CommandError::msg(
+            "Arrête le jeu avant de restaurer un monde",
+        ));
     }
     let (data, dir) = (
         state.ctx.data.clone(),
@@ -375,7 +379,9 @@ pub async fn update_content(
     project_ids: Option<Vec<String>>,
 ) -> CommandResult<Vec<InstalledContent>> {
     if state.games.is_busy(&instance_id) {
-        return Err(CommandError::msg("stop the game before updating content"));
+        return Err(CommandError::msg(
+            "Arrête le jeu avant de mettre à jour le contenu",
+        ));
     }
     let instance = state.ctx.db.get_instance(&instance_id).await?;
     let updated = content::update(&state.ctx, &instance, project_ids.as_deref()).await?;
@@ -459,7 +465,7 @@ pub async fn set_content_enabled(
 ) -> CommandResult<InstalledContent> {
     if state.games.is_busy(&instance_id) {
         return Err(CommandError::msg(
-            "stop the game before enabling or disabling content",
+            "Arrête le jeu avant d'activer ou de désactiver du contenu",
         ));
     }
     let item = content::set_enabled(&state.ctx, &instance_id, &project_id, enabled).await?;
@@ -475,7 +481,9 @@ pub async fn remove_content(
     project_id: String,
 ) -> CommandResult<()> {
     if state.games.is_busy(&instance_id) {
-        return Err(CommandError::msg("stop the game before removing content"));
+        return Err(CommandError::msg(
+            "Arrête le jeu avant de retirer du contenu",
+        ));
     }
     content::remove(&state.ctx, &instance_id, &project_id).await?;
     translation::refresh_later(&app, &instance_id);
@@ -564,7 +572,7 @@ pub async fn launch_instance(
 #[tauri::command]
 pub async fn install_rosetta() -> CommandResult<bool> {
     if !cfg!(target_os = "macos") {
-        return Err(CommandError::msg("Rosetta only exists on macOS"));
+        return Err(CommandError::msg("Rosetta n'existe que sur macOS"));
     }
     let script = r#"do shell script "/usr/sbin/softwareupdate --install-rosetta --agree-to-license" with administrator privileges"#;
     let output = tokio::process::Command::new("/usr/bin/osascript")
@@ -579,13 +587,13 @@ pub async fn install_rosetta() -> CommandResult<bool> {
         }
         tracing::error!(error = %stderr.trim(), "Rosetta install failed");
         return Err(CommandError::msg(format!(
-            "Rosetta installation failed: {}",
+            "L'installation de Rosetta a échoué : {}",
             stderr.trim()
         )));
     }
     if !install::rosetta_installed() {
         return Err(CommandError::msg(
-            "Rosetta is still missing after installation",
+            "Rosetta est toujours absent après l'installation",
         ));
     }
     tracing::info!("Rosetta installed");

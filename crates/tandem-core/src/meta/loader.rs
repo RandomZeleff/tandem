@@ -93,9 +93,9 @@ pub struct LoaderProfile {
 
 fn meta_url(loader: Loader, segments: &[&str]) -> Result<Url> {
     let mut url = Url::parse(loader.meta_base()?)
-        .map_err(|e| Error::InvalidInput(format!("bad meta URL: {e}")))?;
+        .map_err(|e| Error::InvalidInput(format!("Adresse invalide : {e}")))?;
     url.path_segments_mut()
-        .map_err(|()| Error::InvalidInput("bad meta URL".into()))?
+        .map_err(|()| Error::InvalidInput("Adresse invalide".into()))?
         .extend(segments);
     Ok(url)
 }
@@ -211,7 +211,7 @@ pub async fn load_profile(
     let profile: LoaderProfile = serde_json::from_slice(&bytes)?;
     if profile.inherits_from != game_version {
         return Err(Error::InvalidInput(format!(
-            "{loader} profile targets {} instead of {game_version}",
+            "Le profil {loader} vise {} au lieu de {game_version}",
             profile.inherits_from
         )));
     }

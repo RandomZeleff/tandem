@@ -93,9 +93,9 @@ where
     let mut version = meta::load_version(ctx, target.game_version).await?;
     let mut forge_install = None;
     if target.loader != Loader::Vanilla {
-        let loader_version = target
-            .loader_version
-            .ok_or_else(|| Error::InvalidInput(format!("no {} version selected", target.loader)))?;
+        let loader_version = target.loader_version.ok_or_else(|| {
+            Error::InvalidInput(format!("Aucune version de {} choisie", target.loader))
+        })?;
         let profile = match target.loader {
             Loader::Forge | Loader::NeoForge => {
                 let install =

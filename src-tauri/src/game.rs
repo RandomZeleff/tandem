@@ -158,7 +158,7 @@ pub async fn launch(app: AppHandle, ctx: Context, games: Games, id: String) -> C
     {
         let mut slots = games.lock();
         if slots.contains_key(&id) {
-            return Err(CommandError::msg("this instance is already running"));
+            return Err(CommandError::msg("Cette instance est déjà lancée"));
         }
         slots.insert(id.clone(), Slot::Preparing);
     }

@@ -243,7 +243,7 @@ pub async fn load(
 
     if profile.inherits_from != game_version {
         return Err(Error::InvalidInput(format!(
-            "{loader} {version} targets Minecraft {}",
+            "{loader} {version} est prévu pour Minecraft {}",
             profile.inherits_from
         )));
     }
@@ -259,7 +259,7 @@ pub async fn load(
 fn read_entry(archive: &mut zip::ZipArchive<std::fs::File>, name: &str) -> Result<String> {
     let mut entry = archive
         .by_name(name)
-        .map_err(|_| Error::InvalidInput(format!("{name} missing from installer")))?;
+        .map_err(|_| Error::InvalidInput(format!("{name} absent de l'installateur")))?;
     let mut text = String::new();
     entry.read_to_string(&mut text)?;
     Ok(text)
@@ -311,8 +311,9 @@ struct Variables {
 
 impl Variables {
     fn library(&self, coords: &str) -> Result<String> {
-        let path = maven_path(coords)
-            .ok_or_else(|| Error::InvalidInput(format!("bad Maven coordinates: {coords}")))?;
+        let path = maven_path(coords).ok_or_else(|| {
+            Error::InvalidInput(format!("Coordonnées Maven invalides : {coords}"))
+        })?;
         Ok(self.libraries.join(path).display().to_string())
     }
 
@@ -333,7 +334,7 @@ impl Variables {
                         Some(value) => out.push_str(value),
                         None => {
                             return Err(Error::InvalidInput(format!(
-                                "unknown installer variable {{{name}}}"
+                                "Variable inconnue dans l'installateur : {{{name}}}"
                             )))
                         }
                     }
@@ -432,9 +433,9 @@ impl ForgeInstall {
         blocking(move || {
             let mut archive = zip::ZipArchive::new(std::fs::File::open(&installer)?)?;
             for (entry, out) in bundled {
-                let mut file = archive
-                    .by_name(&entry)
-                    .map_err(|_| Error::InvalidInput(format!("{entry} missing from installer")))?;
+                let mut file = archive.by_name(&entry).map_err(|_| {
+                    Error::InvalidInput(format!("{entry} absent de l'installateur"))
+                })?;
                 if let Some(parent) = out.parent() {
                     std::fs::create_dir_all(parent)?;
                 }
@@ -459,7 +460,7 @@ fn main_class(jar: &Path) -> Result<String> {
         .lines()
         .find_map(|line| line.strip_prefix("Main-Class:"))
         .map(|class| class.trim().to_owned())
-        .ok_or_else(|| Error::InvalidInput(format!("no Main-Class in {}", jar.display())))
+        .ok_or_else(|| Error::InvalidInput(format!("Pas de Main-Class dans {}", jar.display())))
 }
 
 /// Lowercase hex SHA-1 of the files listed in `outputs` all match.

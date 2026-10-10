@@ -140,7 +140,7 @@ impl Database {
         let name = new.name.trim();
         if name.is_empty() || name.chars().count() > 64 {
             return Err(Error::InvalidInput(
-                "instance name must be 1–64 characters".into(),
+                "Le nom de l'instance doit faire 1 à 64 caractères".into(),
             ));
         }
         let base = slugify(name);

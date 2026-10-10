@@ -307,7 +307,7 @@ fn url(segments: &[&str]) -> Result<Url> {
 fn url_at(base: &str, segments: &[&str]) -> Result<Url> {
     let mut url = Url::parse(base).map_err(|e| Error::InvalidInput(e.to_string()))?;
     url.path_segments_mut()
-        .map_err(|()| Error::InvalidInput("bad API URL".into()))?
+        .map_err(|()| Error::InvalidInput("Adresse de l'API invalide".into()))?
         .extend(segments);
     Ok(url)
 }
