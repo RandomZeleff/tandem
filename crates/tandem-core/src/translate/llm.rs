@@ -333,6 +333,8 @@ pub fn system_prompt(language: &str) -> String {
          the user sends from English into {language}.\n\
          Rules:\n\
          - Reply with only a JSON object that has exactly the same keys. No comments, no code fences.\n\
+         - The keys identify the texts in the game (for example block.mod.copper_gear or a quest number): use them \
+           as hints of what each text is, but never translate or change them.\n\
          - Every token such as ⟦0⟧ stands for a game code: keep each one exactly once and unchanged, placed where the \
            grammar of {language} needs it.\n\
          - Follow the glossary strictly: it holds the official {language} names used by Minecraft and the player.\n\

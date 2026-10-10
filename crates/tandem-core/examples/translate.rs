@@ -1,6 +1,6 @@
 //! Dev tool: translate an instance the way the launcher does.
 //!
-//! cargo run -p tandem-core --example translate -- <instance-id> [locale] [max-texts] [apply]
+//! cargo run -p tandem-core --example translate -- <instance-id> [locale] [max-texts] [apply | remove]
 //!
 //! Scans and prints what there is to translate. With `max-texts` > 0, translates that
 //! many missing texts with the provider saved in the launcher's settings (defaults to
@@ -25,7 +25,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .ok_or("usage: translate <instance-id> [locale] [max-texts] [apply]")?;
     let locale = args.next().unwrap_or_else(|| "fr_fr".into());
     let max: usize = args.next().and_then(|n| n.parse().ok()).unwrap_or(0);
-    let apply = args.next().as_deref() == Some("apply");
+    let action = args.next();
+    let apply = action.as_deref() == Some("apply");
 
     let ctx = Context::init(DataDir::from_env()?).await?;
     let instance = ctx.db.get_instance(&instance_id).await?;
@@ -117,6 +118,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("report: {:?} in {:?}", report, started.elapsed());
         let tok_s = report.progress.completion_tokens as f64 / started.elapsed().as_secs_f64();
         println!("{tok_s:.1} output tokens/s");
+    }
+
+    if action.as_deref() == Some("remove") {
+        output::remove(&game_dir, &instance.game_version)?;
+        println!("removed");
+        return Ok(());
     }
 
     if apply {

@@ -293,6 +293,10 @@ impl Plan {
                 context: source.name.clone(),
                 priority: priority(source.kind, &source.units[item.unit].target, &item.key),
                 variants: Vec::new(),
+                hint: match source.units[item.unit].target {
+                    Target::Lang { .. } => item.key.clone(),
+                    _ => String::new(),
+                },
             });
         }
         jobs.sort_by(|a, b| {
@@ -307,11 +311,8 @@ impl Plan {
     pub fn author_terms(&self) -> Vec<(String, String)> {
         self.items
             .iter()
-            .filter(|i| i.state == State::Existing && i.english.split_whitespace().count() <= 4)
-            .filter(|i| {
-                let source = &self.scan.sources[i.source];
-                priority(source.kind, &source.units[i.unit].target, &i.key) == 0
-            })
+            // Short texts are names and terms (types, elements, materials) worth reusing.
+            .filter(|i| i.state == State::Existing && i.english.split_whitespace().count() <= 3)
             .filter_map(|i| {
                 let existing = self.scan.existing.get(&i.key)?;
                 (existing != &i.english && !existing.contains('%'))
@@ -521,6 +522,8 @@ pub struct Job {
     pub priority: u8,
     /// Texts that differ from `english` only by their numbers: translated along with it.
     pub variants: Vec<String>,
+    /// The text's language key (`block.cobblemon.bug_gem_block`), a hint of what it is.
+    pub hint: String,
 }
 
 impl Job {
@@ -751,10 +754,21 @@ async fn attempt(
     batch: &[Job],
 ) -> Result<Attempt> {
     let masked: Vec<mask::Masked> = batch.iter().map(Job::masked).collect();
+    // Language keys make the best ids: they tell the model what each text is.
+    let mut ids = HashSet::new();
     let texts: Vec<(String, String)> = masked
         .iter()
+        .zip(batch)
         .enumerate()
-        .map(|(i, m)| ((i + 1).to_string(), m.text.clone()))
+        .map(|(i, (m, job))| {
+            let id =
+                if !job.hint.is_empty() && job.hint.len() <= 80 && ids.insert(job.hint.as_str()) {
+                    job.hint.clone()
+                } else {
+                    format!("#{}", i + 1)
+                };
+            (id, m.text.clone())
+        })
         .collect();
     let hits = glossary.hits(&batch.iter().map(|j| j.english.as_str()).collect::<Vec<_>>());
     let user = llm::user_prompt(&batch[0].context, &hits, &texts);
@@ -824,6 +838,7 @@ pub async fn translate_html(
                 context: context.to_owned(),
                 priority: 0,
                 variants: Vec::new(),
+                hint: String::new(),
             });
         }
     }
@@ -1108,6 +1123,7 @@ mod tests {
             context: context.into(),
             priority: 0,
             variants: Vec::new(),
+            hint: String::new(),
         };
         let jobs = vec![
             job("a", "x"),

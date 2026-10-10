@@ -29,6 +29,9 @@ pub struct Manifest {
     /// Of those, the ones that replaced an original (kept in `.tandem/originals`).
     #[serde(default)]
     pub replaced: HashSet<String>,
+    /// Game language before Tandem switched it, restored when the translation is off.
+    #[serde(default)]
+    pub previous_language: Option<String>,
 }
 
 impl Manifest {
@@ -129,6 +132,12 @@ pub fn apply(
 
     let options_path = game_dir.join("options.txt");
     let options = std::fs::read_to_string(&options_path).unwrap_or_default();
+    let current_language = language_of(&options);
+    if set_language
+        && current_language.as_deref() != Some(game_locale(locale, game_version).as_str())
+    {
+        manifest.previous_language = Some(current_language.unwrap_or_else(|| "en_us".to_owned()));
+    }
     let updated = set_pack(
         &options,
         game_version,
@@ -153,18 +162,37 @@ pub fn remove(game_dir: &Path, game_version: &str) -> Result<()> {
     }
     let options_path = game_dir.join("options.txt");
     if let Ok(options) = std::fs::read_to_string(&options_path) {
-        let updated = set_pack(
+        let mut updated = set_pack(
             &options,
             game_version,
             manifest.locale.as_deref().unwrap_or("en_us"),
             false,
             false,
         );
+        // Back to the language the player had, unless they changed it since.
+        if let (Some(previous), Some(locale)) = (&manifest.previous_language, &manifest.locale) {
+            if language_of(&updated).as_deref() == Some(game_locale(locale, game_version).as_str())
+            {
+                updated = updated
+                    .lines()
+                    .map(|l| {
+                        if l.starts_with("lang:") {
+                            format!("lang:{previous}")
+                        } else {
+                            l.to_owned()
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n")
+                    + "\n";
+            }
+        }
         if updated != options {
             std::fs::write(&options_path, updated)?;
         }
     }
     manifest.locale = None;
+    manifest.previous_language = None;
     manifest.save(game_dir)
 }
 
@@ -376,6 +404,12 @@ pub fn set_pack(
     text
 }
 
+fn language_of(options: &str) -> Option<String> {
+    options
+        .lines()
+        .find_map(|l| l.strip_prefix("lang:").map(|v| v.trim().to_owned()))
+}
+
 /// Locale as the game writes it in `options.txt`: `fr_FR` up to 1.10.
 fn game_locale(locale: &str, game_version: &str) -> String {
     match (lang::minor_version(game_version), locale.split_once('_')) {
@@ -505,6 +539,7 @@ mod tests {
         assert!(!game.join("resourcepacks/tandem-translation-fr_fr").exists());
         let options = std::fs::read_to_string(game.join("options.txt")).unwrap();
         assert!(options.contains(r#"resourcePacks:["vanilla"]"#));
+        assert!(options.contains("lang:en_us"), "{options}");
         assert!(Manifest::load(game).files.is_empty());
     }
 }
