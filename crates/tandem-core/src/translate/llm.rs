@@ -128,6 +128,8 @@ pub struct Client {
     base_url: String,
     model: String,
     key: Option<String>,
+    /// Cleared once the service refuses `response_format`: answers are parsed anyway.
+    json_mode: std::sync::Arc<std::sync::atomic::AtomicBool>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -190,6 +192,7 @@ impl Client {
             base_url,
             model: config.model.trim().to_owned(),
             key: key.filter(|k| !k.trim().is_empty()),
+            json_mode: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)),
         })
     }
 
@@ -227,6 +230,21 @@ impl Client {
     /// One chat completion, asking for JSON. Local models can take minutes on a large
     /// batch, hence the long timeout.
     pub async fn complete(&self, system: &str, user: &str, json: bool) -> Result<Completion> {
+        use std::sync::atomic::Ordering;
+        let json = json && self.json_mode.load(Ordering::Relaxed);
+        match self.send(system, user, json).await {
+            // Some services reject `response_format`: ask again without it.
+            Err(Error::Translation(message))
+                if json && message.starts_with("Le service a répondu 400") =>
+            {
+                self.json_mode.store(false, Ordering::Relaxed);
+                self.send(system, user, false).await
+            }
+            other => other,
+        }
+    }
+
+    async fn send(&self, system: &str, user: &str, json: bool) -> Result<Completion> {
         if self.model.is_empty() {
             return Err(Error::Translation(
                 "Choisis un modèle dans les réglages de traduction.".into(),
