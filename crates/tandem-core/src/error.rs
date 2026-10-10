@@ -12,6 +12,8 @@ pub enum Error {
     Json(#[from] serde_json::Error),
     #[error("Erreur réseau, vérifie ta connexion ({0})")]
     Http(#[from] reqwest::Error),
+    #[error("Pas de connexion à Internet pour l'instant")]
+    Offline,
     #[error("Le serveur a répondu {status} pour {url}")]
     HttpStatus { url: String, status: u16 },
     #[error("Fichier abîmé pendant le téléchargement : {}", path.display())]
@@ -62,6 +64,17 @@ pub enum Error {
     Translation(String),
     #[error("{0}")]
     InvalidInput(String),
+}
+
+impl Error {
+    /// The network itself failed (no route, DNS, timeout), as opposed to a server answer.
+    pub fn is_network(&self) -> bool {
+        match self {
+            Error::Offline => true,
+            Error::Http(err) => err.is_connect() || err.is_timeout() || err.is_request(),
+            _ => false,
+        }
+    }
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;

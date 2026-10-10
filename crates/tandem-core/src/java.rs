@@ -113,7 +113,13 @@ pub async fn plan_runtime(
     let runtime_dir = ctx.data.java().join(folder);
     let java_executable = java_executable(&runtime_dir);
 
-    let manifest = match fetch_runtime_manifest(ctx, component, env).await {
+    let request = fetch_runtime_manifest(ctx, component, env);
+    let fetched = if java_executable.is_file() {
+        ctx.optional(request).await
+    } else {
+        request.await
+    };
+    let manifest = match fetched {
         Ok(manifest) => manifest,
         Err(err) if java_executable.is_file() => {
             tracing::warn!(error = %err, component, "runtime manifest unreachable, using installed runtime");

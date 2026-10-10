@@ -69,7 +69,13 @@ impl AssetObject {
 /// Fetches the version manifest, caching it so the launcher still works offline.
 pub async fn fetch_manifest(ctx: &Context) -> Result<VersionManifest> {
     let cache = ctx.data.cache().join("version_manifest_v2.json");
-    match fetch_bytes(&ctx.http, VERSION_MANIFEST_URL, None).await {
+    let request = fetch_bytes(&ctx.http, VERSION_MANIFEST_URL, None);
+    let fetched = if tokio::fs::try_exists(&cache).await.unwrap_or(false) {
+        ctx.optional(request).await
+    } else {
+        request.await
+    };
+    match fetched {
         Ok(bytes) => {
             let manifest = serde_json::from_slice(&bytes)?;
             tokio::fs::write(&cache, &bytes).await?;
