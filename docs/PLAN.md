@@ -149,12 +149,14 @@ Choix tranchés :
 ### 6a — Le tunnel
 - [x] Détection d'un monde ouvert en LAN (écoute multicast `224.0.2.60:4445`)
 - [x] Codes d'invitation courts (`7K2P-QX9M`), publiés sur le relais pkarr public d'iroh, sans serveur à nous
-- [ ] Session hôte : publie le code, accepte les invités, relaie chaque connexion du jeu vers le monde LAN
-- [ ] Session invité : résout le code, se connecte, faux serveur local + annonce LAN
-- [ ] Rejoindre en un clic : l'invité choisit une instance, Tandem lance le jeu directement sur la partie
-- [ ] Indicateurs : ping, liaison directe ou par relais ; arrivées et départs ; exclure un invité
-- [ ] Avertissement si les instances diffèrent (version, loader, mods)
-- [ ] Page « Jouer à deux » (inviter / rejoindre), messages clairs (compte Microsoft requis, monde pas encore ouvert, code inconnu)
+- [x] Session hôte : publie le code, accepte les invités, relaie chaque connexion du jeu vers le monde LAN
+- [x] Session invité : résout le code, se connecte, faux serveur local + annonce LAN
+- [x] Rejoindre en un clic : l'invité choisit une instance, Tandem lance le jeu directement sur la partie
+- [x] Indicateurs : ping, liaison directe ou par relais ; arrivées et départs ; exclure un invité
+- [x] Avertissement si les instances diffèrent (version, loader, mods)
+- [x] Page « Jouer à deux » (inviter / rejoindre), messages clairs (compte Microsoft requis, monde pas encore ouvert, code inconnu)
+
+- [ ] **Test réel à deux** (deux PC, deux réseaux, deux comptes Microsoft) : Raphaël + un ami
 
 ### 6b — Ensuite
 - [ ] Synchroniser les mods de l'invité sur ceux de l'hôte (Modrinth d'abord, sinon envoyés par l'hôte)
@@ -308,4 +310,8 @@ Choix tranchés :
 - Prochaine étape : au choix de Raphaël, publier la v0.1 (tag `v0.1.0` → brouillon de Release) ou commencer la Phase 6 (jeu à deux sans serveur).
 - Phase 6 commencée puis **mise en pause à la demande de Raphaël pour un cadrage dédié** (ampleur de la feature). Fait : preuve de concept iroh 1.3 (code court publié sur le relais pkarr public d'iroh, résolu en 0,2 s, connexion en 0,7 s, chemin direct choisi), briques du moteur `duo` compilées et testées mais pas encore branchées : codes d'invitation (`XXXX-XXXX`, 40 bits, Crockford), détection et annonce des mondes LAN (224.0.2.60:4445), protocole hôte/invité, comparaison des instances. Pas encore écrit : sessions hôte et invité, interface, rejoindre automatiquement au lancement.
 - Prochaine étape : discussion de cadrage de la Phase 6 avec Raphaël avant de continuer.
+- Phase 6a (tunnel) faite : sessions hôte et invité (`duo::host`, `duo::guest`), page « Jouer à deux » (inviter / rejoindre, code `XXXX-XXXX`, étapes de l'hôte cochées en direct, invités avec ping et liaison directe ou relais, exclure, écart d'instances signalé, compte Microsoft exigé), point doré dans la barre latérale pendant une session, et lancement qui rejoint directement la partie (`--quickPlayMultiplayer` en 1.20+, `--server`/`--port` avant).
+- Vérifié sur ce PC : exemple `duo selftest` (vrai multicast LAN, code résolu sur le relais pkarr, ping de la liste des serveurs à travers le tunnel en 0,15 ms, refus d'un code inconnu, fin de session signalée) ; vrais jeux lancés sur un faux monde : Fabulously Optimized 1.21.4 (quickPlay) et Create Forge 1.19.2 (`--server`) se connectent tout seuls. Page testée dans l'aperçu (backend simulé).
+- Pas vérifié : une vraie partie entre deux PC sur deux réseaux (hole punching réel, relais, connexion authentifiée au monde LAN).
+- Prochaine étape : test réel par Raphaël et un ami, puis 6b (synchroniser les mods).
 
