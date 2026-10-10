@@ -130,7 +130,7 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - [x] Changement de version d'une instance (jeu et/ou loader) avec vérification des mods
 - [x] Datapacks par monde (Modrinth)
 - [x] Détection des incompatibilités entre mods (déclarées dans les jars et sur Modrinth)
-- [ ] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte
+- [~] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte — moteur fait (`content::curseforge`, testé sans clé), reste : commande Tauri, champ de clé dans Réglages, import unifié .mrpack/.zip, panneau « fichiers à télécharger à la main »
 - [ ] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel)
 - [ ] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne
 
@@ -271,3 +271,11 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - Vérifié dans le navigateur (backend simulé) : tous les onglets, visionneuse, liens internes, installation, mise à jour, instance Vanilla, aucune version compatible, projet inexistant, retour arrière, largeur 1100 px ; vraie description de Prominence II rendue dans l'aperçu. Vu dans la vraie fenêtre (`tauri dev`) : fiche de Prominence II avec le vrai backend.
 - Pas vérifié dans la vraie fenêtre : ouverture des liens externes (plugin opener), installation depuis la fiche, galerie.
 - Prochaine étape : discussion de conception de la traduction (Phase 5), avec la description d'une fiche comme premier usage.
+
+### 2026-10-10 (Windows)
+- Mandat de Raphaël : tout faire jusqu'au multijoueur exclu, en autonomie, sans publier de build. Feuille de route ajoutée au plan (Phase 4.7).
+- Phase 5 terminée (D33) : moteur `translate` (sources, masquage des codes, glossaire vanilla + termes des auteurs + joueur, lots par mod avec clé comme indice, cache SQLite par texte, pack généré + quêtes FTB en place avec originaux, manifeste réversible, langue du jeu restaurée), services compatibles OpenAI, clé dans le coffre (`keyring`), onglet Traduction, réglages, traduction des descriptions. Testé avec Ollama qwen2.5:7b sur RTX 4060 (~45 tokens/s) : 400 textes de Cobblemon traduits et chargés en jeu (pack reconnu compatible).
+- Phase 4.7 : erreurs en français ; mise à jour de modpack avec retour arrière (testé sur Fabulously Optimized 6.3.0 → 6.5.0 → retour → 6.5.0, jeu lancé) ; onglet Réglages d'instance (nom, icône, duplication, Java détectés, arguments JVM, fenêtre) ; changement de version d'instance (testé FO 1.21.1 → 1.21.4 : 44 mods mis à jour, 2 désactivés ; le jeu plante ensuite à cause de la config de Controlify, d'où l'option « garder une copie ») ; datapacks par monde ; incompatibilités entre mods (aucune fausse alerte sur 3 gros packs) ; moteur d'import CurseForge.
+- Pas vérifié dans la vraie fenêtre Tauri : la plupart des écrans ajoutés (testés dans l'aperçu navigateur avec le backend simulé) ; liens externes (opener).
+- Prochaine étape : finir l'import CurseForge (commande, clé dans Réglages, import unifié, panneau téléchargements manuels), puis import d'instances d'autres launchers, puis passe finale (audit UI, perfs, hors ligne). Ne pas commencer le multijoueur.
+
