@@ -76,6 +76,10 @@ pub async fn watch(world: watch::Sender<Option<LanWorld>>) -> Result<()> {
                 let Some(found) = parse(&String::from_utf8_lossy(&buffer[..len])) else {
                     continue;
                 };
+                // A world Tandem relays for a guest on this computer: not ours.
+                if found.motd.contains(super::RELAYED_MARK) {
+                    continue;
+                }
                 let local = match checked {
                     Some((port, local)) if port == found.port => local,
                     _ => {

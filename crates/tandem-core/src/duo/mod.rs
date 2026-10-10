@@ -3,6 +3,8 @@
 //! punching works, through iroh's relays otherwise) to the guest, whose game sees it as
 //! a LAN world of its own network. No mod, every version and loader.
 
+pub mod guest;
+pub mod host;
 pub mod invite;
 pub mod lan;
 pub mod protocol;
@@ -10,8 +12,11 @@ pub mod protocol;
 use std::collections::HashSet;
 use std::path::Path;
 
-use iroh::endpoint::Connection;
+use iroh::endpoint::{presets, Connection, RecvStream, SendStream, VarInt};
+use iroh::Endpoint;
 use serde::Serialize;
+use tokio::io::AsyncWriteExt;
+use tokio::net::TcpStream;
 
 use crate::context::Context;
 use crate::error::{Error, Result};
@@ -21,8 +26,46 @@ use protocol::{InstanceSummary, ModRef};
 /// iroh application protocol of Tandem's sessions.
 pub const ALPN: &[u8] = b"tandem/duo/1";
 
+/// Marks the worlds Tandem announces on a guest's network, so a host on the same network
+/// (tests on one computer) never takes them for its own.
+pub(crate) const RELAYED_MARK: &str = "(via Tandem)";
+
+/// Why a host closed a guest's connection.
+pub(crate) const CLOSE_HOST_LEFT: VarInt = VarInt::from_u32(1);
+pub(crate) const CLOSE_KICKED: VarInt = VarInt::from_u32(2);
+pub(crate) const CLOSE_REFUSED: VarInt = VarInt::from_u32(3);
+
 pub(crate) fn fail(err: impl std::fmt::Display) -> Error {
     Error::Duo(err.to_string())
+}
+
+async fn bind_endpoint(accept: bool) -> Result<Endpoint> {
+    let builder = Endpoint::builder(presets::N0);
+    let builder = if accept {
+        builder.alpns(vec![ALPN.to_vec()])
+    } else {
+        builder
+    };
+    builder.bind().await.map_err(|e| {
+        fail(format!(
+            "impossible d'ouvrir la connexion pair à pair ({e})"
+        ))
+    })
+}
+
+/// Copies a game TCP connection both ways over a QUIC stream until either side closes.
+async fn pipe(mut send: SendStream, mut recv: RecvStream, tcp: TcpStream) {
+    let _ = tcp.set_nodelay(true);
+    let (mut tcp_read, mut tcp_write) = tcp.into_split();
+    let upstream = async {
+        let _ = tokio::io::copy(&mut tcp_read, &mut send).await;
+        let _ = send.finish();
+    };
+    let downstream = async {
+        let _ = tokio::io::copy(&mut recv, &mut tcp_write).await;
+        let _ = tcp_write.shutdown().await;
+    };
+    tokio::join!(upstream, downstream);
 }
 
 /// How the two players are linked right now.
