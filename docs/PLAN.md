@@ -30,13 +30,14 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 ## Phase 2 — Comptes
 
-> En pause (2026-10-09) : attend la réponse de Mojang à la demande d'App ID (D9). On avance sur les autres phases en attendant ; pas de build distribuable avant (D31).
+> App ID approuvé par Mojang le 2026-10-10 ; connexion vérifiée par Raphaël avec son compte (jeu lancé). Décision D36.
 
-- [ ] OAuth Microsoft (auth code + loopback ou device code)
-- [ ] Chaîne Xbox Live → XSTS → Minecraft Services → profil
-- [ ] Refresh token automatique, stockage sécurisé (keyring Windows)
-- [ ] Multi-comptes, switch en un clic, avatars (skins)
-- [ ] Gestion des erreurs XSTS (compte enfant, pas de Xbox, pas de jeu possédé)
+- [x] OAuth Microsoft (auth code + PKCE, retour sur `http://localhost:<port>`)
+- [x] Chaîne Xbox Live → XSTS → Minecraft Services → profil (+ vérification de possession)
+- [x] Refresh token automatique, stockage sécurisé (coffre du système, jetons découpés)
+- [x] Multi-comptes, switch en un clic, avatars (tête du vrai skin)
+- [x] Gestion des erreurs XSTS (compte enfant, pas de Xbox, pas de jeu possédé)
+- [x] Fenêtre « Comptes » (connexion pas à pas, hors ligne après possession)
 
 ## Phase 3 — Loaders & contenu
 
@@ -286,3 +287,7 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - Passe finale de la Phase 4.7 : voir [AUDIT-UI.md](AUDIT-UI.md#passe-finale--2026-10-10-fin-de-la-phase-47). Corrigé : fichiers non suivis invisibles dans Contenu (154 mods cachés sur DawnCraft), filtre du contenu, attente de 30 s au lancement sur un réseau sans Internet (→ 5,7 s), messages d'erreur réseau, mise en page à 1100 px.
 - Phase 4.7 terminée.
 - Prochaine étape : Phase 2, connexion Microsoft (OAuth, Xbox Live → XSTS → Minecraft, jetons dans le coffre, plusieurs comptes).
+- Phase 2 (connexion Microsoft, D36) : navigateur + PKCE avec retour sur `localhost`, Xbox Live → XSTS → Minecraft, vérification de possession, jetons dans le coffre (découpés en morceaux, Windows limite un secret à 2,5 Ko), renouvellement avant le lancement, tête du vrai skin, fenêtre « Comptes » et carte de la barre latérale refaites, comptes hors ligne seulement après un compte Microsoft. **Testé par Raphaël avec son vrai compte : connexion OK, jeu lancé.**
+- Notes de la v0.1 complétées (section Comptes, traduction, imports). Rien de publié (D31 : la Phase 2 était la condition, la publication attend le feu vert de Raphaël).
+- Prochaine étape : au choix de Raphaël, publier la v0.1 (tag `v0.1.0` → brouillon de Release) ou commencer la Phase 6 (jeu à deux sans serveur).
+
