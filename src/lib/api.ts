@@ -347,6 +347,26 @@ export interface GlossaryTerm {
   instanceId: string;
 }
 
+/** What moving an instance to another version does to its content. */
+export interface RetargetPlan {
+  loaderVersion: string | null;
+  kept: number;
+  updated: { title: string; from: string; to: string }[];
+  /** Disabled: no version for the target. */
+  unavailable: string[];
+  /** Jar files added by hand. */
+  unknown: string[];
+  gameVersionChanges: boolean;
+  leavesModpack: boolean;
+  worldsBackedUp: number;
+}
+
+export interface RetargetTarget {
+  gameVersion: string;
+  loader: Loader;
+  loaderVersion: string | null;
+}
+
 /** What a modpack update did. */
 export interface PackUpdateReport {
   added: number;
@@ -489,6 +509,9 @@ export const api = {
   setInstanceIcon: (id: string, image: string | null, block: number | null) =>
     invoke<Instance>("set_instance_icon", { id, image, block }),
   duplicateInstance: (id: string, name: string) => invoke<Instance>("duplicate_instance", { id, name }),
+  planVersionChange: (id: string, target: RetargetTarget) => invoke<RetargetPlan>("plan_version_change", { id, target }),
+  changeInstanceVersion: (id: string, target: RetargetTarget) =>
+    invoke<RetargetPlan>("change_instance_version", { id, target }),
   instanceJava: (id: string) => invoke<{ required: number; installs: JavaInstall[] }>("instance_java", { id }),
   createInstance: (instance: NewInstance) => invoke<Instance>("create_instance", { instance }),
   deleteInstance: (id: string) => invoke<void>("delete_instance", { id }),

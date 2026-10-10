@@ -68,26 +68,13 @@ pub struct NewInstance {
 /// Creates an instance and its folder, pinning the loader version so it never
 /// changes under the player's feet.
 pub async fn create(ctx: &Context, mut new: NewInstance) -> Result<Instance> {
-    new.loader_version = match new.loader {
-        Loader::Vanilla => None,
-        loader => {
-            let available = loader::list_versions(ctx, loader, &new.game_version).await?;
-            let chosen = match new.loader_version.take() {
-                Some(v) => available.into_iter().find(|a| a.version == v),
-                None => available
-                    .iter()
-                    .find(|a| a.recommended)
-                    .or_else(|| available.iter().find(|a| a.stable))
-                    .or(available.first())
-                    .cloned(),
-            };
-            let chosen = chosen.ok_or_else(|| Error::LoaderUnavailable {
-                loader: loader.to_string(),
-                game_version: new.game_version.clone(),
-            })?;
-            Some(chosen.version)
-        }
-    };
+    new.loader_version = resolve_loader_version(
+        ctx,
+        new.loader,
+        &new.game_version,
+        new.loader_version.take(),
+    )
+    .await?;
     let created = ctx.db.create_instance(&new).await?;
     tokio::fs::create_dir_all(ctx.data.instance_dir(&created.id)).await?;
     tracing::info!(
@@ -98,6 +85,34 @@ pub async fn create(ctx: &Context, mut new: NewInstance) -> Result<Instance> {
         "instance created"
     );
     Ok(created)
+}
+
+/// The loader version to pin: `wanted` if it exists for the game version, else the
+/// recommended, else the latest stable one. `None` for vanilla.
+pub async fn resolve_loader_version(
+    ctx: &Context,
+    loader: Loader,
+    game_version: &str,
+    wanted: Option<String>,
+) -> Result<Option<String>> {
+    if loader == Loader::Vanilla {
+        return Ok(None);
+    }
+    let available = loader::list_versions(ctx, loader, game_version).await?;
+    let chosen = match wanted {
+        Some(v) => available.into_iter().find(|a| a.version == v),
+        None => available
+            .iter()
+            .find(|a| a.recommended)
+            .or_else(|| available.iter().find(|a| a.stable))
+            .or(available.first())
+            .cloned(),
+    };
+    let chosen = chosen.ok_or_else(|| Error::LoaderUnavailable {
+        loader: loader.to_string(),
+        game_version: game_version.to_owned(),
+    })?;
+    Ok(Some(chosen.version))
 }
 
 /// Saves the settings the player edits (name, Java, JVM arguments, window size).
@@ -452,6 +467,15 @@ impl Database {
         .bind(id)
         .execute(self.pool())
         .await?;
+        Ok(())
+    }
+
+    /// Forgets the modpack an instance came from (it no longer follows its updates).
+    pub async fn clear_instance_pack(&self, id: &str) -> Result<()> {
+        sqlx::query("UPDATE instances SET pack_project_id = NULL, pack_version_id = NULL, pack_version = NULL WHERE id = ?")
+            .bind(id)
+            .execute(self.pool())
+            .await?;
         Ok(())
     }
 

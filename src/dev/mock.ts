@@ -413,6 +413,30 @@ export function installMocks() {
           content[copy.id] = (content[source.id] ?? []).map((c) => ({ ...c }));
           return copy;
         }
+        case "plan_version_change": {
+          await new Promise((r) => setTimeout(r, 500));
+          const target = args.target as { gameVersion: string; loader: Loader };
+          const instance = instances.find((i) => i.id === args.id)!;
+          const mods = (content[instance.id] ?? []).filter((c) => c.kind === "mod");
+          const sameFamily = target.loader === instance.loader || (target.loader === "quilt" && instance.loader === "fabric");
+          return {
+            loaderVersion: target.loader === "vanilla" ? null : "0.19.5",
+            kept: sameFamily ? 1 : 0,
+            updated: sameFamily ? mods.slice(1).map((m) => ({ title: m.title, from: m.versionNumber, to: `2.0.0+${target.gameVersion}` })) : [],
+            unavailable: sameFamily ? [] : mods.map((m) => m.title),
+            unknown: ["handmade-mod-1.0.jar"],
+            gameVersionChanges: target.gameVersion !== instance.gameVersion,
+            leavesModpack: !!instance.packProjectId,
+            worldsBackedUp: 0,
+          };
+        }
+        case "change_instance_version": {
+          await new Promise((r) => setTimeout(r, 900));
+          const target = args.target as { gameVersion: string; loader: Loader; loaderVersion: string | null };
+          const instance = instances.find((i) => i.id === args.id)!;
+          Object.assign(instance, { gameVersion: target.gameVersion, loader: target.loader, loaderVersion: target.loaderVersion, packProjectId: null, packVersionId: null, packVersion: null });
+          return { loaderVersion: target.loaderVersion, kept: 1, updated: [{ title: "Sodium", from: "1.0", to: "2.0" }], unavailable: [], unknown: [], gameVersionChanges: true, leavesModpack: false, worldsBackedUp: 2 };
+        }
         case "instance_java":
           await new Promise((r) => setTimeout(r, 200));
           return {

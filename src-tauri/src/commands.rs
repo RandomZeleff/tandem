@@ -579,6 +579,40 @@ pub async fn instance_java(state: State<'_, AppState>, id: String) -> CommandRes
     Ok(JavaInfo { required, installs })
 }
 
+/// What moving an instance to another version would do to its content.
+#[tauri::command]
+pub async fn plan_version_change(
+    state: State<'_, AppState>,
+    id: String,
+    target: content::retarget::Target,
+) -> CommandResult<content::retarget::RetargetPlan> {
+    let instance = state.ctx.db.get_instance(&id).await?;
+    Ok(content::retarget::plan(&state.ctx, &instance, &target).await?)
+}
+
+#[tauri::command]
+pub async fn change_instance_version(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    target: content::retarget::Target,
+) -> CommandResult<content::retarget::RetargetPlan> {
+    if !state.games.begin(&id) {
+        return Err(CommandError::msg(
+            "Arrête le jeu avant de changer de version",
+        ));
+    }
+    let result = async {
+        let instance = state.ctx.db.get_instance(&id).await?;
+        content::retarget::apply(&state.ctx, &instance, &target).await
+    }
+    .await;
+    state.games.end(&id);
+    let _ = app.emit(modpack::INSTANCES_CHANGED_EVENT, ());
+    translation::refresh_later(&app, &id);
+    Ok(result?)
+}
+
 /// Newer versions of the instance's modpack, newest first.
 #[tauri::command]
 pub async fn modpack_updates(

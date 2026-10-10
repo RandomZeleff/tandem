@@ -9,6 +9,7 @@ pub mod mrpack;
 pub mod pack_update;
 pub mod perf;
 pub mod project;
+pub mod retarget;
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;

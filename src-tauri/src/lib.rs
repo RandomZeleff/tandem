@@ -132,6 +132,8 @@ pub fn run() {
             commands::install_modpack,
             commands::modpack_versions,
             commands::modpack_updates,
+            commands::plan_version_change,
+            commands::change_instance_version,
             commands::update_instance_settings,
             commands::set_instance_icon,
             commands::duplicate_instance,

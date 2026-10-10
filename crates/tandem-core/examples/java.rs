@@ -12,8 +12,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = std::time::Instant::now();
     let found = java_detect::installed(&data);
     for java in &found {
-        let origin = if java.managed { "Tandem" } else { java.vendor.as_deref().unwrap_or("?") };
-        println!("Java {:>2}  {:<12} {:<22} {}", java.major, java.version, origin, java.path);
+        let origin = if java.managed {
+            "Tandem"
+        } else {
+            java.vendor.as_deref().unwrap_or("?")
+        };
+        println!(
+            "Java {:>2}  {:<12} {:<22} {}",
+            java.major, java.version, origin, java.path
+        );
     }
     println!("{} found in {:?}", found.len(), started.elapsed());
     Ok(())

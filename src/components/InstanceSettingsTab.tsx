@@ -12,6 +12,7 @@ import InstanceSlot from "./InstanceSlot";
 import { PackRollback } from "./PackUpdate";
 import { BlockSlot, Icon, LoaderTag } from "./pixel";
 import Select from "./Select";
+import VersionChangeDialog from "./VersionChangeDialog";
 
 const WINDOW_SIZES: [number, number][] = [
   [854, 480],
@@ -29,6 +30,7 @@ const longDate = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
 export default function InstanceSettingsTab(props: { instance: Instance; locked: boolean }) {
   const [error, setError] = createSignal<string | null>(null);
   const [duplicating, setDuplicating] = createSignal(false);
+  const [changingVersion, setChangingVersion] = createSignal(false);
 
   /** Saves the editable settings with one field changed. */
   async function save(change: Partial<InstanceSettings>, message?: string) {
@@ -72,7 +74,12 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
           <Section title="Informations">
             <dl class="grid grid-cols-[auto_1fr] gap-x-8 gap-y-2.5 text-sm">
               <dt class="text-muted">Version</dt>
-              <dd>Minecraft {props.instance.gameVersion}</dd>
+              <dd class="flex flex-wrap items-center gap-x-2">
+                Minecraft {props.instance.gameVersion}
+                <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.locked} onClick={() => setChangingVersion(true)}>
+                  Changer…
+                </button>
+              </dd>
               <dt class="text-muted">Loader</dt>
               <dd>
                 <LoaderTag loader={props.instance.loader} />
@@ -113,6 +120,9 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
         </Section>
       </div>
 
+      <Show when={changingVersion()}>
+        <VersionChangeDialog instance={props.instance} onClose={() => setChangingVersion(false)} />
+      </Show>
       <Show when={duplicating()}>
         <DuplicateDialog instance={props.instance} onClose={() => setDuplicating(false)} />
       </Show>
