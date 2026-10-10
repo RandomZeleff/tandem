@@ -96,3 +96,26 @@ Audit technique de l'interface (`src/`), écran par écran, avant la v0.1. Lectu
 - 2026-10-09 (D27) : P1 5 (historique de navigation) traité. Tous les P1 sont traités.
 - 2026-10-09 (D28) : P2 7, 8, 10, 13, 14, 16 et 17 traités. Tous les P1 et P2 sont traités ; restent les P3 (18 en partie : animations coupées si mouvement réduit).
 - 2026-10-09 : P3 18 (mouvement réduit), 19 (`Index`) et 20 (raccourcis) traités. Audit entièrement traité.
+
+## Passe finale — 2026-10-10 (fin de la Phase 4.7)
+
+Écrans ajoutés depuis le premier audit : fiche de contenu, onglet Traduction, Réglages d'instance, changement de version, mise à jour de modpack, datapacks, import CurseForge, import depuis d'autres launchers. Vérifiés dans l'aperçu (backend simulé) à 1280 et 1100 px, avec des contrôles automatiques sur chaque page, onglet et dialogue : débordement horizontal, libellés de boutons coupés sur deux lignes, boutons sans nom accessible, éléments natifs (`select`, cases), textes restés en anglais, textes de moins de 11 px.
+
+Trouvé et corrigé :
+- **Contenu invisible** : l'onglet Contenu ne montrait que les fichiers reconnus sur Modrinth. DawnCraft importé (CurseForge) en cachait 154 sur 316, Prominence II installé depuis Modrinth 94 (packs de ressources du modpack, mods hors Modrinth). Ils apparaissent maintenant comme « fichier local » (nom lu dans le jar), avec activer/désactiver et retirer (annulable).
+- **Pas de recherche dans le contenu** : champ « Filtrer » à partir de 15 éléments (nom ou fichier).
+- En-tête de la page Instances : les 3 boutons se coupaient sur deux lignes à 1100 px ; ils passent sous le titre.
+- Réglages d'instance : listes Mémoire et Fenêtre de même largeur et même taille de texte.
+- Traduction : le bouton compte les textes distincts (un texte répété n'est traduit qu'une fois), ce qui ne collait pas avec « à traduire » : c'est dit.
+- Erreurs réseau : plus de jargon (« error sending request for url … ») ; un message clair, le détail va dans le journal.
+
+Mesures (build release, Windows, données de test avec 7 instances dont 3 gros packs) :
+- Démarrage à chaud jusqu'à l'interface prête : ≈ 235-240 ms (616 ms au tout premier lancement). Inchangé malgré l'interface plus riche (JS chargé au démarrage : 28 + 225 Ko minifiés).
+- Mémoire propre au launcher au repos : ≈ 11 Mo (processus principal) + ≈ 32 Mo (page) en privé ; les processus de base de WebView2 s'y ajoutent (partagés ici avec `tauri dev`, non mesurables seuls).
+- Onglet Contenu à 563 éléments : ≈ 100 ms jusqu'à l'affichage complet, 14 ms pour activer/désactiver un mod (pas de virtualisation nécessaire).
+
+Hors ligne :
+- Lancer une instance déjà installée sans réseau marche pour Fabric, Forge et NeoForge (préparation ≈ 4,5 s, tout vient du cache).
+- Réseau « connecté mais sans Internet » : la préparation attendait 30 s (deux requêtes facultatives × 15 s de délai de connexion). Maintenant ≈ 5,7 s : les requêtes qui ont une copie locale abandonnent après 5 s, et après un échec réseau elles sont sautées pendant 2 minutes. Les vérifications de mises à jour en arrière-plan sont aussi sautées pendant ce temps au lieu d'afficher une erreur.
+
+Reste à voir dans la vraie fenêtre (pas pilotable par Claude ici) : liens externes, coupure Wi-Fi pendant une installation, réduction du launcher au lancement du jeu.

@@ -132,7 +132,7 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - [x] Détection des incompatibilités entre mods (déclarées dans les jars et sur Modrinth)
 - [x] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte, sinon téléchargés à la main et repris dans Téléchargements — D34
 - [x] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel, ou dossier choisi) — D35
-- [ ] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne
+- [x] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne — [AUDIT-UI.md](AUDIT-UI.md#passe-finale--2026-10-10-fin-de-la-phase-47)
 
 ## Phase 6 — Multijoueur P2P sans serveur
 
@@ -279,3 +279,10 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - Pas vérifié dans la vraie fenêtre Tauri : la plupart des écrans ajoutés (testés dans l'aperçu navigateur avec le backend simulé) ; liens externes (opener).
 - Prochaine étape : finir l'import CurseForge (commande, clé dans Réglages, import unifié, panneau téléchargements manuels), puis import d'instances d'autres launchers, puis passe finale (audit UI, perfs, hors ligne). Ne pas commencer le multijoueur.
 
+### 2026-10-10 (Windows, suite)
+- Import CurseForge fini (D34) : un seul bouton « Importer un modpack » (.mrpack ou .zip reconnu à son contenu), clé du joueur vérifiée puis rangée dans le coffre (dialogue au premier import, ou Réglages), panneau « fichiers à télécharger à la main » qui reprend tout seul les fichiers du dossier Téléchargements. Pas de vraie clé CurseForge pour tester un import réel : parcours testé avec le backend simulé, refus d'une clé invalide vérifié sur l'API.
+- Import depuis d'autres launchers (D35) : Modrinth App, Prism / PolyMC, app CurseForge, launcher officiel, ou dossier choisi. Testé sur les vraies instances du PC : DawnCraft (CurseForge, Forge 1.18.2, 1,1 Go en 16 s, jeu jusqu'au menu) et Prominence II (Modrinth App, 2,5 Go en 16 s, modpack d'origine 4.1.2 repris).
+- Mojang a approuvé l'App ID : la Phase 2 est débloquée.
+- Passe finale de la Phase 4.7 : voir [AUDIT-UI.md](AUDIT-UI.md#passe-finale--2026-10-10-fin-de-la-phase-47). Corrigé : fichiers non suivis invisibles dans Contenu (154 mods cachés sur DawnCraft), filtre du contenu, attente de 30 s au lancement sur un réseau sans Internet (→ 5,7 s), messages d'erreur réseau, mise en page à 1100 px.
+- Phase 4.7 terminée.
+- Prochaine étape : Phase 2, connexion Microsoft (OAuth, Xbox Live → XSTS → Minecraft, jetons dans le coffre, plusieurs comptes).
