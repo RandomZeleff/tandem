@@ -246,3 +246,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Mesuré (preuve de concept, iroh 1.3, deux points sur un même PC) : code résolu en 0,2 s, connexion en 0,7 s, chemin direct choisi automatiquement.
 - Statut : validé (périmètre 6a avec Raphaël)
 
+
+### D38 · 2026-10-10 · Jeu à deux : moins de clics, protocole compatible
+- Retours du premier test réel (Raphaël) : ce qui gêne, c'est d'avoir le même modpack, le nombre de clics et l'étape « Ouvrir au réseau local ».
+- L'invité ne choisit plus d'instance avant de rejoindre : après l'accueil, Tandem prend celle qui a la version et le loader de l'hôte, en préférant le même modpack Modrinth (même version d'abord), puis le moins de mods différents. Elle reste modifiable. Le jeu se lance tout seul dès que le monde est ouvert, seulement si les instances correspondent (réglage `duo_auto_launch`, activé par défaut).
+- Protocole : nouveau message `instance` (invité → hôte) et champ facultatif `pack` dans le résumé d'instance. `VERSION` reste à 1 : un hôte plus ancien ignore le message, un résumé sans `pack` se lit toujours (testé).
+- Hôte : un seul bouton crée l'invitation et lance le jeu directement dans le monde choisi (`--quickPlaySingleplayer`, 1.20+ et versions numérotées par année ; avant, menu du jeu). On ne peut pas ouvrir le monde en LAN à la place du joueur sans mod (`/publish` exige les cheats) : Tandem repère l'entrée dans le monde dans le journal du jeu (`Starting integrated minecraft server`) et envoie une notification système de rappel ; arrivées et départs aussi notifiés, seulement quand le launcher n'est pas au premier plan (`tauri-plugin-notification`).
+- Statut : validé

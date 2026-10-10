@@ -160,7 +160,9 @@ Choix tranchés :
 
 ### 6b — Ensuite
 - [ ] Synchroniser les mods de l'invité sur ceux de l'hôte (Modrinth d'abord, sinon envoyés par l'hôte)
-- [ ] Peaufinage : accessibilité, moins de frictions (retours du premier test)
+- [x] Moins de clics (D38) : l'invité rejoint sans choisir d'instance (Tandem prend celle qui correspond) et le jeu se lance dès que le monde est ouvert ; l'hôte invite et arrive directement dans son monde en un clic (1.20+)
+- [x] Étape LAN mieux guidée : Tandem voit que l'hôte est dans son monde, notification de rappel par-dessus le jeu ; arrivées et départs notifiés
+- [ ] Test réel des nouveautés à deux PC (notifications Windows, choix automatique de l'instance, lancement automatique)
 - [ ] (plus tard) Synchro du monde / « host migration »
 - [ ] (plus tard) Relais Tandem en option
 
@@ -329,3 +331,10 @@ Choix tranchés :
 - Premier vrai test par Raphaël et un ami : inviter, rejoindre et jouer marchent, l'invité en 4G (≈ 30 ms, autre réseau) comme en Wi-Fi (≈ 3 ms) ; exclusion et inversion des rôles OK ; longue partie fluide. Phase 6a validée.
 - Second essai : liaison affichée « direct » ; avertissement des mods manquants vérifié (jaune avec une instance différente, rien avec la bonne).
 - Prochaine étape : 6b (synchroniser les mods) et peaufinage de l'expérience (accessibilité, moins de frictions), au choix de Raphaël.
+
+### 2026-10-10 (Windows, suite : moins de frictions pour jouer à deux)
+- Retours de Raphaël sur le test : gênes = avoir le même modpack, trop de clics, ouvrir le monde en LAN. Ordre choisi : d'abord les améliorations rapides, puis la synchro des mods (6b).
+- Fait (D38) : l'invité entre seulement le code (instance choisie par Tandem : même modpack, puis mêmes mods ; modifiable), jeu lancé tout seul quand le monde s'ouvre et que tout correspond ; l'hôte a un bouton « Inviter et lancer le jeu » avec choix du monde, ouvert directement (Quick Play) ; étape LAN détaillée et « tu es dans ton monde » repéré dans le journal ; notifications système (rappel LAN, arrivées, départs, fin de partie) quand le launcher est en arrière-plan. Protocole compatible avec les installeurs déjà donnés.
+- Vérifié : vrai jeu NeoForge 1.21.1 (Cobblemon) ouvert directement dans « Tutorial World v4 » (en jeu en 61 s, ligne de journal repérée) ; parcours hôte et invité dans l'aperçu (backend simulé) : lancement automatique, aucune instance correspondante, changement d'instance (pas de lancement automatique si les mods diffèrent) ; app Tauri démarrée avec le plugin de notification ; fmt, Clippy, 135 tests.
+- Pas vérifié : les notifications dans la vraie fenêtre et par-dessus le jeu, le choix automatique sur deux vrais PC.
+- Prochaine étape : 6b, synchroniser les mods de l'invité (le champ `pack` permet déjà d'installer le même modpack Modrinth chez l'invité).
