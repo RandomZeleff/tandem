@@ -43,6 +43,12 @@ pub enum Error {
     AccountNotFound(String),
     #[error("Aucun compte actif : ajoute un compte pour jouer")]
     NoActiveAccount,
+    #[error("La session Microsoft a expiré : reconnecte ce compte")]
+    LoginRequired,
+    #[error("Connecte un compte Microsoft qui possède Minecraft pour jouer, même hors ligne")]
+    OwnershipRequired,
+    #[error("{0}")]
+    Auth(String),
     #[error("{0} n'est pas encore pris en charge")]
     LoaderNotSupported(String),
     #[error("{loader} n'existe pas pour Minecraft {game_version}")]

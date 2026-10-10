@@ -1,12 +1,13 @@
 import { createResource, createSignal, For, type JSX, Show } from "solid-js";
 import { api, errorMessage } from "../lib/api";
 import { gameState } from "../lib/games";
-import { skinLook } from "../lib/look";
-import { removeWithUndo } from "../lib/toast";
+import { toast } from "../lib/toast";
+import { openAccounts, signInWithMicrosoft } from "../lib/accounts";
+import { AccountAvatar, AccountKindLabel, MicrosoftLogo } from "./accounts/AccountVisuals";
 import { onDismiss } from "../lib/ui";
 import InstanceSlot from "./InstanceSlot";
 import { accounts, activeAccount, instances, navigate, refetchAccounts, route, type Route } from "../lib/store";
-import { Icon, type IconName, LoaderTag, SkinHead } from "./pixel";
+import { Icon, type IconName, LoaderTag } from "./pixel";
 
 interface NavItem {
   label: string;
@@ -48,140 +49,108 @@ function AccountMenu(props: { anchor: () => HTMLElement | undefined; onClose: ()
 function AccountCard() {
   const [open, setOpen] = createSignal(false);
   let anchor: HTMLButtonElement | undefined;
-  const [username, setUsername] = createSignal("");
-  const [error, setError] = createSignal<string | null>(null);
+  const others = () => accounts().filter((a) => !a.isActive);
 
-  /** Accounts removed but still undoable. */
-  const [removing, setRemoving] = createSignal<ReadonlySet<string>>(new Set());
-  const listed = () => accounts().filter((a) => !removing().has(a.id));
-
-  function remove(id: string, username: string) {
-    const toggle = (on: boolean) =>
-      setRemoving((set) => {
-        const next = new Set(set);
-        if (on) next.add(id);
-        else next.delete(id);
-        return next;
-      });
-    removeWithUndo({
-      message: `Compte ${username} retiré`,
-      hide: () => toggle(true),
-      show: () => toggle(false),
-      commit: async () => {
-        try {
-          await api.removeAccount(id);
-          await refetchAccounts();
-          return null;
-        } catch (err) {
-          return errorMessage(err);
-        } finally {
-          toggle(false);
-        }
-      },
-    });
-  }
-
-  async function run(action: () => Promise<unknown>) {
-    setError(null);
+  async function use(id: string) {
+    setOpen(false);
     try {
-      await action();
+      await api.setActiveAccount(id);
       await refetchAccounts();
     } catch (err) {
-      setError(errorMessage(err));
+      toast(errorMessage(err), { tone: "error" });
     }
+  }
+
+  function manage() {
+    setOpen(false);
+    openAccounts();
   }
 
   return (
     <div class="relative mx-3 mt-3.5 mb-1.5">
-      <button
-        ref={anchor}
-        class="panel px-corners-md flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-600 focus-visible:bg-slate-600"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open()}
+      <Show
+        when={activeAccount()}
+        fallback={
+          <button
+            class="panel px-corners-md flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-600 focus-visible:bg-slate-600"
+            onClick={() => openAccounts()}
+          >
+            <span class="slot h-11 w-11 bg-white!">
+              <MicrosoftLogo size={20} />
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="text-[15px] font-semibold">Se connecter</span>
+              <span class="text-xs text-muted">Compte Microsoft</span>
+            </span>
+          </button>
+        }
       >
-        <span class="slot h-11 w-11">
-          <Show when={activeAccount()} fallback={<Icon name="user" size={22} color="#4A4A4A" />}>
-            {(account) => <SkinHead look={skinLook(account().username)} size={32} />}
-          </Show>
-        </span>
-        <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span class="truncate text-[15px] font-semibold">
-            {activeAccount()?.username ?? "Aucun compte"}
-          </span>
-          <span class="flex items-center gap-1.5 text-xs text-muted">
-            <span class="size-1.5" classList={{ "bg-xp": !!activeAccount(), "bg-faint": !activeAccount() }} />
-            {activeAccount()
-              ? activeAccount()!.kind === "offline"
-                ? "Hors ligne"
-                : "Compte Microsoft"
-              : "Ajoute un compte"}
-          </span>
-        </span>
-        <Icon name="caret" size={12} color="#7D828A" />
-      </button>
+        {(account) => (
+          <button
+            ref={anchor}
+            class="panel px-corners-md flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-600 focus-visible:bg-slate-600"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open()}
+            aria-label={`Compte : ${account().username}`}
+          >
+            <span class="slot h-11 w-11">
+              <AccountAvatar account={account()} size={32} />
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="truncate text-[15px] font-semibold">{account().username}</span>
+              <span class="text-xs text-muted">
+                <AccountKindLabel account={account()} />
+              </span>
+            </span>
+            <Icon name="caret" size={12} color="#7D828A" />
+          </button>
+        )}
+      </Show>
 
       <Show when={open()}>
         <AccountMenu anchor={() => anchor} onClose={() => setOpen(false)}>
-          <Show when={listed().length > 0}>
-            <ul class="mb-3 space-y-0.5">
-              <For each={listed()}>
+          <Show when={others().length > 0}>
+            <p class="mb-1.5 px-1.5 text-[11px] font-semibold tracking-wide text-faint uppercase">Changer de compte</p>
+            <ul class="mb-2 space-y-0.5">
+              <For each={others()}>
                 {(account) => (
-                  <li class="group flex items-center gap-2 px-1.5 py-1 hover:bg-slate-600 focus-within:bg-slate-600">
+                  <li>
                     <button
-                      class="flex flex-1 items-center gap-2.5 text-left text-sm"
-                      onClick={() => run(() => api.setActiveAccount(account.id))}
+                      class="flex w-full items-center gap-2.5 px-1.5 py-1.5 text-left text-sm hover:bg-slate-600 focus-visible:bg-slate-600"
+                      onClick={() => void use(account.id)}
                     >
-                      <SkinHead look={skinLook(account.username)} size={20} />
-                      <span class="flex-1 truncate" classList={{ "font-semibold": account.isActive }}>
-                        {account.username}
+                      <AccountAvatar account={account} size={22} />
+                      <span class="flex min-w-0 flex-1 flex-col">
+                        <span class="truncate">{account.username}</span>
+                        <span class="text-[11px] text-muted">
+                          <AccountKindLabel account={account} />
+                        </span>
                       </span>
-                      <Show when={account.isActive}>
-                        <Icon name="check" size={12} color="var(--color-xp)" />
-                      </Show>
-                    </button>
-                    <button
-                      class="text-faint opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-redstone-text focus-visible:text-redstone-text"
-                      aria-label={`Retirer ${account.username}`}
-                      onClick={() => remove(account.id, account.username)}
-                    >
-                      <Icon name="close" size={10} />
                     </button>
                   </li>
                 )}
               </For>
             </ul>
+            <div class="mb-2 h-px bg-line" />
           </Show>
-          <form
-            class="space-y-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void run(async () => {
-                await api.addOfflineAccount(username());
-                setUsername("");
-              });
+          <button
+            class="flex w-full items-center gap-2.5 px-1.5 py-1.5 text-left text-sm hover:bg-slate-600 focus-visible:bg-slate-600"
+            onClick={manage}
+          >
+            <Icon name="gear" size={14} />
+            Gérer les comptes
+          </button>
+          <button
+            class="flex w-full items-center gap-2.5 px-1.5 py-1.5 text-left text-sm hover:bg-slate-600 focus-visible:bg-slate-600"
+            onClick={() => {
+              setOpen(false);
+              openAccounts();
+              void signInWithMicrosoft();
             }}
           >
-            <label class="block text-xs text-muted" for="offline-username">
-              Ajouter un compte hors ligne
-            </label>
-            <div class="flex gap-2">
-              <input
-                id="offline-username"
-                class="field h-9 min-w-0 flex-1 text-sm"
-                placeholder="Pseudo"
-                maxLength={16}
-                value={username()}
-                onInput={(e) => setUsername(e.currentTarget.value)}
-              />
-              <button type="submit" class="btn h-9 px-3 text-sm" disabled={username().trim().length < 3}>
-                Ajouter
-              </button>
-            </div>
-            <p class="text-xs text-faint">La connexion Microsoft arrive bientôt.</p>
-          </form>
-          <Show when={error()}>
-            <p class="mt-2 text-xs text-redstone-text">{error()}</p>
-          </Show>
+            <MicrosoftLogo size={14} />
+            Ajouter un compte Microsoft
+          </button>
         </AccountMenu>
       </Show>
     </div>

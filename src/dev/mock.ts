@@ -198,8 +198,13 @@ const datapacks: Record<string, Datapack[]> = {
 /** Pack version each updated instance can go back to. */
 const rollbackFrom: Record<string, string> = {};
 
+/** A face drawn like a skin's, for Microsoft accounts of the mock. */
+const MOCK_FACE = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" shape-rendering="crispEdges"><rect width="8" height="8" fill="#c58c5f"/><path d="M0 0h8v2H0zM0 2h1v2H0zM7 2h1v2H7z" fill="#3b2213"/><path d="M1 4h2v1H1zM5 4h2v1H5z" fill="#fff"/><path d="M2 4h1v1H2zM5 4h1v1H5z" fill="#2b5fb5"/><path d="M3 6h2v1H3z" fill="#7a4630"/></svg>',
+)}`;
+
 let accounts: Account[] = [
-  { id: "a1", kind: "offline", username: "Zeleff", mcUuid: "00000000-0000-3000-8000-000000000000", isActive: true },
+  { id: "a1", kind: "offline", username: "Zeleff", mcUuid: "00000000-0000-3000-8000-000000000000", isActive: true, avatar: null },
 ];
 
 const logs: LogEntry[] = [
@@ -651,6 +656,23 @@ export function installMocks() {
         case "set_local_content_enabled":
         case "remove_local_content":
           return null;
+        case "begin_microsoft_login":
+          await new Promise((r) => setTimeout(r, 300));
+          return "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=mock";
+        case "finish_microsoft_login": {
+          await new Promise((r) => setTimeout(r, 2500));
+          for (const step of ["microsoft", "xbox", "minecraft", "profile"]) {
+            await emit("auth://step", step);
+            await new Promise((r) => setTimeout(r, 700));
+          }
+          if ((window as { __mockLoginFails?: boolean }).__mockLoginFails)
+            throw "Ce compte Microsoft n'a pas encore de profil Xbox. Crée-le gratuitement sur https://www.xbox.com/live puis reconnecte-toi.";
+          const account: Account = { id: "ms-1", kind: "microsoft", username: "Zeleff", mcUuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5", isActive: true, avatar: MOCK_FACE };
+          accounts = accounts.filter((a) => a.id !== "ms-1").map((a) => ({ ...a, isActive: false })).concat(account);
+          return account;
+        }
+        case "cancel_microsoft_login":
+          return null;
         case "manual_downloads":
           return manualFiles[args.instanceId as string] ?? [];
         case "collect_manual_downloads": {
@@ -671,6 +693,8 @@ export function installMocks() {
           return null;
         }
         case "launch_instance":
+          // Offline names only work once a Microsoft account is there (D36).
+          if (!accounts.some((a) => a.kind === "microsoft")) throw "account-needed";
           if (!rosettaInstalled && instances.find((i) => i.id === args.id)?.gameVersion === "1.12.2") {
             throw "rosetta-missing";
           }
@@ -685,7 +709,7 @@ export function installMocks() {
           await emit("game://exited", { instanceId: args.id, code: null, stopped: true, crashReport: null, analysis: null });
           return true;
         case "add_offline_account": {
-          const account: Account = { id: crypto.randomUUID(), kind: "offline", username: args.username as string, mcUuid: "", isActive: true };
+          const account: Account = { id: crypto.randomUUID(), kind: "offline", username: args.username as string, mcUuid: "", isActive: true, avatar: null };
           accounts = accounts.map((a) => ({ ...a, isActive: false })).concat(account);
           return account;
         }

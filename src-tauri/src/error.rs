@@ -13,6 +13,13 @@ impl CommandError {
 /// Sent instead of the message so the frontend can offer to install Rosetta.
 pub const ROSETTA_MISSING: &str = "rosetta-missing";
 
+/// Sent when a Microsoft account must sign in again, so the UI can offer it.
+pub const LOGIN_REQUIRED: &str = "login-required";
+
+/// Sent when there is no account to play with, or only offline ones without a Microsoft
+/// account that owns the game: the UI opens the accounts window.
+pub const ACCOUNT_NEEDED: &str = "account-needed";
+
 /// Sent when Modrinth does not know a project, so the page can say so.
 pub const PROJECT_NOT_FOUND: &str = "project-not-found";
 
@@ -20,6 +27,10 @@ impl From<tandem_core::Error> for CommandError {
     fn from(err: tandem_core::Error) -> Self {
         match err {
             tandem_core::Error::RosettaMissing => Self::msg(ROSETTA_MISSING),
+            tandem_core::Error::LoginRequired => Self::msg(LOGIN_REQUIRED),
+            tandem_core::Error::NoActiveAccount | tandem_core::Error::OwnershipRequired => {
+                Self::msg(ACCOUNT_NEEDED)
+            }
             tandem_core::Error::Http(ref detail) => {
                 // The player gets the short message; the log keeps what failed.
                 tracing::warn!(error = ?detail, "network request failed");

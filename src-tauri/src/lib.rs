@@ -1,3 +1,4 @@
+mod accounts;
 mod commands;
 mod error;
 mod game;
@@ -31,6 +32,7 @@ pub struct AppState {
     pub games: game::Games,
     pub projects: ProjectCache,
     pub translations: tandem_core::translate::service::Service,
+    pub logins: accounts::Logins,
     _log_guard: WorkerGuard,
 }
 
@@ -71,6 +73,7 @@ pub fn run() {
                 games: game::Games::default(),
                 projects: ProjectCache::default(),
                 translations: Default::default(),
+                logins: Default::default(),
                 _log_guard: log_guard,
             });
             // Tauri creates the window and its webview before `setup`: most of this is theirs.
@@ -164,10 +167,13 @@ pub fn run() {
             commands::stop_instance,
             commands::install_rosetta,
             commands::running_instances,
-            commands::list_accounts,
-            commands::add_offline_account,
-            commands::set_active_account,
-            commands::remove_account,
+            accounts::list_accounts,
+            accounts::add_offline_account,
+            accounts::set_active_account,
+            accounts::remove_account,
+            accounts::begin_microsoft_login,
+            accounts::finish_microsoft_login,
+            accounts::cancel_microsoft_login,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

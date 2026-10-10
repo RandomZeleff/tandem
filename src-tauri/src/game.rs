@@ -6,6 +6,8 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 
 use serde::Serialize;
+use tandem_core::account::AccountKind;
+use tandem_core::auth;
 use tandem_core::crash::{self, CrashAnalysis};
 use tandem_core::install::{self, InstallProgress, Stage};
 use tandem_core::jvm;
@@ -187,6 +189,14 @@ async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathB
         .active_account()
         .await?
         .ok_or(Error::NoActiveAccount)?;
+    let access_token = match account.kind {
+        AccountKind::Microsoft => auth::access_token(ctx, &account).await?,
+        // Offline play is allowed once the game's ownership was shown (D36).
+        AccountKind::Offline if !ctx.db.has_microsoft_account().await? => {
+            return Err(Error::OwnershipRequired)
+        }
+        AccountKind::Offline => "0".to_owned(),
+    };
     let game_dir = ctx.data.instance_dir(id);
     tracing::info!(
         instance = %id,
@@ -207,8 +217,7 @@ async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathB
         assets_root: &ctx.data.assets(),
         libraries_dir: &ctx.data.libraries(),
         account: &account,
-        // Offline accounts have no token; Microsoft sign-in arrives in Phase 2.
-        access_token: "0",
+        access_token: &access_token,
         memory_mb: instance.memory_mb.unwrap_or_else(|| {
             jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir))
         }),

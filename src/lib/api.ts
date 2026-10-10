@@ -159,6 +159,8 @@ export interface Account {
   username: string;
   mcUuid: string;
   isActive: boolean;
+  /** Face of the skin (PNG data URL), Microsoft accounts only. */
+  avatar: string | null;
 }
 
 export type InstallStage = "metadata" | "downloading" | "finalizing" | "processing" | "copying";
@@ -698,10 +700,19 @@ export const api = {
   addOfflineAccount: (username: string) => invoke<Account>("add_offline_account", { username }),
   setActiveAccount: (id: string) => invoke<Account>("set_active_account", { id }),
   removeAccount: (id: string) => invoke<void>("remove_account", { id }),
+  /** Opens the Microsoft sign-in page in the browser; resolves to its URL. */
+  beginMicrosoftLogin: () => invoke<string>("begin_microsoft_login"),
+  /** Waits for the sign-in started by `beginMicrosoftLogin`. */
+  finishMicrosoftLogin: () => invoke<Account>("finish_microsoft_login"),
+  cancelMicrosoftLogin: () => invoke<void>("cancel_microsoft_login"),
 };
 
 /** Launch error meaning the version needs Rosetta 2, which is not installed. */
 export const ROSETTA_MISSING = "rosetta-missing";
+/** A Microsoft account must sign in again. */
+export const LOGIN_REQUIRED = "login-required";
+/** No account to play with (or only offline ones without a Microsoft account). */
+export const ACCOUNT_NEEDED = "account-needed";
 
 /** Error meaning Modrinth does not know the project. */
 export const PROJECT_NOT_FOUND = "project-not-found";

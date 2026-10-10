@@ -1,6 +1,5 @@
 use serde::Serialize;
 use serde_json::Value;
-use tandem_core::account::Account;
 use tandem_core::content::deps::{self, Dependent, Provider};
 use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
 use tandem_core::content::project::{self, DependencyItem, ProjectDetails, ProjectVersions};
@@ -900,27 +899,4 @@ pub fn stop_instance(state: State<'_, AppState>, id: String) -> bool {
 #[tauri::command]
 pub fn running_instances(state: State<'_, AppState>) -> Vec<String> {
     state.games.running_ids()
-}
-
-#[tauri::command]
-pub async fn list_accounts(state: State<'_, AppState>) -> CommandResult<Vec<Account>> {
-    Ok(state.ctx.db.list_accounts().await?)
-}
-
-#[tauri::command]
-pub async fn add_offline_account(
-    state: State<'_, AppState>,
-    username: String,
-) -> CommandResult<Account> {
-    Ok(state.ctx.db.add_offline_account(&username).await?)
-}
-
-#[tauri::command]
-pub async fn set_active_account(state: State<'_, AppState>, id: String) -> CommandResult<Account> {
-    Ok(state.ctx.db.set_active_account(&id).await?)
-}
-
-#[tauri::command]
-pub async fn remove_account(state: State<'_, AppState>, id: String) -> CommandResult<()> {
-    Ok(state.ctx.db.remove_account(&id).await?)
 }

@@ -31,6 +31,8 @@ pub struct Account {
     pub username: String,
     pub mc_uuid: String,
     pub is_active: bool,
+    /// Face of the skin (PNG data URL), Microsoft accounts only.
+    pub avatar: Option<String>,
 }
 
 /// UUID the vanilla server assigns to an offline player
@@ -54,7 +56,7 @@ fn validate_username(username: &str) -> Result<()> {
     }
 }
 
-const COLUMNS: &str = "id, kind, username, mc_uuid, is_active";
+const COLUMNS: &str = "id, kind, username, mc_uuid, is_active, avatar";
 
 impl Database {
     pub async fn list_accounts(&self) -> Result<Vec<Account>> {
@@ -99,6 +101,58 @@ impl Database {
             }
         };
         self.set_active_account(&id).await
+    }
+
+    /// Adds a Microsoft account, or updates the one with that profile (name and skin may
+    /// change), and activates it.
+    pub async fn upsert_microsoft_account(
+        &self,
+        username: &str,
+        mc_uuid: &str,
+        avatar: Option<&str>,
+    ) -> Result<Account> {
+        let existing: Option<String> =
+            sqlx::query_scalar("SELECT id FROM accounts WHERE kind = 'microsoft' AND mc_uuid = ?")
+                .bind(mc_uuid)
+                .fetch_optional(self.pool())
+                .await?;
+        let id = match existing {
+            Some(id) => {
+                sqlx::query(
+                    "UPDATE accounts SET username = ?, avatar = COALESCE(?, avatar),
+                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?",
+                )
+                .bind(username)
+                .bind(avatar)
+                .bind(&id)
+                .execute(self.pool())
+                .await?;
+                id
+            }
+            None => {
+                let id = uuid::Uuid::new_v4().to_string();
+                sqlx::query(
+                    "INSERT INTO accounts (id, kind, username, mc_uuid, avatar) VALUES (?, 'microsoft', ?, ?, ?)",
+                )
+                .bind(&id)
+                .bind(username)
+                .bind(mc_uuid)
+                .bind(avatar)
+                .execute(self.pool())
+                .await?;
+                id
+            }
+        };
+        self.set_active_account(&id).await
+    }
+
+    /// Whether a Microsoft account (which owns the game: others are refused) was added.
+    pub async fn has_microsoft_account(&self) -> Result<bool> {
+        let count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM accounts WHERE kind = 'microsoft'")
+                .fetch_one(self.pool())
+                .await?;
+        Ok(count > 0)
     }
 
     pub async fn set_active_account(&self, id: &str) -> Result<Account> {
@@ -159,5 +213,30 @@ mod tests {
 
         assert!(db.add_offline_account("x").await.is_err());
         assert!(db.add_offline_account("bad name!").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn microsoft_accounts_are_updated_by_profile() {
+        let tmp = tempfile::tempdir().unwrap();
+        let db = Database::open(&tmp.path().join("t.db")).await.unwrap();
+        assert!(!db.has_microsoft_account().await.unwrap());
+        let first = db
+            .upsert_microsoft_account(
+                "Zeleff",
+                "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+                Some("data:a"),
+            )
+            .await
+            .unwrap();
+        // Renamed, skin unreachable this time: the old face is kept.
+        let again = db
+            .upsert_microsoft_account("Zeleff2", "069a79f4-44e9-4726-a5be-fca90e38aaf5", None)
+            .await
+            .unwrap();
+        assert_eq!(again.id, first.id);
+        assert_eq!(again.username, "Zeleff2");
+        assert_eq!(again.avatar.as_deref(), Some("data:a"));
+        assert!(db.has_microsoft_account().await.unwrap());
+        assert_eq!(db.list_accounts().await.unwrap().len(), 1);
     }
 }

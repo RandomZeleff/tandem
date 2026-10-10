@@ -1,3 +1,4 @@
+import { openAccounts } from "./accounts";
 import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { listen } from "@tauri-apps/api/event";
@@ -7,6 +8,8 @@ import {
   errorMessage,
   EVENTS,
   ROSETTA_MISSING,
+  LOGIN_REQUIRED,
+  ACCOUNT_NEEDED,
   type GameExited,
   type GameStats,
   type GameOutput,
@@ -134,6 +137,11 @@ export async function launch(id: string) {
     await api.launchInstance(id);
   } catch (err) {
     const message = errorMessage(err);
+    if (message === LOGIN_REQUIRED || message === ACCOUNT_NEEDED) {
+      setGames(id, { status: "idle", progress: undefined });
+      openAccounts(message === LOGIN_REQUIRED ? "expired" : "needed");
+      return;
+    }
     if (message === ROSETTA_MISSING) {
       setGames(id, { status: "idle", progress: undefined });
       setRosettaPrompt(id);
