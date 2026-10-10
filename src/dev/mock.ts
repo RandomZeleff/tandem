@@ -10,6 +10,7 @@ import type {
   ContentKind,
   InstalledContent,
   Instance,
+  InstanceSettings,
   Loader,
   LogEntry,
   NewInstance,
@@ -45,6 +46,9 @@ const instances: Instance[] = [
   packProjectId: null as string | null,
   packVersionId: null as string | null,
   packVersion: null as string | null,
+  windowWidth: null as number | null,
+  windowHeight: null as number | null,
+  block: null as number | null,
 }));
 
 /** Fabric/Quilt-like answers: nothing before 1.14, a beta on top of stable builds. */
@@ -299,6 +303,9 @@ export function installMocks() {
             packProjectId: null,
             packVersionId: null,
             packVersion: null,
+            windowWidth: null,
+            windowHeight: null,
+            block: null,
           };
           instances.unshift(created);
           return created;
@@ -386,6 +393,36 @@ export function installMocks() {
         case "remove_content":
           content[args.instanceId as string] = (content[args.instanceId as string] ?? []).filter((c) => c.projectId !== args.projectId);
           return null;
+        case "update_instance_settings": {
+          const instance = instances.find((i) => i.id === args.id)!;
+          const settings = args.settings as InstanceSettings;
+          if (settings.jvmArgs?.includes("-Xmx")) throw "La mémoire se règle avec le curseur, pas dans les arguments (-Xmx, -Xms)";
+          Object.assign(instance, settings);
+          return { ...instance };
+        }
+        case "set_instance_icon": {
+          const instance = instances.find((i) => i.id === args.id)!;
+          Object.assign(instance, { icon: args.image ? ICON : null, block: args.block ?? null });
+          return { ...instance };
+        }
+        case "duplicate_instance": {
+          await new Promise((r) => setTimeout(r, 900));
+          const source = instances.find((i) => i.id === args.id)!;
+          const copy = { ...source, id: (args.name as string).toLowerCase().replace(/[^a-z0-9]+/g, "-"), name: args.name as string, lastPlayedAt: null };
+          instances.unshift(copy);
+          content[copy.id] = (content[source.id] ?? []).map((c) => ({ ...c }));
+          return copy;
+        }
+        case "instance_java":
+          await new Promise((r) => setTimeout(r, 200));
+          return {
+            required: 21,
+            installs: [
+              { path: "C:\\Program Files\\Java\\jdk-21.0.10\\bin\\java.exe", version: "21.0.10", major: 21, vendor: "Oracle Corporation", managed: false },
+              { path: "C:\\Users\\you\\AppData\\Roaming\\Tandem\\java\\java-runtime-delta\\bin\\java.exe", version: "21.0.7", major: 21, vendor: "Microsoft", managed: true },
+              { path: "C:\\Program Files\\Java\\jre1.8.0_503\\bin\\java.exe", version: "1.8.0_503", major: 8, vendor: null, managed: false },
+            ],
+          };
         case "modpack_updates": {
           const instance = instances.find((i) => i.id === args.instanceId);
           if (!instance?.packProjectId || instance.packVersion !== "14.1.0") return [];

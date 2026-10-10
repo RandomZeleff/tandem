@@ -94,6 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         access_token: "0",
         memory_mb: jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir)),
         extra_jvm_args: Vec::new(),
+        window: None,
     });
     let mut child = launch::spawn(&command)?;
     let group = tandem_core::process::ProcessGroup::track(&child);

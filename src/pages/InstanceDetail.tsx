@@ -1,4 +1,4 @@
-import { createResource, createSignal, Match, Show, Switch } from "solid-js";
+import { createSignal, Match, Show, Switch } from "solid-js";
 import Alert from "../components/Alert";
 import ContentList from "../components/ContentList";
 import CrashPanel from "../components/CrashPanel";
@@ -8,18 +8,17 @@ import GameStatsPanel from "../components/GameStatsPanel";
 import InstanceSlot from "../components/InstanceSlot";
 import MissingDepsPanel from "../components/MissingDepsPanel";
 import { Icon, LoaderTag, XpBar } from "../components/pixel";
-import PackUpdateBanner, { PackRollback } from "../components/PackUpdate";
+import InstanceSettingsTab from "../components/InstanceSettingsTab";
+import PackUpdateBanner from "../components/PackUpdate";
 import PlayButton from "../components/PlayButton";
 import WorldsTab from "../components/WorldsTab";
 import Scene from "../components/Scene";
 import ScreenshotsTab from "../components/ScreenshotsTab";
-import Select from "../components/Select";
 import Tabs, { tabPanel } from "../components/Tabs";
 import TranslationTab from "../components/translation/TranslationTab";
 import { api, errorMessage, type InstallProgress, type Instance } from "../lib/api";
-import { formatBytes, formatGigabytes, formatRelative } from "../lib/format";
+import { formatBytes } from "../lib/format";
 import { gameState } from "../lib/games";
-import { openProject } from "../lib/projects";
 import { navigate, refetchInstances, remembered } from "../lib/store";
 
 type Tab = "console" | "content" | "worlds" | "screenshots" | "translation" | "info";
@@ -60,7 +59,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
     { id: "worlds", label: "Mondes" },
     { id: "screenshots", label: "Captures" },
     { id: "translation", label: "Traduction" },
-    { id: "info", label: "Informations" },
+    { id: "info", label: "Réglages" },
   ];
 
   return (
@@ -171,40 +170,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
               <TranslationTab instance={props.instance} locked={state().status !== "idle"} />
             </Match>
             <Match when={tab() === "info"}>
-              <dl class="panel px-corners-md grid max-w-xl grid-cols-[auto_1fr] gap-x-8 gap-y-3 p-5 text-sm">
-                <dt class="text-muted">Version</dt>
-                <dd>Minecraft {props.instance.gameVersion}</dd>
-                <dt class="text-muted">Loader</dt>
-                <dd>
-                  <LoaderTag loader={props.instance.loader} />
-                  <Show when={props.instance.loaderVersion}>
-                    <span class="font-mono text-xs text-muted"> {props.instance.loaderVersion}</span>
-                  </Show>
-                </dd>
-                <Show when={props.instance.packProjectId}>
-                  <dt class="text-muted">Modpack</dt>
-                  <dd>
-                    <button
-                      class="text-xp-text hover:underline focus-visible:underline"
-                      onClick={() => openProject(props.instance.packProjectId!)}
-                    >
-                      Voir la fiche du modpack
-                    </button>
-                    <span class="font-mono text-xs text-muted"> {props.instance.packVersion} </span>
-                    <PackRollback instance={props.instance} locked={state().status !== "idle"} onError={setError} />
-                  </dd>
-                </Show>
-                <dt class="text-muted">Java</dt>
-                <dd>{props.instance.javaPath ?? "Automatique (fourni par Mojang)"}</dd>
-                <dt class="text-muted">Mémoire</dt>
-                <dd>
-                  <MemoryPicker instance={props.instance} onError={setError} />
-                </dd>
-                <dt class="text-muted">Dernière partie</dt>
-                <dd>{formatRelative(props.instance.lastPlayedAt)}</dd>
-                <dt class="text-muted">Identifiant</dt>
-                <dd class="font-mono text-xs">{props.instance.id}</dd>
-              </dl>
+              <InstanceSettingsTab instance={props.instance} locked={state().status !== "idle"} />
             </Match>
           </Switch>
         </div>
@@ -226,51 +192,6 @@ export default function InstanceDetail(props: { instance: Instance }) {
             </button>
           </div>
         </Dialog>
-      </Show>
-    </div>
-  );
-}
-
-const MEMORY_STEPS_GB = [1, 2, 3, 4, 6, 8, 10, 12, 16, 24, 32];
-
-
-/** "Automatique" follows the machine and the mod count; fixed sizes stay as chosen. */
-function MemoryPicker(props: { instance: Instance; onError: (message: string) => void }) {
-  const [info] = createResource(() => props.instance.id, api.memoryInfo);
-  const steps = () => {
-    const total = info()?.totalMb ?? Infinity;
-    const fitting = MEMORY_STEPS_GB.map((gb) => gb * 1024).filter((mb) => mb <= total * 0.75);
-    const current = props.instance.memoryMb;
-    return current && !fitting.includes(current) ? [...fitting, current].sort((a, b) => a - b) : fitting;
-  };
-
-  async function choose(value: string) {
-    try {
-      await api.setInstanceMemory(props.instance.id, value === "auto" ? null : Number(value));
-      await refetchInstances();
-    } catch (err) {
-      props.onError(errorMessage(err));
-    }
-  }
-
-  return (
-    <div class="flex flex-col gap-1.5">
-      <Select
-        label="Mémoire allouée"
-        class="h-8 w-56 px-2.5 text-sm"
-        value={String(props.instance.memoryMb ?? "auto")}
-        options={[
-          { value: "auto", label: "Automatique", hint: info() ? formatGigabytes(info()!.autoMb) : undefined },
-          ...steps().map((mb) => ({ value: String(mb), label: formatGigabytes(mb) })),
-        ]}
-        onChange={(value) => void choose(value)}
-      />
-      <Show when={info()}>
-        {(i) => (
-          <span class="text-xs text-muted">
-            {formatGigabytes(i().totalMb)} sur cette machine. En automatique, la mémoire suit le nombre de mods.
-          </span>
-        )}
       </Show>
     </div>
   );

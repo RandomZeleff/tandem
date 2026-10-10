@@ -43,8 +43,12 @@ function hash(value: string): number {
   return Math.abs(h);
 }
 
-export function blockLook(id: string): BlockLook {
-  return BLOCKS[hash(id) % BLOCKS.length];
+/** Number of blocks a player can pick as an instance icon. */
+export const BLOCK_COUNT = BLOCKS.length;
+
+/** The block chosen for an instance, else one picked from its id. */
+export function blockLook(id: string, chosen?: number | null): BlockLook {
+  return BLOCKS[(chosen ?? hash(id)) % BLOCKS.length];
 }
 
 export function skinLook(name: string): SkinLook {

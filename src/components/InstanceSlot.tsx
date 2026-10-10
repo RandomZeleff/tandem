@@ -9,7 +9,7 @@ export default function InstanceSlot(props: { instance: Instance; size: number; 
   return (
     <Show
       when={props.instance.icon}
-      fallback={<BlockSlot look={blockLook(props.instance.id)} size={props.size} style={props.style} />}
+      fallback={<BlockSlot look={blockLook(props.instance.id, props.instance.block)} size={props.size} style={props.style} />}
     >
       {(icon) => <ProjectIcon url={icon()} size={props.size} style={props.style} />}
     </Show>

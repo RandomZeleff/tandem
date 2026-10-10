@@ -20,6 +20,8 @@ pub struct LaunchSpec<'a> {
     pub access_token: &'a str,
     pub memory_mb: u32,
     pub extra_jvm_args: Vec<String>,
+    /// Game window size, `None` for the game's default.
+    pub window: Option<(u32, u32)>,
 }
 
 #[derive(Debug, Clone)]
@@ -112,6 +114,15 @@ pub fn build_command(spec: &LaunchSpec<'_>) -> GameCommand {
         ),
         (_, Some(legacy)) => args.extend(legacy.split_whitespace().map(|v| substitute(v, &vars))),
         _ => {}
+    }
+    // Every version since 1.6 reads these, whatever its own arguments say.
+    if let Some((width, height)) = spec.window {
+        args.extend([
+            "--width".to_owned(),
+            width.to_string(),
+            "--height".to_owned(),
+            height.to_string(),
+        ]);
     }
 
     GameCommand {

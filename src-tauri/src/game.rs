@@ -216,6 +216,7 @@ async fn start(app: &AppHandle, ctx: &Context, id: &str) -> Result<(Child, PathB
             .as_deref()
             .map(|a| a.split_whitespace().map(str::to_owned).collect())
             .unwrap_or_default(),
+        window: instance.window_width.zip(instance.window_height),
     });
     tracing::info!(
         instance = %id,

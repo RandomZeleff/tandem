@@ -9,7 +9,7 @@ import { LoaderTag, XpBar } from "./pixel";
 import PlayButton from "./PlayButton";
 
 export default function InstanceCard(props: { instance: Instance }) {
-  const look = () => blockLook(props.instance.id);
+  const look = () => blockLook(props.instance.id, props.instance.block);
   const state = () => gameState(props.instance.id);
   const ratio = () => {
     const p = state().progress;

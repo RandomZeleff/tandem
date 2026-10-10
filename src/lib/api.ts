@@ -61,6 +61,28 @@ export interface Instance {
   packProjectId: string | null;
   packVersionId: string | null;
   packVersion: string | null;
+  windowWidth: number | null;
+  windowHeight: number | null;
+  /** Block drawn as the icon when there is no image (null: picked from the id). */
+  block: number | null;
+}
+
+/** Settings the player edits on an instance. */
+export interface InstanceSettings {
+  name: string;
+  javaPath: string | null;
+  jvmArgs: string | null;
+  windowWidth: number | null;
+  windowHeight: number | null;
+}
+
+export interface JavaInstall {
+  path: string;
+  version: string;
+  major: number;
+  vendor: string | null;
+  /** Downloaded by Tandem. */
+  managed: boolean;
 }
 
 export type ContentKind = "mod" | "resourcepack" | "shader";
@@ -461,6 +483,13 @@ export const api = {
     invoke<LoaderVersion[]>("list_loader_versions", { loader, gameVersion }),
 
   listInstances: () => invoke<Instance[]>("list_instances"),
+  updateInstanceSettings: (id: string, settings: InstanceSettings) =>
+    invoke<Instance>("update_instance_settings", { id, settings }),
+  /** `image`: file path, or null to go back to a block. */
+  setInstanceIcon: (id: string, image: string | null, block: number | null) =>
+    invoke<Instance>("set_instance_icon", { id, image, block }),
+  duplicateInstance: (id: string, name: string) => invoke<Instance>("duplicate_instance", { id, name }),
+  instanceJava: (id: string) => invoke<{ required: number; installs: JavaInstall[] }>("instance_java", { id }),
   createInstance: (instance: NewInstance) => invoke<Instance>("create_instance", { instance }),
   deleteInstance: (id: string) => invoke<void>("delete_instance", { id }),
   memoryInfo: (id: string) => invoke<MemoryInfo>("memory_info", { id }),

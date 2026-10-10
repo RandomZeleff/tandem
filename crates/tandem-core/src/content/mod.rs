@@ -552,6 +552,56 @@ pub async fn set_enabled(
     Ok(item)
 }
 
+#[cfg(test)]
+pub(crate) mod tests_support {
+    use super::*;
+
+    /// A content row pointing at `folder/file_name`, for tests elsewhere in the crate.
+    pub async fn add_row(
+        ctx: &Context,
+        instance_id: &str,
+        folder: &str,
+        file_name: &str,
+        sha1: &str,
+    ) {
+        let kind = [
+            ContentKind::Mod,
+            ContentKind::ResourcePack,
+            ContentKind::Shader,
+        ]
+        .into_iter()
+        .find(|k| k.folder() == folder)
+        .unwrap();
+        ctx.db
+            .upsert_content(
+                instance_id,
+                &InstalledContent {
+                    project_id: file_name.into(),
+                    version_id: "v".into(),
+                    kind,
+                    title: file_name.into(),
+                    version_number: "1".into(),
+                    file_name: file_name.into(),
+                    sha1: sha1.into(),
+                    icon_url: None,
+                    is_dependency: false,
+                    enabled: true,
+                    installed_at: String::new(),
+                },
+            )
+            .await
+            .unwrap();
+    }
+}
+
+/// Copies the content rows of an instance to another (after its files were copied).
+pub async fn copy_content(db: &Database, from: &str, to: &str) -> Result<()> {
+    for item in db.list_content(from).await? {
+        db.upsert_content(to, &item).await?;
+    }
+    Ok(())
+}
+
 /// Removes a project's file from the instance. Dependencies are left in place: other
 /// content may still need them.
 pub async fn remove(ctx: &Context, instance_id: &str, project_id: &str) -> Result<()> {

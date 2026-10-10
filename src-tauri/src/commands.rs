@@ -13,7 +13,7 @@ use tandem_core::meta::loader::{self, Loader, LoaderVersion};
 use tandem_core::meta::{self, Latest, ManifestEntry};
 use tandem_core::screenshots::{self, Screenshot};
 use tandem_core::worlds::{self, Backup, BackupKind, World};
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_opener::OpenerExt;
 
 use crate::error::{CommandError, CommandResult, PROJECT_NOT_FOUND};
@@ -506,6 +506,77 @@ pub async fn install_modpack(
         version_id.as_deref(),
     )
     .await
+}
+
+/// Saves the settings the player edits on an instance.
+#[tauri::command]
+pub async fn update_instance_settings(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    settings: instance::InstanceSettings,
+) -> CommandResult<Instance> {
+    let updated = instance::update_settings(&state.ctx, &id, &settings).await?;
+    let _ = app.emit(modpack::INSTANCES_CHANGED_EVENT, ());
+    Ok(updated)
+}
+
+/// `image`: a file to use as the icon, or `null` to go back to a block (`block`).
+#[tauri::command]
+pub async fn set_instance_icon(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    image: Option<String>,
+    block: Option<u32>,
+) -> CommandResult<Instance> {
+    let updated = instance::set_icon(
+        &state.ctx,
+        &id,
+        image.as_deref().map(std::path::Path::new),
+        block,
+    )
+    .await?;
+    let _ = app.emit(modpack::INSTANCES_CHANGED_EVENT, ());
+    Ok(updated)
+}
+
+#[tauri::command]
+pub async fn duplicate_instance(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    name: String,
+) -> CommandResult<Instance> {
+    if state.games.is_busy(&id) {
+        return Err(CommandError::msg(
+            "Arrête le jeu avant de dupliquer cette instance",
+        ));
+    }
+    let created = instance::duplicate(&state.ctx, &id, &name).await?;
+    let _ = app.emit(modpack::INSTANCES_CHANGED_EVENT, ());
+    Ok(created)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JavaInfo {
+    /// Java major version the instance's game version asks for.
+    required: u32,
+    installs: Vec<tandem_core::java_detect::JavaInstall>,
+}
+
+/// Java installations found on the computer, and what the instance needs.
+#[tauri::command]
+pub async fn instance_java(state: State<'_, AppState>, id: String) -> CommandResult<JavaInfo> {
+    let instance = state.ctx.db.get_instance(&id).await?;
+    let required = match meta::load_version(&state.ctx, &instance.game_version).await {
+        Ok(version) => tandem_core::java_detect::required_major(&version),
+        Err(_) => 8,
+    };
+    let data = state.ctx.data.clone();
+    let installs = blocking(move || Ok(tandem_core::java_detect::installed(&data))).await?;
+    Ok(JavaInfo { required, installs })
 }
 
 /// Newer versions of the instance's modpack, newest first.
