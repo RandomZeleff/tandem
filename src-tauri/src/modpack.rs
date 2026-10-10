@@ -4,11 +4,12 @@
 use std::path::Path;
 
 use tandem_core::content::mrpack::{self, PackIndex};
+use tandem_core::content::pack_update::{self, UpdateReport};
 use tandem_core::instance::{self, Instance, PackOrigin};
 use tandem_core::Context;
 use tauri::{AppHandle, Emitter};
 
-use crate::error::CommandResult;
+use crate::error::{CommandError, CommandResult};
 use crate::game::{progress_emitter, Games};
 
 /// The instance list changed outside of a direct user action (created or rolled back).
@@ -48,6 +49,74 @@ pub async fn install_from_modrinth(
         tracing::warn!(path = %pack.path.display(), error = %err, "could not remove the downloaded pack");
     }
     Ok(installed)
+}
+
+/// Moves an instance to another version of its Modrinth modpack.
+pub async fn update_from_modrinth(
+    app: &AppHandle,
+    ctx: &Context,
+    games: &Games,
+    instance_id: &str,
+    version_id: &str,
+) -> CommandResult<UpdateReport> {
+    let instance = ctx.db.get_instance(instance_id).await?;
+    let project = instance
+        .pack_project_id
+        .clone()
+        .ok_or_else(|| CommandError::msg("Cette instance ne vient pas d'un modpack Modrinth"))?;
+    if !games.begin(instance_id) {
+        return Err(CommandError::msg(
+            "Arrête le jeu avant de mettre à jour le modpack",
+        ));
+    }
+    let result = async {
+        let pack = mrpack::download(ctx, &project, Some(version_id)).await?;
+        let origin = PackOrigin {
+            project_id: pack.project.id.clone(),
+            version_id: pack.version.id.clone(),
+            version: pack.version.version_number.clone(),
+            icon: pack.project.icon_url.clone(),
+        };
+        let report = pack_update::update(
+            ctx,
+            &instance,
+            &pack.path,
+            Some(origin),
+            progress_emitter(app, instance_id),
+        )
+        .await;
+        if report.is_ok() {
+            let _ = tokio::fs::remove_file(&pack.path).await;
+        }
+        report
+    }
+    .await;
+    games.end(instance_id);
+    let _ = app.emit(INSTALL_FINISHED_EVENT, instance_id);
+    let _ = app.emit(INSTANCES_CHANGED_EVENT, ());
+    crate::translation::refresh_later(app, instance_id);
+    Ok(result?)
+}
+
+/// Undoes the last modpack update of an instance.
+pub async fn rollback(
+    app: &AppHandle,
+    ctx: &Context,
+    games: &Games,
+    instance_id: &str,
+) -> CommandResult<()> {
+    let instance = ctx.db.get_instance(instance_id).await?;
+    if !games.begin(instance_id) {
+        return Err(CommandError::msg(
+            "Arrête le jeu avant d'annuler la mise à jour",
+        ));
+    }
+    let result = pack_update::rollback(ctx, &instance).await;
+    games.end(instance_id);
+    let _ = app.emit(INSTALL_FINISHED_EVENT, instance_id);
+    let _ = app.emit(INSTANCES_CHANGED_EVENT, ());
+    crate::translation::refresh_later(app, instance_id);
+    Ok(result?)
 }
 
 /// Installs a `.mrpack` file chosen by the player.

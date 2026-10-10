@@ -508,6 +508,46 @@ pub async fn install_modpack(
     .await
 }
 
+/// Newer versions of the instance's modpack, newest first.
+#[tauri::command]
+pub async fn modpack_updates(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<mrpack::PackVersion>> {
+    let instance = state.ctx.db.get_instance(&instance_id).await?;
+    Ok(content::pack_update::newer_versions(&state.ctx, &instance).await?)
+}
+
+#[tauri::command]
+pub async fn update_modpack(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    version_id: String,
+) -> CommandResult<content::pack_update::UpdateReport> {
+    modpack::update_from_modrinth(&app, &state.ctx, &state.games, &instance_id, &version_id).await
+}
+
+/// The pack version a rollback would bring back, if the last update can be undone.
+#[tauri::command]
+pub async fn modpack_rollback_version(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Option<String>> {
+    Ok(content::pack_update::rollback_version(
+        &state.ctx.data.instance_dir(&instance_id),
+    ))
+}
+
+#[tauri::command]
+pub async fn rollback_modpack(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<()> {
+    modpack::rollback(&app, &state.ctx, &state.games, &instance_id).await
+}
+
 /// Installable versions of a modpack, for the version picker.
 #[tauri::command]
 pub async fn modpack_versions(

@@ -28,7 +28,8 @@ pub struct Instance {
 }
 
 /// Modrinth modpack an instance comes from.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PackOrigin {
     pub project_id: String,
     pub version_id: String,
@@ -186,6 +187,26 @@ impl Database {
         .bind(&origin.version_id)
         .bind(&origin.version)
         .bind(&origin.icon)
+        .bind(id)
+        .execute(self.pool())
+        .await?;
+        Ok(())
+    }
+
+    /// Game version and loader, when a modpack update changes them.
+    pub async fn set_instance_target(
+        &self,
+        id: &str,
+        game_version: &str,
+        loader: crate::meta::loader::Loader,
+        loader_version: Option<&str>,
+    ) -> Result<()> {
+        sqlx::query(
+            "UPDATE instances SET game_version = ?, loader = ?, loader_version = ? WHERE id = ?",
+        )
+        .bind(game_version)
+        .bind(loader)
+        .bind(loader_version)
         .bind(id)
         .execute(self.pool())
         .await?;

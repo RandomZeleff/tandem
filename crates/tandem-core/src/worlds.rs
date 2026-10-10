@@ -47,6 +47,8 @@ pub enum BackupKind {
     Auto,
     /// The world as it was right before a restore replaced it.
     BeforeRestore,
+    /// Made before a modpack update changed the game version.
+    BeforeUpdate,
 }
 
 impl BackupKind {
@@ -55,13 +57,19 @@ impl BackupKind {
             BackupKind::Manual => "manual",
             BackupKind::Auto => "auto",
             BackupKind::BeforeRestore => "before-restore",
+            BackupKind::BeforeUpdate => "before-update",
         }
     }
 
     fn parse(s: &str) -> Option<Self> {
-        [Self::Manual, Self::Auto, Self::BeforeRestore]
-            .into_iter()
-            .find(|k| k.as_str() == s)
+        [
+            Self::Manual,
+            Self::Auto,
+            Self::BeforeRestore,
+            Self::BeforeUpdate,
+        ]
+        .into_iter()
+        .find(|k| k.as_str() == s)
     }
 }
 

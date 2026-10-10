@@ -84,7 +84,7 @@ pub struct PackEnv {
 }
 
 impl PackFile {
-    fn for_client(&self) -> bool {
+    pub(crate) fn for_client(&self) -> bool {
         self.env.as_ref().is_none_or(|e| e.client != "unsupported")
     }
 }
@@ -124,7 +124,7 @@ impl PackIndex {
 
 /// Relative path made only of normal components (no `..`, root or drive prefix).
 /// `:` and `\` are refused on every OS so a pack is judged the same everywhere.
-fn safe_relative(path: &str) -> Option<PathBuf> {
+pub(crate) fn safe_relative(path: &str) -> Option<PathBuf> {
     if path.contains([':', '\\']) {
         return None;
     }
@@ -134,7 +134,7 @@ fn safe_relative(path: &str) -> Option<PathBuf> {
     ok.then(|| path.to_owned())
 }
 
-fn allowed_url(url: &str) -> bool {
+pub(crate) fn allowed_url(url: &str) -> bool {
     reqwest::Url::parse(url).is_ok_and(|u| {
         u.scheme() == "https" && u.host_str().is_some_and(|h| ALLOWED_HOSTS.contains(&h))
     })
@@ -162,7 +162,9 @@ pub async fn read_index(pack: &Path) -> Result<PackIndex> {
     .await
 }
 
-async fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T> + Send + 'static) -> Result<T> {
+pub(crate) async fn blocking<T: Send + 'static>(
+    f: impl FnOnce() -> Result<T> + Send + 'static,
+) -> Result<T> {
     tokio::task::spawn_blocking(f)
         .await
         .map_err(|e| Error::Io(io::Error::other(e)))?
@@ -335,8 +337,18 @@ where
     for (relative, sha1) in &placements {
         store::link(&store::path(&ctx.data, sha1), &game_dir.join(relative)).await?;
     }
-    let (pack, dir) = (pack.to_owned(), game_dir.clone());
-    blocking(move || extract_overrides(&pack, &dir)).await?;
+    let (pack_path, dir) = (pack.to_owned(), game_dir.clone());
+    blocking(move || extract_overrides(&pack_path, &dir)).await?;
+    match super::pack_update::contents(pack, index).await {
+        Ok(state) => {
+            if let Err(err) = state.save(&game_dir) {
+                tracing::warn!(instance = %instance.id, error = %err, "could not save modpack state");
+            }
+        }
+        Err(err) => {
+            tracing::warn!(instance = %instance.id, error = %err, "could not read modpack contents")
+        }
+    }
 
     // Best effort: an untracked file still works, it just cannot be updated from the UI.
     if let Err(err) = track(ctx, instance, &placements).await {
@@ -391,7 +403,11 @@ fn kind_of(relative: &Path) -> Option<ContentKind> {
 }
 
 /// Records pack files that are Modrinth projects as regular instance content.
-async fn track(ctx: &Context, instance: &Instance, placements: &[(PathBuf, String)]) -> Result<()> {
+pub(crate) async fn track(
+    ctx: &Context,
+    instance: &Instance,
+    placements: &[(PathBuf, String)],
+) -> Result<()> {
     let candidates: Vec<(&PathBuf, &String, ContentKind)> = placements
         .iter()
         .filter_map(|(path, sha1)| Some((path, sha1, kind_of(path)?)))

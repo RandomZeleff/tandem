@@ -17,22 +17,26 @@ pub fn path(data: &DataDir, sha1: &str) -> PathBuf {
 /// copies otherwise (e.g. store and instance on different volumes).
 pub async fn link(stored: &Path, dest: &Path) -> Result<()> {
     let (stored, dest) = (stored.to_owned(), dest.to_owned());
-    tokio::task::spawn_blocking(move || -> Result<()> {
-        if let Some(parent) = dest.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        match std::fs::remove_file(&dest) {
-            Err(err) if err.kind() != io::ErrorKind::NotFound => return Err(err.into()),
-            _ => {}
-        }
-        if let Err(err) = std::fs::hard_link(&stored, &dest) {
-            tracing::debug!(error = %err, dest = %dest.display(), "hardlink failed, copying");
-            std::fs::copy(&stored, &dest)?;
-        }
-        Ok(())
-    })
-    .await
-    .map_err(|e| Error::Io(io::Error::other(e)))?
+    tokio::task::spawn_blocking(move || link_blocking(&stored, &dest))
+        .await
+        .map_err(|e| Error::Io(io::Error::other(e)))?
+}
+
+/// [`link`] for code already on a blocking thread.
+pub fn link_blocking(stored: &Path, dest: &Path) -> Result<()> {
+    if let Some(parent) = dest.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    // Never write through an existing hardlink: that would change the stored copy.
+    match std::fs::remove_file(dest) {
+        Err(err) if err.kind() != io::ErrorKind::NotFound => return Err(err.into()),
+        _ => {}
+    }
+    if let Err(err) = std::fs::hard_link(stored, dest) {
+        tracing::debug!(error = %err, dest = %dest.display(), "hardlink failed, copying");
+        std::fs::copy(stored, dest)?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]

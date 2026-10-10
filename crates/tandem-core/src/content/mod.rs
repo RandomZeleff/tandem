@@ -6,6 +6,7 @@ pub mod deps;
 pub mod markdown;
 pub mod modrinth;
 pub mod mrpack;
+pub mod pack_update;
 pub mod perf;
 pub mod project;
 
