@@ -5,6 +5,8 @@
 //! cargo run -p tandem-core --example duo -- join <code> [name]
 //! cargo run -p tandem-core --example duo -- stand-in       # fake world, logs who connects
 //! cargo run -p tandem-core --example duo -- copytest <instance-id>
+//! cargo run -p tandem-core --example duo -- copyinto <instance-id>   # real copy instance
+//! cargo run -p tandem-core --example duo -- copydelete <copy-id>
 //!
 //! `copytest` hosts a copy of the instance's mods (plus one mod Modrinth does not know)
 //! and syncs them into an empty folder through a real session, as a guest's copy would.
@@ -351,6 +353,63 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
             host.stop().await;
             guest.leave().await;
+        }
+        Some("copyinto") => {
+            // Like a guest's "prepare the instance": a new instance of the same version and
+            // loader, filled through a real session from the hosted one. Launch it with
+            // the `play` example.
+            let id = args.get(1).ok_or("usage: duo copyinto <instance-id>")?;
+            let ctx = Context::init(DataDir::from_env()?).await?;
+            let instance = ctx.db.get_instance(id).await?;
+            let summary = tandem_core::duo::summary(&ctx, &instance).await?;
+            let copy = tandem_core::instance::create(
+                &ctx,
+                tandem_core::instance::NewInstance {
+                    name: format!("{} (copie)", instance.name),
+                    game_version: summary.game_version.clone(),
+                    loader: instance.loader,
+                    loader_version: summary.loader_version.clone(),
+                },
+            )
+            .await?;
+            let host = Host::start(
+                http.clone(),
+                HostConfig {
+                    player: "Zeleff".into(),
+                    instance: Some(summary.clone()),
+                    game_dir: Some(ctx.data.instance_dir(id)),
+                },
+                |_| {},
+            )
+            .await?;
+            let (guest, _) = Guest::join(http.clone(), &host.code(), "Léo", None, |_| {}).await?;
+            let started = Instant::now();
+            let report = sync::sync_instance(
+                &ctx,
+                &guest,
+                &ctx.data.instance_dir(&copy.id),
+                &summary,
+                |_| {},
+            )
+            .await?;
+            println!(
+                "copy {} filled in {:?}: {}",
+                copy.id,
+                started.elapsed(),
+                serde_json::to_string(&report)?
+            );
+            host.stop().await;
+            guest.leave().await;
+        }
+        Some("copydelete") => {
+            // Removes an instance made by `copyinto` (only those).
+            let id = args.get(1).ok_or("usage: duo copydelete <copy-id>")?;
+            if !id.ends_with("-copie") {
+                return Err("only instances made by copyinto".into());
+            }
+            let ctx = Context::init(DataDir::from_env()?).await?;
+            tandem_core::instance::delete(&ctx, id).await?;
+            println!("{id} deleted");
         }
         Some("stand-in") => {
             let port = stand_in_world().await?;
