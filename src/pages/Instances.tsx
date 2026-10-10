@@ -46,7 +46,7 @@ export default function Instances() {
         <div class="flex gap-2">
           <button class="btn px-corners h-10 px-4" disabled={importing()} onClick={() => void importFile()}>
             <Icon name="folder" size={12} />
-            {importing() ? "Import…" : "Importer un .mrpack"}
+            {importing() ? "Import…" : "Importer un modpack"}
           </button>
           <button class="btn btn-primary px-corners h-10 px-4" onClick={() => setNewInstanceDialog({})}>
             <Icon name="plus" size={12} />

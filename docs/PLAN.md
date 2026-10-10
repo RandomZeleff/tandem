@@ -45,7 +45,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Client API Modrinth : recherche + installation mods, shaders, resource packs, modpacks, datapacks (par monde)
 - [x] Résolution de dépendances + compatibilité version/loader : dépendances requises récursives, choix de la version compatible, détection des incompatibilités
 - [x] Import/export `.mrpack` (+ installation de modpacks depuis Découvrir ; Fabric/Quilt uniquement)
-- [ ] Import modpacks CurseForge (`manifest.json`, clé API, gestion des mods non distribuables)
+- [x] Import modpacks CurseForge (`manifest.json`, clé API, gestion des mods non distribuables) — Phase 4.7, D34
 - [x] Mises à jour de contenu par instance (+ activer/désactiver un contenu)
 - [x] Changement de version d'une instance (avec vérif de compatibilité des mods) — Phase 4.7
 
@@ -130,7 +130,7 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - [x] Changement de version d'une instance (jeu et/ou loader) avec vérification des mods
 - [x] Datapacks par monde (Modrinth)
 - [x] Détection des incompatibilités entre mods (déclarées dans les jars et sur Modrinth)
-- [~] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte — moteur fait (`content::curseforge`, testé sans clé), reste : commande Tauri, champ de clé dans Réglages, import unifié .mrpack/.zip, panneau « fichiers à télécharger à la main »
+- [x] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte, sinon téléchargés à la main et repris dans Téléchargements — D34
 - [ ] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel)
 - [ ] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne
 

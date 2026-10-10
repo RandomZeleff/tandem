@@ -16,7 +16,7 @@ use crate::error::{Error, Result};
 use crate::install::{InstallProgress, Stage};
 use crate::instance::{Instance, NewInstance};
 use crate::meta::loader::Loader;
-use crate::store;
+use crate::{secrets, store};
 
 const API: &str = "https://api.curseforge.com/v1";
 /// Secret name of the player's CurseForge key.
@@ -115,6 +115,49 @@ impl Manifest {
             loader_version,
         })
     }
+}
+
+/// The player's saved CurseForge key, if any.
+pub async fn stored_key() -> Result<Option<String>> {
+    mrpack::blocking(|| secrets::get(KEY_SECRET)).await
+}
+
+/// Checks `key` against the API, then saves it. An empty key deletes the saved one.
+pub async fn save_key(ctx: &Context, key: &str) -> Result<()> {
+    let key = key.trim().to_owned();
+    if !key.is_empty() {
+        check_key(ctx, &key).await?;
+    }
+    mrpack::blocking(move || secrets::set(KEY_SECRET, &key)).await
+}
+
+/// Asks the API for Minecraft's game entry: fails when the key is refused.
+pub async fn check_key(ctx: &Context, key: &str) -> Result<()> {
+    let url = format!("{API}/games/432");
+    let response = ctx.http.get(&url).header("x-api-key", key).send().await?;
+    match response.status().as_u16() {
+        200..=299 => Ok(()),
+        401 | 403 => Err(Error::InvalidInput(
+            "Clé CurseForge refusée : vérifie qu'elle est complète".into(),
+        )),
+        status => Err(Error::HttpStatus { url, status }),
+    }
+}
+
+/// [`read_manifest`] off the async runtime.
+pub async fn inspect(pack: &Path) -> Result<Option<Manifest>> {
+    let pack = pack.to_owned();
+    mrpack::blocking(move || read_manifest(&pack)).await
+}
+
+/// [`collect_manual`] from the player's Downloads folder, off the async runtime.
+pub async fn collect_from_downloads(game_dir: &Path) -> Result<Vec<ManualFile>> {
+    let game_dir = game_dir.to_owned();
+    mrpack::blocking(move || match downloads_dir() {
+        Some(downloads) => collect_manual(&game_dir, &downloads),
+        None => Ok(manual_downloads(&game_dir)),
+    })
+    .await
 }
 
 /// Reads `manifest.json` from a CurseForge pack. `None` when the zip is not one.

@@ -166,7 +166,9 @@ export function projectMocks(catalogue: Record<ProjectType, SearchHit[]>, instan
         await wait(400);
         return dependencies(args.projectId as string);
       case "plugin:opener|open_url":
-        window.open(args.url as string, "_blank", "noopener");
+        // CurseForge file pages stand for a download by hand (see the manual downloads mock).
+        if ((args.url as string).includes("curseforge.com")) window.dispatchEvent(new Event("mock:manual-download"));
+        else window.open(args.url as string, "_blank", "noopener");
         return null;
       default:
         return undefined;

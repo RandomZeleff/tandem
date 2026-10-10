@@ -215,3 +215,9 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Services : API compatible OpenAI uniquement (Ollama, LM Studio et la plupart des services en ligne la proposent). Tandem n'embarque aucune clé ; celle du joueur va dans le coffre du système (crate `keyring`), jamais en base. Pas de prix affichés (ils changent) : tokens et durée estimée à partir de la vitesse mesurée au dernier passage.
 - Statut : validé
 
+
+### D34 · 2026-10-10 · Import CurseForge : clé du joueur, fichiers bloqués retrouvés ailleurs
+- Le dépôt est public : une clé CurseForge embarquée serait lisible par tous (et ses conditions la réservent au projet qui l'a demandée). Comme pour la traduction (D33), le joueur colle sa propre clé, vérifiée auprès de l'API (`/games/432`) avant d'être rangée dans le coffre du système. Elle n'est demandée qu'au premier import d'un `.zip` CurseForge, dans un dialogue, ou dans Réglages.
+- Un seul bouton « Importer un modpack » : le fichier est reconnu à son contenu (`manifest.json` → CurseForge, sinon `.mrpack`), pas à son extension.
+- Fichiers dont l'auteur interdit la distribution par des tiers (pas d'URL dans l'API) : d'abord cherchés sur Modrinth par SHA-1 (même fichier, au bit près) ; le reste est listé dans l'instance (`.tandem/manual-downloads.json`) avec un lien vers la page exacte du fichier. Tandem surveille le dossier Téléchargements (toutes les 3 s pendant que le panneau est affiché, et au retour dans la fenêtre) et y reprend chaque fichier reconnu par taille puis SHA-1, même renommé par le navigateur.
+- Statut : validé

@@ -6,6 +6,7 @@ import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
 import GameStatsPanel from "../components/GameStatsPanel";
 import InstanceSlot from "../components/InstanceSlot";
+import ManualDownloadsPanel from "../components/curseforge/ManualDownloadsPanel";
 import MissingDepsPanel from "../components/MissingDepsPanel";
 import { Icon, LoaderTag, XpBar } from "../components/pixel";
 import InstanceSettingsTab from "../components/InstanceSettingsTab";
@@ -134,6 +135,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
           )}
         </Show>
         <MissingDepsPanel instanceId={props.instance.id} />
+        <ManualDownloadsPanel instanceId={props.instance.id} />
         <Show when={props.instance.packProjectId && state().status === "idle"}>
           <PackUpdateBanner instance={props.instance} locked={state().status !== "idle"} />
         </Show>

@@ -33,11 +33,25 @@ export async function installPack(projectId: string, versionId: string): Promise
 }
 
 const MRPACK_FILTER = { name: "Modpack Modrinth", extensions: ["mrpack"] };
+const PACK_FILTER = { name: "Modpack (Modrinth ou CurseForge)", extensions: ["mrpack", "zip"] };
 
-/** Lets the player pick a `.mrpack`, installs it and opens the new instance. Null if cancelled. */
+/** Pending request for the player's CurseForge key; resolves to true once one is saved. */
+export const [curseforgeKeyPrompt, setCurseforgeKeyPrompt] = createSignal<((saved: boolean) => void) | null>(null);
+
+function askCurseforgeKey(): Promise<boolean> {
+  return new Promise((resolve) => setCurseforgeKeyPrompt(() => resolve));
+}
+
+/**
+ * Lets the player pick a `.mrpack` or a CurseForge `.zip`, installs it and opens the new
+ * instance. A CurseForge pack first asks for the player's key if none is saved. Null if cancelled.
+ */
 export async function importModpackFile(): Promise<Instance | null> {
-  const path = await open({ multiple: false, directory: false, filters: [MRPACK_FILTER] });
+  const path = await open({ multiple: false, directory: false, filters: [PACK_FILTER] });
   if (typeof path !== "string") return null;
+  if ((await api.modpackKind(path)) === "curseforge" && !(await api.curseforgeKeySaved())) {
+    if (!(await askCurseforgeKey())) return null;
+  }
   const instance = await api.importModpack(path);
   await refetchInstances();
   navigate({ page: "instance", id: instance.id });

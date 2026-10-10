@@ -1,4 +1,5 @@
 import { lazy, Match, onCleanup, onMount, Show, Switch } from "solid-js";
+import { CurseForgeKeyDialog } from "./components/curseforge/CurseForgeKey";
 import NewInstanceDialog from "./components/NewInstanceDialog";
 import RosettaDialog from "./components/RosettaDialog";
 import Sidebar from "./components/Sidebar";
@@ -153,6 +154,8 @@ function App() {
       </Show>
 
       <Toaster />
+
+      <CurseForgeKeyDialog />
 
       <Show when={rosettaPrompt()} keyed>
         {(id) => <RosettaDialog instanceId={id} onClose={() => setRosettaPrompt(null)} />}

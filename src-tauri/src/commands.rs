@@ -4,7 +4,7 @@ use tandem_core::account::Account;
 use tandem_core::content::deps::{self, Dependent, Provider};
 use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
 use tandem_core::content::project::{self, DependencyItem, ProjectDetails, ProjectVersions};
-use tandem_core::content::{self, mrpack, perf, ContentUpdate, InstalledContent};
+use tandem_core::content::{self, curseforge, mrpack, perf, ContentUpdate, InstalledContent};
 use tandem_core::install;
 use tandem_core::instance::{self, Instance, NewInstance};
 use tandem_core::jvm;
@@ -707,7 +707,7 @@ pub async fn modpack_versions(
     Ok(mrpack::versions(&state.ctx, &project_id).await?)
 }
 
-/// Creates an instance from a `.mrpack` file.
+/// Creates an instance from a modpack file (`.mrpack` or CurseForge `.zip`).
 #[tauri::command]
 pub async fn import_modpack(
     app: AppHandle,
@@ -715,6 +715,45 @@ pub async fn import_modpack(
     path: String,
 ) -> CommandResult<Instance> {
     modpack::import_file(&app, &state.ctx, &state.games, std::path::Path::new(&path)).await
+}
+
+/// `modrinth` or `curseforge`, so the UI can ask for a CurseForge key first.
+#[tauri::command]
+pub async fn modpack_kind(path: String) -> CommandResult<&'static str> {
+    modpack::kind(std::path::Path::new(&path)).await
+}
+
+#[tauri::command]
+pub async fn curseforge_key_saved() -> CommandResult<bool> {
+    Ok(curseforge::stored_key().await?.is_some())
+}
+
+/// Checks and saves the player's CurseForge key; `""` deletes it.
+#[tauri::command]
+pub async fn set_curseforge_key(state: State<'_, AppState>, key: String) -> CommandResult<()> {
+    Ok(curseforge::save_key(&state.ctx, &key).await?)
+}
+
+/// Files of a CurseForge pack still waiting to be downloaded by hand.
+#[tauri::command]
+pub async fn manual_downloads(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<curseforge::ManualFile>> {
+    let dir = state.ctx.data.instance_dir(&instance_id);
+    tokio::task::spawn_blocking(move || curseforge::manual_downloads(&dir))
+        .await
+        .map_err(|e| CommandError::msg(e.to_string()))
+}
+
+/// Picks up the awaited files from the Downloads folder; returns those still missing.
+#[tauri::command]
+pub async fn collect_manual_downloads(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<Vec<curseforge::ManualFile>> {
+    let dir = state.ctx.data.instance_dir(&instance_id);
+    Ok(curseforge::collect_from_downloads(&dir).await?)
 }
 
 #[tauri::command]

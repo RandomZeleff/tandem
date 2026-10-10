@@ -212,6 +212,13 @@ const statsTimers: Record<string, ReturnType<typeof setInterval>> = {};
 /** The 1.12.2 instance asks for Rosetta until it is "installed" once. */
 let rosettaInstalled = false;
 
+/** CurseForge import: saved key, and files waiting to be downloaded by hand per instance. */
+let curseforgeKey = false;
+const manualFiles: Record<string, { name: string; fileName: string; sha1: string | null; size: number; url: string; folder: string }[]> = {};
+/** Pages opened from the manual downloads panel: as many files "appear" in Downloads. */
+let downloadedByHand = 0;
+window.addEventListener("mock:manual-download", () => downloadedByHand++);
+
 /** Simulates an install then a running game, emitting the real event names. */
 async function fakeLaunch(id: string) {
   const total = 331_000_000;
@@ -549,6 +556,59 @@ export function installMocks() {
           }
           await emit("install://finished", created.id);
           return created;
+        }
+        case "plugin:dialog|open": {
+          const filters = ((args.options as { filters?: { extensions: string[] }[] })?.filters ?? []).flatMap((f) => f.extensions);
+          return filters.includes("zip") ? "C:/Users/mock/Downloads/All the Mods 9-0.2.60.zip" : null;
+        }
+        case "modpack_kind":
+          return String(args.path).endsWith(".zip") ? "curseforge" : "modrinth";
+        case "curseforge_key_saved":
+          return curseforgeKey;
+        case "set_curseforge_key": {
+          await new Promise((r) => setTimeout(r, 500));
+          const key = String(args.key);
+          if (key && !key.startsWith("$2a$")) throw "Clé CurseForge refusée : vérifie qu'elle est complète";
+          curseforgeKey = key !== "";
+          return null;
+        }
+        case "import_modpack": {
+          if (String(args.path).endsWith(".zip") && !curseforgeKey) throw "curseforge-key-missing";
+          const created: Instance = {
+            ...instances[0],
+            id: "all-the-mods-9",
+            name: "All the Mods 9",
+            gameVersion: "1.20.1",
+            loader: "forge",
+            loaderVersion: "47.2.0",
+            icon: null,
+            createdAt: new Date().toISOString(),
+            lastPlayedAt: null,
+            packProjectId: null,
+            packVersionId: null,
+            packVersion: null,
+          };
+          instances.unshift(created);
+          await emit("instances://changed");
+          for (let i = 0; i <= 10; i++) {
+            await new Promise((r) => setTimeout(r, 120));
+            await emit("install://progress", { instanceId: created.id, stage: "downloading", doneFiles: i * 40, totalFiles: 400, doneBytes: i * 80e6, totalBytes: 800e6 });
+          }
+          manualFiles[created.id] = [
+            { name: "Sophisticated Backpacks", fileName: "sophisticatedbackpacks-1.20.1-3.20.2.1035.jar", sha1: "a", size: 1_402_311, url: "https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks/files/5328571", folder: "mods" },
+            { name: "Mekanism", fileName: "Mekanism-1.20.1-10.4.5.19.jar", sha1: "b", size: 10_812_004, url: "https://www.curseforge.com/minecraft/mc-mods/mekanism/files/5134493", folder: "mods" },
+            { name: "Stoneholm", fileName: "Stoneholm-1.20.1-forge-1.4.10.jar", sha1: "c", size: 98_210, url: "https://www.curseforge.com/minecraft/mc-mods/stoneholm/files/4993040", folder: "mods" },
+          ];
+          await emit("install://finished", created.id);
+          return created;
+        }
+        case "manual_downloads":
+          return manualFiles[args.instanceId as string] ?? [];
+        case "collect_manual_downloads": {
+          const list = manualFiles[args.instanceId as string] ?? [];
+          list.splice(0, Math.min(downloadedByHand, list.length));
+          downloadedByHand = 0;
+          return [...list];
         }
         case "export_modpack":
           return null;

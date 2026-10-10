@@ -288,7 +288,7 @@ export default function Discover(props: { instanceId?: string; query?: string; k
           </p>
           <button class="btn px-corners shrink-0" disabled={importing()} onClick={() => void importFile()}>
             <Icon name="folder" size={12} />
-            {importing() ? "Import…" : "Importer un .mrpack"}
+            {importing() ? "Import…" : "Importer un modpack"}
           </button>
         </div>
       </Show>

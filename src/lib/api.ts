@@ -511,6 +511,17 @@ export const EVENTS = {
   instancesChanged: "instances://changed",
 } as const;
 
+/** A file of a CurseForge pack whose author forbids launchers to download it. */
+export interface ManualFile {
+  name: string;
+  fileName: string;
+  sha1: string | null;
+  size: number;
+  /** Download page of this exact file on curseforge.com. */
+  url: string;
+  folder: string;
+}
+
 export const api = {
   appInfo: () => invoke<AppInfo>("app_info"),
   getLogs: () => invoke<LogEntry[]>("get_logs"),
@@ -599,6 +610,12 @@ export const api = {
   modpackRollbackVersion: (instanceId: string) => invoke<string | null>("modpack_rollback_version", { instanceId }),
   rollbackModpack: (instanceId: string) => invoke<void>("rollback_modpack", { instanceId }),
   importModpack: (path: string) => invoke<Instance>("import_modpack", { path }),
+  modpackKind: (path: string) => invoke<"modrinth" | "curseforge">("modpack_kind", { path }),
+  curseforgeKeySaved: () => invoke<boolean>("curseforge_key_saved"),
+  /** Checks the key with CurseForge, then saves it; `""` deletes it. */
+  setCurseforgeKey: (key: string) => invoke<void>("set_curseforge_key", { key }),
+  manualDownloads: (instanceId: string) => invoke<ManualFile[]>("manual_downloads", { instanceId }),
+  collectManualDownloads: (instanceId: string) => invoke<ManualFile[]>("collect_manual_downloads", { instanceId }),
   exportModpack: (instanceId: string, path: string, version: string) =>
     invoke<void>("export_modpack", { instanceId, path, version }),
 

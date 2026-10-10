@@ -3,8 +3,10 @@
 
 use std::path::Path;
 
+use tandem_core::content::curseforge::{self, Manifest};
 use tandem_core::content::mrpack::{self, PackIndex};
 use tandem_core::content::pack_update::{self, UpdateReport};
+use tandem_core::instance::NewInstance;
 use tandem_core::instance::{self, Instance, PackOrigin};
 use tandem_core::Context;
 use tauri::{AppHandle, Emitter};
@@ -33,13 +35,14 @@ pub async fn install_from_modrinth(
         version: pack.version.version_number.clone(),
         icon: pack.project.icon_url.clone(),
     };
+    let new = index.new_instance(Some(&pack.project.title))?;
     let installed = install(
         app,
         ctx,
         games,
         &pack.path,
-        index,
-        Some(&pack.project.title),
+        new,
+        Source::Modrinth(&index),
         Some(origin),
     )
     .await?;
@@ -119,15 +122,49 @@ pub async fn rollback(
     Ok(result?)
 }
 
-/// Installs a `.mrpack` file chosen by the player.
+/// Installs a modpack file chosen by the player: a Modrinth `.mrpack` or a CurseForge `.zip`.
 pub async fn import_file(
     app: &AppHandle,
     ctx: &Context,
     games: &Games,
     path: &Path,
 ) -> CommandResult<Instance> {
+    if let Some(manifest) = curseforge::inspect(path).await? {
+        let key = curseforge::stored_key()
+            .await?
+            .ok_or_else(|| CommandError::msg(CURSEFORGE_KEY_MISSING))?;
+        let new = manifest.new_instance()?;
+        return install(
+            app,
+            ctx,
+            games,
+            path,
+            new,
+            Source::CurseForge(&manifest, &key),
+            None,
+        )
+        .await;
+    }
     let index = mrpack::read_index(path).await?;
-    install(app, ctx, games, path, index, None, None).await
+    let new = index.new_instance(None)?;
+    install(app, ctx, games, path, new, Source::Modrinth(&index), None).await
+}
+
+/// Sent when a CurseForge pack is imported without a saved key, so the UI can ask for one.
+pub const CURSEFORGE_KEY_MISSING: &str = "curseforge-key-missing";
+
+/// Which kind of pack a file is: `modrinth` or `curseforge`.
+pub async fn kind(path: &Path) -> CommandResult<&'static str> {
+    Ok(if curseforge::inspect(path).await?.is_some() {
+        "curseforge"
+    } else {
+        "modrinth"
+    })
+}
+
+enum Source<'a> {
+    Modrinth(&'a PackIndex),
+    CurseForge(&'a Manifest, &'a str),
 }
 
 async fn install(
@@ -135,11 +172,11 @@ async fn install(
     ctx: &Context,
     games: &Games,
     pack: &Path,
-    index: PackIndex,
-    name: Option<&str>,
+    new: NewInstance,
+    source: Source<'_>,
     origin: Option<PackOrigin>,
 ) -> CommandResult<Instance> {
-    let created = instance::create(ctx, index.new_instance(name)?).await?;
+    let created = instance::create(ctx, new).await?;
     let id = created.id.clone();
     games.begin(&id);
     let _ = app.emit(INSTANCES_CHANGED_EVENT, ());
@@ -148,7 +185,15 @@ async fn install(
         if let Some(origin) = &origin {
             ctx.db.set_instance_pack(&id, origin).await?;
         }
-        mrpack::install(ctx, &created, pack, &index, progress_emitter(app, &id)).await?;
+        let progress = progress_emitter(app, &id);
+        match source {
+            Source::Modrinth(index) => {
+                mrpack::install(ctx, &created, pack, index, progress).await?;
+            }
+            Source::CurseForge(manifest, key) => {
+                curseforge::install(ctx, &created, pack, manifest, key, progress).await?;
+            }
+        }
         ctx.db.get_instance(&id).await
     }
     .await;

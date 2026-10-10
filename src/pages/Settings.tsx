@@ -1,5 +1,6 @@
 import { createResource, createSignal, type JSX, Show } from "solid-js";
 import Alert from "../components/Alert";
+import { CurseForgeSettings } from "../components/curseforge/CurseForgeKey";
 import LogView from "../components/LogView";
 import { Icon, Toggle } from "../components/pixel";
 import Select from "../components/Select";
@@ -114,6 +115,8 @@ export default function Settings() {
       </div>
 
       <TranslationSettings />
+
+      <CurseForgeSettings />
 
       <section class="panel px-corners-md flex min-h-[260px] flex-1 flex-col gap-3 p-4">
         <h2 class="panel-title">Journal du launcher</h2>
