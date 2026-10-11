@@ -186,6 +186,32 @@ Mis de côté (faisable, gain trop étroit pour l'instant) :
 - Génération du terrain par les amis (niveau 2, [faisabilité prouvée](TEST-DUO.md#repousser-les-limites--pistes-de-niveau-1-à-3-11-octobre-2026)) : utile seulement si beaucoup d'amis explorent du terrain neuf en même temps, plafonné par la limite LAN de 8, coûteux (serveur sans joueurs et 2 à 3 Go de RAM chez chaque ami). La pré-génération avant de jouer donne l'essentiel du gain. À reprendre si Tandem dépasse les 8 joueurs
 - Pistes écartées : partager la simulation d'un même monde entre plusieurs PC, y compris confier les mobs à l'ami le plus proche (copie vivante du monde à synchroniser, mods qui supposent un seul serveur) ; compression ou relais réseau (coût CPU nul mesuré) ; mods de multithreading du tick (Folia : sans mods ; mods Fabric expérimentaux : trop risqués avec un gros modpack)
 
+### 6d — Mini-mod hôte (session dédiée, cadrée le 2026-10-11)
+Priorité 1 de la 6c (D40). Un mod côté serveur, ajouté par Tandem au lancement, qui retire du travail inutile sans rien changer en jeu. Mesures de départ : [TEST-DUO.md](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026).
+
+**Point de départ** : prototype Fabric local dans `.claude/notes/tandem-host/` (non poussé), compilé avec `javac` contre `server-intermediary.jar` (noms intermédiaires, Java 17, même jar en 1.20.1 et 1.21.1). Contenu : `DeadSpawnGroups` + `SpawnHelperMixin` (catégories d'apparition où rien ne peut apparaître), `BalmConfigReflectionMixin` (cache), `ArchitecturyEventFactoryMixin` (appel direct des écouteurs), `ChunkImport` + `MinecraftServerMixin` + `ChunkLoadingManagerAccess` (import de chunks : génération coopérative mise de côté, **à retirer de la v1**). Banc de mesure et scripts : notes locales (`etat.md`, section « Session optimisation »).
+
+**Décisions à prendre en début de session** (recommandation entre parenthèses) :
+- Construction : garder `javac` sur les noms intermédiaires (léger, sans Gradle, mais il faut produire le jar Minecraft remappé pour compiler, en local et en CI) ou passer à Gradle + Loom (standard, refmaps, CI simple, plus lourd). (Loom si la CI doit le construire ; sinon garder `javac` et générer le jar de compilation avec un script.)
+- Où vit le code : `mods/tandem-host/` dans le dépôt, licence du dépôt.
+- Comment Tandem l'ajoute : `-Dfabric.addMods=<jar>` au lancement (rien n'est écrit dans `mods/` de l'instance, rien à nettoyer après un plantage) plutôt que copier le jar. (`addMods`.) Jar embarqué dans l'app et écrit dans le dossier de données de Tandem. Point d'entrée : `launch::build_command` (`crates/tandem-core/src/launch.rs`).
+- Quand : seulement pendant une session d'hôte, ou à chaque lancement avec un réglage pour le couper. Les gains valent aussi en solo (serveur intégré). (À chaque lancement, réglage « Optimisations Tandem » activé par défaut, et par instance.)
+- Quilt charge les mods Fabric : à vérifier. NeoForge et Forge : noms différents à l'exécution (Mojang depuis NeoForge 1.20.5, SRG pour Forge 1.20.1), donc un autre jar. (v1 Fabric/Quilt, NeoForge en v2, Forge ensuite si le besoin existe.)
+
+**Travail de la v1 (Fabric)**
+- [ ] Mettre le prototype dans le dépôt, retirer l'import de chunks, nom et identifiant définitifs, version du mod dans le journal au démarrage
+- [ ] Tolérance aux versions : chaque Mixin facultatif (`required: false`, `defaultRequire: 0`), aucun plantage si une cible manque ; vérifier en 1.20.1, 1.21.1, 1.21.4 et la dernière version prise en charge par Fabric
+- [ ] Vérifier le correctif Architectury (exceptions, arguments primitifs, écouteurs non publics → retour au code d'origine) et le cache Balm (config rechargée en jeu : l'identifiant ne change pas, seule la classe sert de clé)
+- [ ] Cache de la recherche d'apparition (jusqu'à 17 % du tick sur Prominence) : mesurer d'abord ce qui se répète (biome, liste par catégorie, structures, chunks voisins), ne cacher que ce qui ne dépend pas de la position exacte ; identique en jeu
+- [ ] Distance d'activation des entités (−15 à 20 % sur Prominence avec ServerCore) : entités loin de tout joueur tickées moins souvent ; jamais pour les entités en combat, montées, tenues en laisse, apprivoisées près de leur maître, les projectiles, les boss ; distance et intervalle prudents ; réglable et désactivable
+- [ ] Branchement dans Tandem : jar embarqué, `-Dfabric.addMods`, réglage global et par instance, ligne dans le journal du jeu quand il est actif
+- [ ] Mesures avant/après sur Cobbleverse (1.21.1) et Prominence II (1.20.1) avec `loadtest_run.py` (référence, puis chaque optimisation séparément, puis toutes), JFR à chaque palier
+- [ ] Tests en vrai : solo et « Jouer ensemble » sur 3 gros packs (Cobbleverse, Prominence II, Fabulously Optimized), aucun plantage, aucun comportement visible changé (apparitions, Pokémon, villageois, fermes simples)
+
+**Terminé quand** : le mod est ajouté par Tandem sans rien toucher dans l'instance, coupable dans les Réglages, chaque optimisation est mesurée et documentée (gain, pack, nombre de joueurs), et aucun des trois packs ne plante ni ne change en jeu.
+
+**Hors périmètre** : génération coopérative du terrain (mise de côté, D40), NeoForge (v2), dépasser les 8 joueurs du LAN, réglages propres à un mod.
+
 ## Portage macOS
 
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
@@ -383,4 +409,4 @@ Mis de côté (faisable, gain trop étroit pour l'instant) :
 ### 2026-10-11 (Windows : plus de CurseForge)
 - Choix de Raphaël (D41) : Tandem n'utilise plus CurseForge. Retiré : module `content::curseforge`, commandes de la clé et des téléchargements à la main, dialogue de clé, réglage, panneau de l'instance. Un `.zip` CurseForge est refusé avec un message qui oriente vers « Depuis un autre launcher ». Gardé : l'import d'instances déjà installées (dont l'app CurseForge), qui ne fait que copier des fichiers locaux.
 - Vérifié : fmt, Clippy, 134 tests (dont le refus d'un pack CurseForge), TypeScript, import `.mrpack` et Réglages dans l'aperçu (backend simulé).
-
+- Cadrage de la session « mini-mod hôte » écrit (6d ci-dessus) : décisions à prendre, travail de la v1 Fabric, critères de fin.
