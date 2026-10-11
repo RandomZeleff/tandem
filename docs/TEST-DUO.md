@@ -145,3 +145,52 @@ Génération pure sur une zone vierge, PC entier dessus et personne en jeu : **7
 - **La RAM ne change pas** : 300 à 700 Mo libres dans les deux cas.
 - **Mais un monde ouvert en LAN est limité à 8 joueurs** par Minecraft lui-même. Dépasser 8 demanderait de modifier le jeu (l'agent Java prévu), ou de faire tourner le monde de l'hôte comme un serveur à part.
 - **Coût d'une pré-génération** : une zone de 4 000 × 4 000 blocs (62 500 chunks) prend environ 13 min sur ce PC seul et pèse environ 700 Mo. Partagée entre 5 PC : environ 3 min chacun, plus l'envoi d'environ 140 Mo par ami vers l'hôte. Pré-générer à l'avance sur le seul PC de l'hôte donne déjà l'essentiel du gain.
+
+## Optimisation : où part le temps du serveur (11 octobre 2026)
+
+**Montage.** Même PC. Deux modpacks très différents, chacun sur un monde pré-généré (Chunky), joueurs qui tournent en cercles à la vitesse d'un sprint, 4 invités de plus toutes les 90 s :
+- **Cobbleverse** (Fabric 1.21.1, 136 mods), serveur à 3 Go + un vrai jeu par le tunnel Tandem, comme les tests précédents ;
+- **Prominence II** (Fabric 1.20.1, RPG, 678 mods côté client, 443 côté serveur), serveur à 6 Go, sans vrai jeu (pas assez de RAM pour les deux), temps du tick mesuré par Carpet (`tick query` n'existe pas avant 1.20.3).
+
+**Profilage : Java Flight Recorder**, pas spark. Sous Windows, spark n'a que son échantillonneur Java : il ne voit le code qu'aux « safepoints » (résultats faux, très différents de JFR) et ralentit le serveur en permanence (10 joueurs : 46 ms par tick avec lui, 32 sans). JFR est inclus dans Java 21, sans ce biais. Chaque échantillon du fil du serveur est rangé par sous-système et par mod (classes lues dans les jars, Mixins reconnus à leur nom).
+
+### Temps par tick (ms) selon le nombre de joueurs
+
+Cobbleverse :
+
+| Variante | 2 | 6 | 10 | 14 | 18 |
+|---|---|---|---|---|---|
+| Référence (distance de simulation 12) | 9,3 | 20,3 | 32,4 | 39,3 | 47,1 |
+| Distance de simulation 8 | 7,4 | 19,8 | 31,2 | 38,5 | 43,3 |
+| Apparition vanilla coupée (`doMobSpawning false`) | 6,9 | 13,6 | 18,0 | 24,1 | 25,6 |
+| … + VMP | 6,6 | 15,0 | 18,3 | 22,7 | 24,4 |
+| … + VMP + ServerCore (réglages par défaut) | 6,8 | 12,4 | 15,8 | 19,3 | 21,6 |
+| … + distance d'activation (ServerCore, 32 blocs) | 6,3 | 11,8 | 15,3 | 18,4 | 24,3 |
+| **Mini-mod Tandem seul** (sans toucher aux règles du monde) | 8,1 | 16,0 | 20,9 | 24,4 | 28,0 |
+
+Prominence II :
+
+| Variante | 2 | 6 | 10 | 14 | 18 |
+|---|---|---|---|---|---|
+| Référence | 18,6 | 38,0 | 51,5 | 60,8 | (arrêté) |
+| Mini-mod Tandem | 13,0 | 34,1 | 48,1 | 53,1 | 72,1 |
+| Mini-mod + ServerCore (distance d'activation, villageois bloqués ralentis) | 11,4 | 27,7 | 40,4 | 49,2 | 56,8 |
+
+Le serveur tient ses 20 TPS tant que le tick reste sous 50 ms. Écart entre deux passages identiques : environ ±2 ms.
+
+### Ce qui coûte, et ce qui se généralise
+
+1. **Apparitions vanilla qui ne servent à rien.** Cobbleverse bloque toutes les créatures vanilla (MobsBeGone), mais seulement au moment où elles entrent dans le monde : le serveur fait d'abord toute la recherche d'emplacement (biome, structures, chunks voisins), pour chaque chunk autour de chaque joueur, à chaque tick. **40 % du tick** à 10-18 joueurs, pour rien. Le cas est courant (packs qui remplacent les mobs vanilla, catégories vides). Correctif sans effet en jeu : sauter les catégories où rien ne peut apparaître (mini-mod ci-dessous). Gain : 47 → 28 ms à 18 joueurs. Sur Prominence, les mobs vanilla existent : le mini-mod ne saute qu'une catégorie vide, comme prévu.
+2. **IA des entités.** Après ça, la charge principale des deux packs : Pokémon (53 % du tick sur Cobbleverse), mobs vanilla et moddés, recherche de chemin, villageois qui cherchent leurs points d'intérêt (Prominence). La **distance d'activation** (entités loin des joueurs mises au ralenti, comme Paper) gagne 15 à 20 % sur Prominence, presque rien sur Cobbleverse (les Pokémon apparaissent près des joueurs). ServerCore la propose mais ne marche que sur un serveur dédié, pas dans le monde de l'hôte : à refaire dans le mini-mod pour en profiter.
+3. **Bibliothèques partagées mal optimisées.** Architectury (présente dans les deux packs, et dans des centaines d'autres) reconstruit un `MethodHandle` par réflexion à chaque appel de chaque écouteur d'événement ; Balm relit une annotation et recrée un identifiant à chaque lecture de config, ce que Forgiving Void fait pour chaque entité à chaque tick. Architectury : 2 à 3 % du tick ; Forgiving Void (au-dessus de Balm) : jusqu'à 6 %, dont seule la lecture de config est corrigée pour l'instant dans le mini-mod.
+4. **Coûts propres à certains mods** (à signaler à leurs auteurs plutôt qu'à corriger nous-mêmes) : fonction de datapack qui redonne un effet à tous les joueurs à chaque tick (Cobbleverse « No Hunger » : un paquet réseau par joueur et par tick), baies de Cobblemon qui se marquent « modifiées » à chaque tick, calcul d'agressivité de Fight or Flight à chaque tick, Pehkui (4,5 %), BlockSwap (3,7 %) sur Prominence.
+5. **Ce qui ne change presque rien ici** : distance de simulation 12 → 8 (−8 % : apparitions et IA se font de toute façon à moins de 64-128 blocs des joueurs), VMP (pensé pour le réseau de nombreux vrais joueurs, que nos faux joueurs n'ont pas).
+6. **Pré-génération** : 77 chunks/s sur Cobbleverse (qui a c2me), 35 chunks/s sur Prominence (sans c2me). c2me double la vitesse de génération : à proposer pour « préparer le monde ».
+
+### Le mini-mod Tandem (prototype, Fabric)
+
+Un jar de 7 Ko, actif seulement côté serveur (le monde de l'hôte), rien à installer chez les amis. Compilé directement contre les noms « intermédiaires » de Fabric, stables d'une version à l'autre : le même jar marche en 1.20.1 et 1.21.1.
+- Catégories d'apparition mortes : calculées au démarrage à partir des listes des biomes et des structures, et du mod bloqueur s'il y en a un ; sautées ensuite. Les marchands ambulants, patrouilles, générateurs de monstres continuent (contrairement à `doMobSpawning false`).
+- Cache de `ConfigReflection.getIdentifier` (Balm) et appel direct des écouteurs Architectury.
+
+Limites : Fabric seulement pour l'instant (NeoForge utilise d'autres noms à l'exécution), pas encore branché dans Tandem, faux joueurs côté serveur (le coût réseau de vrais joueurs n'est pas mesuré).

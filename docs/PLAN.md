@@ -168,9 +168,10 @@ Choix tranchés :
 
 ### 6c — Optimiser « Jouer ensemble » à fond (session dédiée, voulue par Raphaël)
 Point de départ : les deux tests de charge de [TEST-DUO.md](TEST-DUO.md#test-de-charge--combien-damis-sur-un-pc-moyen-11-octobre-2026). Sur un PC moyen avec Cobbleverse : la génération du terrain fait la majorité de la charge ; sur un monde déjà généré, la limite devient le fil principal du serveur (un cœur, environ 2 ms par joueur) ; la RAM est serrée dès le premier ami ; un monde ouvert en LAN est limité à 8 joueurs.
-- [ ] Mesurer d'abord : relancer le test (monde pré-généré) en distance de simulation 8 au lieu de 12, et profiler le tick avec spark (part de Cobblemon : apparitions, IA des Pokémon)
-- [ ] Distance de simulation adaptée quand on héberge un groupe (réglage du jeu de l'hôte, appliqué ou proposé avant le lancement)
-- [ ] Pré-générer le monde de l'hôte à l'avance (« préparer le monde pour jouer à plusieurs »), puis éventuellement la pré-génération partagée entre amis pour les très grandes zones
+- [x] Mesurer d'abord : profilage du tick (JFR) sur Cobbleverse et Prominence II, variantes comparées ([résultats](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026))
+- [ ] Mini-mod « hôte » ajouté par Tandem pendant une session (prototype Fabric fait, local) : catégories d'apparition mortes sautées, Architectury et Balm corrigés ; à ajouter : distance d'activation des entités, version NeoForge, branchement dans Tandem
+- [ ] Distance de simulation adaptée quand on héberge un groupe (gain mesuré faible : −8 % de 12 à 8 ; priorité basse)
+- [ ] Pré-générer le monde de l'hôte à l'avance (« préparer le monde pour jouer à plusieurs »), avec c2me si possible (génération deux fois plus rapide), puis éventuellement la pré-génération partagée entre amis
 - [ ] Réglages « multijoueur » des mods lourds selon le profilage (plafond de Pokémon par joueur, etc.)
 - [ ] Indicateur de charge pour l'hôte (RAM libre, santé du serveur) avec conseils
 - [ ] Dépasser les 8 joueurs du LAN (agent Java, ou monde de l'hôte en serveur à part) ; agent Java d'ouverture LAN automatique dans la même veine
@@ -362,3 +363,9 @@ Point de départ : les deux tests de charge de [TEST-DUO.md](TEST-DUO.md#test-de
 - Tests de charge (résultats dans [TEST-DUO.md](TEST-DUO.md)) : serveur Cobbleverse (136 mods) sur le PC de Raphaël, un vrai jeu par un vrai tunnel Tandem, faux joueurs Carpet qui sprintent. Terrain neuf : hôte + 4 amis confortable, saturation CPU vers 8 joueurs, RAM serrée dès 2. Monde pré-généré : environ 20 joueurs tiennent, limite = fil principal du serveur. Génération pure 77 chunks/s, environ 11 Ko par chunk. Tunnel : 0,3 à 1 Mbit/s par joueur, jamais la limite.
 - Outils : exemple `duo tunnel <port>` (serveur vu à travers une vraie session, débit mesuré), `TANDEM_MEMORY_MB` pour `play`, scripts locaux de montage et de pilotage du test.
 - Prochaine étape : session dédiée à l'optimisation (6c ci-dessus), et le test réel à deux PC des nouveautés (nouvel installeur des deux côtés).
+
+### 2026-10-11 (Windows : optimiser « Jouer ensemble », mesures)
+- Profilage du serveur avec Java Flight Recorder (spark écarté : biaisé et coûteux sous Windows). Deux packs : Cobbleverse (Fabric 1.21.1) et Prominence II (Fabric 1.20.1), mondes pré-générés, 2 à 18 joueurs. Résultats dans [TEST-DUO.md](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026).
+- Trouvé : apparitions vanilla calculées puis jetées quand un pack bloque les mobs (40 % du tick sur Cobbleverse) ; IA des entités ensuite (distance d'activation : −15 à 20 % sur Prominence) ; Architectury et Balm qui passent par la réflexion à chaque appel. Distance de simulation et VMP : peu d'effet.
+- Prototype de mini-mod Fabric (local, `.claude/notes/tandem-host`) : 47 → 28 ms par tick à 18 joueurs sur Cobbleverse, −8 à 13 % sur Prominence, même jar pour 1.20.1 et 1.21.1.
+- Prochaine étape : décider avec Raphaël du mini-mod (ajouté par Tandem pendant une session d'hôte), y ajouter la distance d'activation, puis NeoForge.
