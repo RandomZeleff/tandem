@@ -135,6 +135,14 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - [x] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel, ou dossier choisi) — D35
 - [x] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne — [AUDIT-UI.md](AUDIT-UI.md#passe-finale--2026-10-10-fin-de-la-phase-47)
 
+## Phase 4.8 — Soutenir les créateurs (plus tard, idée de Raphaël le 2026-10-11)
+Tandem n'affiche pas de publicité (celle qui paie les auteurs sur Modrinth) : le mettre en valeur auprès des créateurs. Modrinth donne les liens de soutien de chaque projet (`donation_urls` : Ko-fi, Patreon, PayPal, GitHub Sponsors, Buy Me a Coffee, autre) ; aujourd'hui ils sont discrets, une ligne « Don » dans la colonne Liens de la fiche.
+- [ ] Bouton « Soutenir l'auteur » bien visible dans la fiche, à côté d'« Installer », icône de la plateforme ; seulement si l'auteur a mis un lien
+- [ ] « Les créateurs de ce pack » dans chaque instance : auteurs des contenus installés regroupés, avec leurs liens (« tes 136 mods sont faits par 89 créateurs, 34 acceptent les dons ») ; liens retrouvés par une requête groupée vers Modrinth, comme la reconnaissance des fichiers
+- [ ] Fiche d'un modpack : l'auteur du pack, puis les créateurs des mods qu'il contient avec leurs liens
+- [ ] Petit rappel unique, par exemple après 10 h de jeu sur une instance (« ses créateurs acceptent les soutiens »), fermable pour toujours
+- Principes : jamais insistant ni bloquant ; toujours le lien direct de l'auteur, Tandem ne prend rien ; ton chaleureux, pas culpabilisant ; repli « Voir sur Modrinth » quand l'auteur n'a pas de lien. Les liens sont par projet, pas par auteur : regrouper par équipe ou organisation Modrinth.
+
 ## Phase 6 — Multijoueur P2P sans serveur
 
 Cadrage (2026-10-10, avec Raphaël, D37) : on livre d'abord **le tunnel seul** (6a), puis la synchronisation des mods (6b). L'hôte ouvre son monde au réseau local dans le jeu, comme d'habitude ; Tandem le transporte chez l'invité, dont le jeu le voit comme une partie du réseau local. Aucun mod, toutes versions et loaders.
@@ -410,3 +418,4 @@ Priorité 1 de la 6c (D40). Un mod côté serveur, ajouté par Tandem au lanceme
 - Choix de Raphaël (D41) : Tandem n'utilise plus CurseForge. Retiré : module `content::curseforge`, commandes de la clé et des téléchargements à la main, dialogue de clé, réglage, panneau de l'instance. Un `.zip` CurseForge est refusé avec un message qui oriente vers « Depuis un autre launcher ». Gardé : l'import d'instances déjà installées (dont l'app CurseForge), qui ne fait que copier des fichiers locaux.
 - Vérifié : fmt, Clippy, 134 tests (dont le refus d'un pack CurseForge), TypeScript, import `.mrpack` et Réglages dans l'aperçu (backend simulé).
 - Cadrage de la session « mini-mod hôte » écrit (6d ci-dessus) : décisions à prendre, travail de la v1 Fabric, critères de fin.
+- Ajouté au plan : Phase 4.8 « Soutenir les créateurs » (liens de soutien Modrinth mis en valeur), pour plus tard.
