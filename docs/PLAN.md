@@ -175,8 +175,10 @@ Point de départ : les deux tests de charge de [TEST-DUO.md](TEST-DUO.md#test-de
 - [ ] Réglages « multijoueur » des mods lourds selon le profilage (plafond de Pokémon par joueur, etc.)
 - [ ] Indicateur de charge pour l'hôte (RAM libre, santé du serveur) avec conseils
 - [ ] Dépasser les 8 joueurs du LAN (agent Java, ou monde de l'hôte en serveur à part) ; agent Java d'ouverture LAN automatique dans la même veine
+- [ ] Génération du terrain par les amis (niveau 2, [faisabilité prouvée](TEST-DUO.md#repousser-les-limites--pistes-de-niveau-1-à-3-11-octobre-2026)) : générateur sans joueurs chez l'ami, chunks envoyés par le tunnel et injectés par le mini-mod
+- [ ] Recherche d'apparition mise en cache dans le mini-mod (jusqu'à 17 % du tick sur un pack riche en mobs)
 - [ ] Héberger sur le PC le plus fort du groupe avec un monde qui suit le groupe (transfert d'hôte)
-- Pistes écartées : partager la simulation d'un même monde entre plusieurs PC (latence entre box, mods qui supposent un seul serveur) ; mods de multithreading du tick (Folia : sans mods ; mods Fabric expérimentaux : trop risqués avec un gros modpack)
+- Pistes écartées : partager la simulation d'un même monde entre plusieurs PC, y compris confier les mobs à l'ami le plus proche (copie vivante du monde à synchroniser, mods qui supposent un seul serveur) ; compression ou relais réseau (coût CPU nul mesuré) ; mods de multithreading du tick (Folia : sans mods ; mods Fabric expérimentaux : trop risqués avec un gros modpack)
 
 ## Portage macOS
 
@@ -369,3 +371,4 @@ Point de départ : les deux tests de charge de [TEST-DUO.md](TEST-DUO.md#test-de
 - Trouvé : apparitions vanilla calculées puis jetées quand un pack bloque les mobs (40 % du tick sur Cobbleverse) ; IA des entités ensuite (distance d'activation : −15 à 20 % sur Prominence) ; Architectury et Balm qui passent par la réflexion à chaque appel. Distance de simulation et VMP : peu d'effet.
 - Prototype de mini-mod Fabric (local, `.claude/notes/tandem-host`) : 47 → 28 ms par tick à 18 joueurs sur Cobbleverse, −8 à 13 % sur Prominence, même jar pour 1.20.1 et 1.21.1.
 - Prochaine étape : décider avec Raphaël du mini-mod (ajouté par Tandem pendant une session d'hôte), y ajouter la distance d'activation, puis NeoForge.
+- Suite : pistes de niveau 1 à 3 étudiées. Niveau 1 (cœurs inutilisés) : plafond 12 à 30 %, surtout un cache de la recherche d'apparition. Niveau 2 : réseau sans intérêt CPU ; génération du terrain par les amis faisable (génération non reproductible de toute façon, injection de chunks dans l'hôte en marche prouvée). Niveau 3 écarté (casse les mods).

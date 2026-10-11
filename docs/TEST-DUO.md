@@ -194,3 +194,29 @@ Un jar de 7 Ko, actif seulement côté serveur (le monde de l'hôte), rien à in
 - Cache de `ConfigReflection.getIdentifier` (Balm) et appel direct des écouteurs Architectury.
 
 Limites : Fabric seulement pour l'instant (NeoForge utilise d'autres noms à l'exécution), pas encore branché dans Tandem, faux joueurs côté serveur (le coût réseau de vrais joueurs n'est pas mesuré).
+
+## Repousser les limites : pistes de niveau 1 à 3 (11 octobre 2026)
+
+Trois niveaux étudiés, des plus sûrs aux plus ambitieux, en écartant ce qui casserait les mods.
+
+**Niveau 1 : les cœurs inutilisés de l'hôte.** Le serveur n'utilise qu'un cœur sur 12. Part du tick qui n'est que de la « recherche » (calculable à côté puis appliquée) :
+
+| Recherche | Cobbleverse (18 joueurs) | Prominence (14 joueurs) |
+|---|---|---|
+| Chemins des mobs | 1,7 % | 5,5 % |
+| Entités proches (capteurs, cibles) | 3,8 % | 3,9 % |
+| Points d'intérêt des villageois | 0,5 % | 2,9 % |
+| Emplacements d'apparition vanilla | 2,7 % (déjà réduit par le mini-mod) | 17,1 % |
+| Emplacements d'apparition d'un mod | 3,0 % | 0 % |
+
+Plafond : 12 à 30 % du tick. Le reste (décider, bouger, collisions) modifie le monde et doit rester sur un seul fil. Le plus gros morceau, la recherche d'apparition de Prominence, est surtout des lectures de biome et de chunks voisins à chaque essai : un cache suffit, sans parallélisme. Calculer les chemins en parallèle toucherait l'IA des mobs moddés : risqué.
+
+**Niveau 2 : les amis comme coprocesseurs.**
+- *Réseau* : sur 62 s avec un vrai joueur, les fils réseau (compression comprise) totalisent 1 échantillon contre 2 739 pour le fil du serveur. Déplacer la compression dans le tunnel Rust ne gagnerait rien. Un relais entre amis n'aiderait qu'un hôte à très petit débit montant (environ 0,5 Mbit/s par ami).
+- *Génération du terrain par les amis* : c'est la piste qui tient. Deux constats :
+  - La génération de Minecraft **n'est pas reproductible**, même seul : deux mondes de même graine générés dans le même ordre diffèrent de 0,6 % (Cobbleverse) à 1,7 % (Prominence) des blocs, à cause des décorations des chunks voisins posées en parallèle (feuilles, arbres, mousse, argile, poches de minerai, herbe). Le relief, les biomes et les structures sont identiques. Vérifier qu'un ami génère « la même chose » que l'hôte n'a donc pas de sens : un chunk généré par un ami est aussi valable que celui de l'hôte.
+  - **Injection dans le monde de l'hôte en marche, prouvée** : 289 chunks générés dans un autre monde (même graine, à x = 20 000), envoyés en fichiers de 6,8 Ko par chunk, ont été pris par le mini-mod en 9 s et chargés par le serveur au lieu d'être générés. Il ne reste que les différences de la vie du monde après chargement (eau qui coule, varech qui pousse : 0,1 % des blocs).
+  - Gain attendu : celui mesuré entre terrain neuf et terrain pré-généré (6 joueurs : 37 → 18 ms par tick, CPU du PC 82 → 32 %). Un explorateur demande environ 10 chunks/s, soit environ 70 Ko/s à envoyer et un cœur et demi chez l'ami.
+  - Reste à faire : faire tourner le générateur chez l'ami (un serveur sans joueurs du même modpack, 2 à 3 Go de RAM), décider où générer (devant chaque joueur), envoyer par le tunnel, entités nées à la génération, autres dimensions, NeoForge.
+
+**Niveau 3 : déléguer la simulation des mobs à l'ami le plus proche.** Plafond théorique élevé (les entités font 40 à 60 % du tick), mais l'ami aurait besoin d'une copie vivante du monde côté serveur autour de lui, synchronisée dans les deux sens, et les mobs moddés touchent des données globales du serveur (combats et équipes Cobblemon, inventaires, progrès). C'est exactement le genre de piste qui casse les mods : **écartée**. Ses équivalents locaux (distance d'activation, IA allégée loin des joueurs) donnent une partie du gain sans ce risque.
