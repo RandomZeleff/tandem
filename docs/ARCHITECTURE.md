@@ -19,7 +19,8 @@
 │   ├─ content    Modrinth, fiches, mrpack, dépendances│
 │   ├─ launchers  import Modrinth App, Prism, CF, Mojang│
 │   ├─ translate  extraction, LLM, resource pack       │
-│   └─ p2p        détection LAN, tunnel iroh           │
+│   ├─ duo        détection LAN, tunnel iroh           │
+│   └─ optimizations  mod Tandem ajouté au lancement   │
 ├─────────────────────────────────────────────────────┤
 │  SQLite (sqlx) · système de fichiers · keyring       │
 └─────────────────────────────────────────────────────┘
@@ -38,6 +39,7 @@ Racine surchargeable avec la variable d'environnement `TANDEM_DATA_DIR` (utile e
 ├─ assets/              index + objets (format Mojang, partagés)
 ├─ java/<version>/      runtimes téléchargés
 ├─ instances/<id>/      .minecraft de chaque instance (id = slug du nom)
+├─ mods/                jar de Tandem Optimizations (ajouté au lancement, D42)
 ├─ cache/               réponses API, traductions
 └─ logs/                tandem.YYYY-MM-DD.log (rotation journalière, 7 fichiers)
 ```
@@ -45,6 +47,7 @@ Racine surchargeable avec la variable d'environnement `TANDEM_DATA_DIR` (utile e
 ## Flux clés
 
 - **Lancement** : résoudre version + loader → lister fichiers requis → télécharger ce qui manque dans `store` → hardlink → construire la commande → spawn → streamer les logs via events.
+- **Optimisations** : pour Fabric et Quilt 1.20 à 1.21.11, le lancement ajoute `-Dfabric.addMods=<données>/mods/tandem-optimizations-fabric-<v>.jar` (jar embarqué dans l'app, sources dans `mods/tandem-optimizations/`), rien n'est écrit dans l'instance.
 - **Multi P2P** : hôte détecte l'annonce LAN → ouvre un endpoint iroh → code d'invitation ; invité résout le code → connexion QUIC → proxy TCP local ↔ flux QUIC.
 - **Traduction** : scan des jars → extraction des chaînes → masquage des codes de format → LLM par lots → validation → resource pack → cache par hash.
 

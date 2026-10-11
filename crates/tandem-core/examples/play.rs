@@ -99,7 +99,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap_or_else(|| {
                 jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir))
             }),
-        extra_jvm_args: Vec::new(),
+        // Tandem Optimizations, as the launcher adds them (`instance:<id>` only).
+        extra_jvm_args: match &existing {
+            Some(instance) => tandem_core::optimizations::jvm_args(&ctx, instance).await?,
+            None => Vec::new(),
+        },
         window: None,
         // `TANDEM_JOIN=127.0.0.1:25565`: the game joins that server at once.
         // `TANDEM_WORLD=<folder>`: the game opens that world at once (1.20+).

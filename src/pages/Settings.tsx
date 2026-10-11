@@ -6,6 +6,7 @@ import Select from "../components/Select";
 import TranslationSettings from "../components/translation/TranslationSettings";
 import { api, errorMessage } from "../lib/api";
 import { ON_GAME_START_SETTING, type OnGameStart } from "../lib/games";
+import { ACTIVATION_SETTING, OPTIMIZATIONS_SETTING } from "../lib/optimizations";
 
 /** Same key as the toggle in the Worlds tab. */
 const AUTO_BACKUP_SETTING = "auto_backup_worlds";
@@ -42,6 +43,13 @@ export default function Settings() {
   );
   const [autoBackup, { mutate: setAutoBackup }] = createResource(
     async () => (await api.getSetting<boolean>(AUTO_BACKUP_SETTING)) ?? true,
+  );
+
+  const [optimizations, { mutate: setOptimizations }] = createResource(
+    async () => (await api.getSetting<boolean>(OPTIMIZATIONS_SETTING)) ?? true,
+  );
+  const [activation, { mutate: setActivation }] = createResource(
+    async () => (await api.getSetting<boolean>(ACTIVATION_SETTING)) ?? true,
   );
 
   async function save<T>(key: string, value: T, apply: (v: T) => void) {
@@ -88,6 +96,29 @@ export default function Settings() {
                 checked={autoBackup() ?? true}
                 label="Sauvegarder les mondes après chaque partie"
                 onChange={(v) => void save(AUTO_BACKUP_SETTING, v, setAutoBackup)}
+              />
+            }
+          />
+          <Row
+            title="Optimisations Tandem"
+            description="Un petit mod que Tandem ajoute au lancement des instances Fabric et Quilt (1.20 à 1.21) : le monde, en solo comme quand tu invites des amis, saute le travail inutile. Rien n'est installé dans tes instances. Réglable aussi par instance."
+            control={
+              <Toggle
+                checked={optimizations() ?? true}
+                label="Optimisations Tandem"
+                onChange={(v) => void save(OPTIMIZATIONS_SETTING, v, setOptimizations)}
+              />
+            }
+          />
+          <Row
+            title="Ralentir les créatures loin des joueurs"
+            description="Les créatures inactives à plus de 32 blocs de tout joueur sont simulées quatre fois moins souvent. Elles bougent plus lentement au loin ; fermes, villageois et combats ne changent pas."
+            control={
+              <Toggle
+                checked={activation() ?? true}
+                disabled={optimizations() === false}
+                label="Ralentir les créatures loin des joueurs"
+                onChange={(v) => void save(ACTIVATION_SETTING, v, setActivation)}
               />
             }
           />

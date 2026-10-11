@@ -12,6 +12,7 @@ use tandem_core::crash::{self, CrashAnalysis};
 use tandem_core::install::{self, InstallProgress, Stage};
 use tandem_core::jvm;
 use tandem_core::launch::{self, LaunchSpec, QuickPlay};
+use tandem_core::optimizations;
 use tandem_core::process::ProcessGroup;
 use tandem_core::stats::{ProcessSampler, ProcessStats};
 use tandem_core::{worlds, Context, Error};
@@ -234,11 +235,19 @@ async fn start(
         memory_mb: instance.memory_mb.unwrap_or_else(|| {
             jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir))
         }),
-        extra_jvm_args: instance
-            .jvm_args
-            .as_deref()
-            .map(|a| a.split_whitespace().map(str::to_owned).collect())
-            .unwrap_or_default(),
+        // The player's arguments come last: they can override Tandem's `-D` options.
+        extra_jvm_args: optimizations::jvm_args(ctx, &instance)
+            .await?
+            .into_iter()
+            .chain(
+                instance
+                    .jvm_args
+                    .as_deref()
+                    .unwrap_or_default()
+                    .split_whitespace()
+                    .map(str::to_owned),
+            )
+            .collect(),
         window: instance.window_width.zip(instance.window_height),
         quick_play,
     });

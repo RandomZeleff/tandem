@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "tandem_optimizations",
+  "version": "1.0.0",
+  "name": "Tandem Optimizations",
+  "description": "Server-side optimizations added by the Tandem launcher at launch: skips work that has no effect in game. Never installed in the instance.",
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": { "main": ["tandem.optimizations.TandemOptimizations"] },
+  "mixins": ["tandem_optimizations.mixins.json"],
+  "depends": { "fabricloader": ">=0.15", "minecraft": ">=1.20 <1.22" }
+}

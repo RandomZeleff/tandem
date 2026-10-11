@@ -1,0 +1,9 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "tandem.optimizations.mixin",
+  "plugin": "tandem.optimizations.MixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": ["ServerWorldMixin", "SpawnHelperMixin"],
+  "injectors": { "defaultRequire": 0 }
+}

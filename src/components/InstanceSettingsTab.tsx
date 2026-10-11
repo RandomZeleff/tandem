@@ -2,6 +2,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { createEffect, createResource, createSignal, For, type JSX, Show } from "solid-js";
 import { api, errorMessage, type Instance, type InstanceSettings } from "../lib/api";
 import { formatGigabytes, formatRelative } from "../lib/format";
+import { instanceOptimizationsKey, OPTIMIZATIONS_SETTING, supportsOptimizations } from "../lib/optimizations";
 import { BLOCK_COUNT, blockLook } from "../lib/look";
 import { openProject } from "../lib/projects";
 import { navigate, refetchInstances } from "../lib/store";
@@ -10,7 +11,7 @@ import Alert from "./Alert";
 import Dialog from "./Dialog";
 import InstanceSlot from "./InstanceSlot";
 import { PackRollback } from "./PackUpdate";
-import { BlockSlot, Icon, LoaderTag } from "./pixel";
+import { BlockSlot, Icon, LoaderTag, Toggle } from "./pixel";
 import Select from "./Select";
 import VersionChangeDialog from "./VersionChangeDialog";
 
@@ -117,6 +118,9 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
             instance={props.instance}
             onSave={(size) => save({ windowWidth: size?.[0] ?? null, windowHeight: size?.[1] ?? null }, "Taille de fenêtre enregistrée")}
           />
+          <Show when={supportsOptimizations(props.instance)}>
+            <OptimizationsField instance={props.instance} onError={setError} />
+          </Show>
         </Section>
       </div>
 
@@ -353,6 +357,35 @@ function WindowField(props: { instance: Instance; onSave: (size: [number, number
 }
 
 /** "Automatique" follows the machine and the mod count; fixed sizes stay as chosen. */
+/** Tandem Optimizations for this instance; follows the Settings until changed here. */
+function OptimizationsField(props: { instance: Instance; onError: (message: string) => void }) {
+  const [on, { mutate }] = createResource(
+    () => props.instance.id,
+    async (id) =>
+      (await api.getSetting<boolean>(instanceOptimizationsKey(id))) ?? (await api.getSetting<boolean>(OPTIMIZATIONS_SETTING)) ?? true,
+  );
+
+  async function change(value: boolean) {
+    mutate(value);
+    try {
+      await api.setSetting(instanceOptimizationsKey(props.instance.id), value);
+      toast(value ? "Optimisations activées au prochain lancement" : "Optimisations coupées au prochain lancement");
+    } catch (err) {
+      props.onError(errorMessage(err));
+    }
+  }
+
+  return (
+    <div class="flex items-center justify-between gap-6 py-3">
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <span class="text-sm font-medium">Optimisations Tandem</span>
+        <span class="text-xs text-muted">Un petit mod ajouté au lancement, jamais installé dans l'instance : le monde saute le travail inutile.</span>
+      </div>
+      <Toggle checked={on() ?? true} label="Optimisations Tandem" onChange={(v) => void change(v)} />
+    </div>
+  );
+}
+
 function MemoryPicker(props: { instance: Instance; onError: (message: string) => void }) {
   const [info] = createResource(() => props.instance.id, api.memoryInfo);
   const steps = () => {

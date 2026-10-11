@@ -9,3 +9,6 @@ src-tauri/gen/schemas
 .claude/
 CLAUDE.md
 CLAUDE.local.md
+
+# Built jar of the mod Tandem embeds (see mods/tandem-optimizations/README.md)
+!mods/tandem-optimizations/dist/

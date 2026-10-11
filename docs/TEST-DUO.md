@@ -195,6 +195,26 @@ Un jar de 7 Ko, actif seulement côté serveur (le monde de l'hôte), rien à in
 
 Limites : Fabric seulement pour l'instant (NeoForge utilise d'autres noms à l'exécution), pas encore branché dans Tandem, faux joueurs côté serveur (le coût réseau de vrais joueurs n'est pas mesuré).
 
+## Tandem Optimizations v1 : mesures (11 octobre 2026)
+
+Le mini-mod devenu **Tandem Optimizations** (D42, [sources](../mods/tandem-optimizations/README.md)), ajouté par Tandem au lancement. Même banc que plus haut (faux joueurs Carpet en cercle sur monde pré-généré, +4 joueurs toutes les 90 s), mais mémoire du serveur réduite (Prominence 4 Go, Cobbleverse 3 Go) : avec Chrome, Discord et Steam ouverts, 5 à 6 Go faisaient paginer le PC et faussaient tout. Temps par tick en ms (au-delà de 50, le serveur prend du retard).
+
+Prominence II (1.20.1) :
+
+| Variante | 2 | 6 | 10 | 14 |
+|---|---|---|---|---|
+| Sans le mod | 15,0 | 42,6 | 55,2 | 69,5 |
+| Mod sans distance d'activation | 14,5 | 41,6 | 55,8 | 71,5 |
+| Mod complet (distance d'activation sur toutes les créatures) | 12,4 | 29,9 | 46,8 | 52,3 |
+
+Cobbleverse (1.21.1), mod sans puis avec distance d'activation : 5,3 / 11,5 / 15,3 / 20,7 / 23,4 contre 5,4 / 11,5 / 15,2 / 18,9 / 23,5 (2 à 18 joueurs) : pas de gain, attendu (les Pokémon apparaissent près des joueurs).
+
+**Problème trouvé et corrigé.** Avec la distance d'activation, Cobbleverse avait **75 % de Pokémon en plus** à chaque palier (634 contre 363 à 18 joueurs) : Cobblemon fait vieillir ses Pokémon avec un compteur avancé dans leur propre tick, ralentis ils disparaissaient quatre fois plus tard. Aucun moyen de savoir quel mod fait pareil : la distance d'activation ne touche plus que les créatures vanilla (et pas celles dont un minuteur se voit : poules, zombies-villageois, piglins, hoglins, tatous). Vérifié ensuite : nombre de Pokémon revenu dans la marge du hasard (132 / 250 / 326 contre 91 / 220 / 282 sans distance d'activation). Le gain sur Prominence avec cette version n'est pas remesuré : il sera plus faible que le tableau (ses créatures moddées ne sont plus ralenties).
+
+Ce que le mod complet change sur Prominence : jusqu'à 30 % de temps de tick en moins, et le serveur tient ses 20 TPS jusqu'à 10 joueurs au lieu de 6. Le reste du mod (catégories d'apparition mortes, Architectury, Balm) ne gagne presque rien sur ce pack ; son gros effet est sur les packs qui bloquent les mobs vanilla (Cobbleverse : 47 → 28 ms à 18 joueurs, plus haut).
+
+Versions : construit et vérifié contre les 20 versions de 1.20 à 1.21.11, démarré sur de vrais serveurs 1.20.1, 1.21.1, 1.21.4 et 1.21.11 (les bébés grandissent au même rythme, aucune erreur).
+
 ## Repousser les limites : pistes de niveau 1 à 3 (11 octobre 2026)
 
 Trois niveaux étudiés, des plus sûrs aux plus ambitieux, en écartant ce qui casserait les mods.
