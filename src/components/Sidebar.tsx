@@ -24,7 +24,7 @@ const NAV: NavItem[] = [
   { label: "Accueil", icon: "home", to: { page: "home" } },
   { label: "Instances", icon: "grid", to: { page: "instances" } },
   { label: "Découvrir", icon: "search", to: { page: "discover" }, shortcut: "K" },
-  { label: "Jouer à deux", icon: "duo", to: { page: "multi" } },
+  { label: "Jouer ensemble", icon: "duo", to: { page: "multi" } },
 ];
 
 function isActive(item: NavItem): boolean {
@@ -185,7 +185,7 @@ export default function Sidebar() {
               <Icon name={item.icon} size={18} color={isActive(item) ? "var(--color-xp)" : undefined} />
               <span class="flex-1">{item.label}</span>
               <Show when={item.to.page === "multi" && duoActive()}>
-                <span class="step-pulse size-2 bg-gold" title="Partie à deux en cours" />
+                <span class="step-pulse size-2 bg-gold" title="Partie à plusieurs en cours" />
               </Show>
             </button>
           )}

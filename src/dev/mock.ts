@@ -704,7 +704,7 @@ export function installMocks() {
           return null;
         case "duo_join": {
           await new Promise((r) => setTimeout(r, 1500));
-          if (String(args.code).startsWith("0000")) throw "Jeu à deux : aucune partie avec ce code. Vérifie-le, ou demande à l'hôte s'il a bien lancé l'invitation.";
+          if (String(args.code).startsWith("0000")) throw "Jouer ensemble : aucune partie avec ce code. Vérifie-le, ou demande à l'hôte s'il a bien lancé l'invitation.";
           setTimeout(() => void emit("duo://guest", { type: "world", world: { motd: "Léo - Monde créatif" } }), 3000);
           const timer = setInterval(() => void emit("duo://guest", { type: "link", link: { pingMs: 31, direct: true } }), 2000);
           setTimeout(() => clearInterval(timer), 120_000);

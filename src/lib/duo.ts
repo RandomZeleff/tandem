@@ -144,7 +144,7 @@ export async function startDuoEvents() {
       if (duo.host && !duo.host.world)
         void notifyInGame(
           "Ouvre ton monde au réseau local",
-          "Échap → Ouvrir au réseau local → Démarrer le monde en LAN. Ton ami pourra alors te rejoindre.",
+          "Échap → Ouvrir au réseau local → Démarrer le monde en LAN. Tes amis pourront alors te rejoindre.",
         );
     }, LAN_REMINDER_MS);
   });

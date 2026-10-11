@@ -135,7 +135,7 @@ function AccountGate(props: { children: JSX.Element }) {
           <div class="flex flex-1 flex-col gap-1">
             <span class="font-semibold">Un compte Microsoft est nécessaire</span>
             <span class="text-sm text-chalk-2">
-              Le monde ouvert vérifie les comptes auprès de Mojang : toi et ton ami devez jouer avec votre compte
+              Le monde ouvert vérifie les comptes auprès de Mojang : chaque joueur doit utiliser son compte
               Microsoft, pas un compte hors ligne.
             </span>
           </div>
@@ -212,7 +212,7 @@ function Start() {
           <div class="flex flex-col gap-1">
             <h2 class="panel-title text-gold!">Inviter un ami</h2>
             <p class="text-sm text-chalk-2">
-              Tu héberges : ton ami rejoint ton monde avec un code. Ton monde reste chez toi.
+              Tu héberges : tes amis rejoignent ton monde avec un code. Ton monde reste chez toi.
             </p>
           </div>
           <label class="flex flex-col gap-1.5">
@@ -306,7 +306,7 @@ function Hosting() {
           {copied() ? "Code copié" : "Copier le code"}
         </button>
         <p class="max-w-sm text-sm text-chalk-2">
-          Donne ce code à ton ami : il l'entre dans Tandem, page « Jouer à deux ». Il reste valable tant que tu
+          Donne ce code à tes amis : ils l'entrent dans Tandem, page « Jouer ensemble ». Il reste valable tant que tu
           n'arrêtes pas l'invitation.
         </p>
         <button class="btn btn-ghost mt-auto text-sm" onClick={() => void stopHosting()}>
@@ -349,9 +349,9 @@ function Hosting() {
               {(world) => <span class="text-xs text-xp-text">Monde ouvert : {world().motd}</span>}
             </Show>
           </Step>
-          <Step done={host().guests.length > 0} current={!!host().world && host().guests.length === 0} title="Ton ami rejoint avec le code">
+          <Step done={host().guests.length > 0} current={!!host().world && host().guests.length === 0} title="Tes amis rejoignent avec le code">
             <Show when={host().guests.length === 0}>
-              <span class="text-xs text-muted">Son jeu se lance directement dans ton monde.</span>
+              <span class="text-xs text-muted">Leur jeu se lance directement dans ton monde.</span>
             </Show>
           </Step>
         </ol>
@@ -602,7 +602,7 @@ function Joined() {
   );
 }
 
-/** "Jouer à deux": invite a friend into your world, or join theirs, with a short code. */
+/** "Jouer ensemble": invite friends into your world, or join theirs, with a short code. */
 export default function Duo() {
   onMount(() => void startDuoEvents());
   return (
@@ -613,10 +613,10 @@ export default function Duo() {
         <div class="relative flex h-full max-w-[620px] flex-col justify-center gap-2 px-8">
           <span class="flex items-center gap-2 font-pixel text-[13px] font-medium tracking-[2px] text-gold">
             <span class="size-1.5 bg-gold" />
-            JOUER À DEUX
+            JOUER ENSEMBLE
           </span>
           <h1 class="font-pixel text-[32px] leading-tight font-bold [text-shadow:4px_4px_0_rgb(0_0_0/0.45)]">
-            Ton monde, ton pote. Zéro serveur.
+            Ton monde, tes potes. Zéro serveur.
           </h1>
           <Show when={activeAccount()}>
             {(account) => (

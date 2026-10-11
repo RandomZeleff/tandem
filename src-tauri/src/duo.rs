@@ -113,7 +113,7 @@ async fn player(ctx: &Context) -> CommandResult<String> {
     match ctx.db.active_account().await? {
         Some(account) if account.kind == AccountKind::Microsoft => Ok(account.username),
         _ => Err(CommandError::msg(
-            "Le jeu à deux demande un compte Microsoft : le monde ouvert vérifie les comptes auprès de Mojang. Connecte-le dans Comptes.",
+            "Jouer ensemble demande un compte Microsoft : le monde ouvert vérifie les comptes auprès de Mojang. Connecte-le dans Comptes.",
         )),
     }
 }

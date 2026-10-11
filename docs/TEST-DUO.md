@@ -11,12 +11,12 @@ Deux joueurs, deux PC, idéalement **deux réseaux différents** (chacun chez so
 ## La partie
 
 **Hôte**
-1. Jouer à deux → choisir l'instance → **Créer une invitation** → envoyer le code à l'ami.
+1. Jouer ensemble → choisir l'instance (et le monde, 1.20+) → **Inviter et lancer le jeu** → envoyer le code aux amis.
 2. Lancer l'instance, entrer dans un monde, puis Échap → **Ouvrir au réseau local** → **Démarrer le monde en LAN**.
 3. La deuxième étape se coche toute seule (« Monde ouvert »).
 
 **Invité**
-1. Jouer à deux → taper le code → choisir l'instance → **Rejoindre**.
+1. Jouer ensemble → taper le code → **Rejoindre** (Tandem choisit l'instance ; sinon **Préparer l'instance**).
 2. Quand « Monde ouvert » s'affiche → **Jouer** : le jeu se lance directement dans le monde de l'hôte.
 
 ## À noter pendant le test

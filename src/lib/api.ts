@@ -558,7 +558,7 @@ export interface FoundInstance {
   lastPlayed: number | null;
 }
 
-/** Jeu à deux (D37). */
+/** Jouer ensemble (D37). */
 export interface LanWorld {
   motd: string;
   port: number;

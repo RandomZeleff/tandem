@@ -49,7 +49,7 @@ pub enum Error {
     OwnershipRequired,
     #[error("{0}")]
     Auth(String),
-    #[error("Jeu à deux : {0}")]
+    #[error("Jouer ensemble : {0}")]
     Duo(String),
     #[error("{0} n'est pas encore pris en charge")]
     LoaderNotSupported(String),
