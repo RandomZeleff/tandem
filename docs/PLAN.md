@@ -174,85 +174,51 @@ Choix tranchés :
 - [ ] (plus tard) Synchro du monde / « host migration »
 - [ ] (plus tard) Relais Tandem en option
 
-### 6c — Optimiser « Jouer ensemble » à fond (session dédiée, voulue par Raphaël)
-Point de départ : les deux tests de charge de [TEST-DUO.md](TEST-DUO.md#test-de-charge--combien-damis-sur-un-pc-moyen-11-octobre-2026). Sur un PC moyen avec Cobbleverse : la génération du terrain fait la majorité de la charge ; sur un monde déjà généré, la limite devient le fil principal du serveur (un cœur, environ 2 ms par joueur) ; la RAM est serrée dès le premier ami ; un monde ouvert en LAN est limité à 8 joueurs.
-- [x] Mesurer d'abord : profilage du tick (JFR) sur Cobbleverse et Prominence II, variantes comparées ([résultats](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026)), puis pistes de niveau 1 à 3 ([résultats](TEST-DUO.md#repousser-les-limites--pistes-de-niveau-1-à-3-11-octobre-2026))
+### 6c — Optimiser « Jouer ensemble » : feuille de route (recadrée le 2026-10-11, D44)
+Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en parallèle le même jour), on arrête de chercher de nouveaux angles et de repousser le nombre de joueurs. On termine ce qui est commencé, **un chantier à la fois, dans l'ordre**, chacun testé en vrai et documenté avant de passer au suivant.
 
-Priorités retenues (D40, pas encore commencées, au feu vert de Raphaël) :
-1. [ ] Mini-mod « hôte » branché dans Tandem, ajouté seulement pendant une session d'hôte (prototype Fabric local : catégories d'apparition mortes sautées, Architectury et Balm corrigés, import de chunks). À ajouter : recherche d'apparition mise en cache (jusqu'à 17 % du tick sur un pack riche en mobs), distance d'activation des entités (−15 à 20 % sur Prominence), puis version NeoForge
-2. [ ] Mesurer le vrai jeu de l'hôte avec des amis : mémoire (première limite au premier test), micro-gels du ramasse-miettes, images par seconde
-3. [ ] Pré-générer le monde de l'hôte en un clic (« préparer le monde pour jouer à plusieurs »), avec c2me si possible (génération deux fois plus rapide)
-4. [ ] Indicateur de charge pour l'hôte (RAM libre, santé du serveur) avec conseils
+**Ce qu'on sait** (détails et chiffres : [TEST-DUO.md](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026)) :
+- Le temps du serveur part surtout dans la génération du terrain neuf, puis l'IA des créatures. Une fois le gaspillage retiré, le reste est du vrai travail.
+- Gagné : apparitions inutiles sautées (Cobbleverse 47 → 28 ms à 18 joueurs), distance d'activation (Prominence jusqu'à −30 %, avant sa restriction aux créatures vanilla).
+- Le monde à part coûte +1,5 Go (mesuré sur Cobbleverse) et ne rend pas le tick plus rapide : son intérêt est le confort (plus d'étape LAN, partie qui survit au plantage du jeu de l'hôte) et la limite de 8 joueurs levée.
+- Plafond réaliste sur un PC : 20 à 30 joueurs sur un pack moyen, 12 à 15 sur un pack lourd. Au-delà, il faudrait répartir le monde entre plusieurs PC, ce que les mods ne supportent pas.
 
-Plus tard :
-- [ ] Dépasser les 8 joueurs du LAN (agent Java, ou monde de l'hôte en serveur à part) ; agent Java d'ouverture LAN automatique dans la même veine
-- [ ] Héberger sur le PC le plus fort du groupe avec un monde qui suit le groupe (transfert d'hôte)
-- [ ] Réglages « multijoueur » des mods lourds selon le profilage
-- [ ] Distance de simulation adaptée quand on héberge un groupe (gain mesuré faible : −8 % de 12 à 8)
+**Déjà fait** (code poussé, vérifié en local) :
+- Tandem Optimizations v1 (D42) : mod ajouté au lancement (Fabric, Quilt, 1.20 à 1.21.11), réglages globaux et par instance, vérification de construction contre 20 versions, démarré sur 4 vrais serveurs.
+- Monde à part, base (D43) : installation du serveur, mods client écartés, nouvel essai sans les mods qui plantent, inventaire de l'hôte dans les deux sens, branchement dans « Jouer ensemble » (bêta, désactivé par défaut), testé avec le vrai jeu sur Cobbleverse et Prominence II.
+- Outils de mesure et de test (notes locales).
 
-Mis de côté (faisable, gain trop étroit pour l'instant) :
-- Génération du terrain par les amis (niveau 2, [faisabilité prouvée](TEST-DUO.md#repousser-les-limites--pistes-de-niveau-1-à-3-11-octobre-2026)) : utile seulement si beaucoup d'amis explorent du terrain neuf en même temps, plafonné par la limite LAN de 8, coûteux (serveur sans joueurs et 2 à 3 Go de RAM chez chaque ami). La pré-génération avant de jouer donne l'essentiel du gain. À reprendre si Tandem dépasse les 8 joueurs
-- Pistes écartées : partager la simulation d'un même monde entre plusieurs PC, y compris confier les mobs à l'ami le plus proche (copie vivante du monde à synchroniser, mods qui supposent un seul serveur) ; compression ou relais réseau (coût CPU nul mesuré) ; mods de multithreading du tick (Folia : sans mods ; mods Fabric expérimentaux : trop risqués avec un gros modpack)
+**Chantiers, dans l'ordre :**
 
-### 6d — Mini-mod hôte (session dédiée, cadrée le 2026-10-11)
-Priorité 1 de la 6c (D40). Un mod côté serveur, ajouté par Tandem au lancement, qui retire du travail inutile sans rien changer en jeu. Mesures de départ : [TEST-DUO.md](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026).
+1. **Terminer Tandem Optimizations v1**
+   - [ ] Tests en vrai, en solo et dans « Jouer ensemble », sur Cobbleverse, Prominence II et Fabulously Optimized : aucun plantage, rien de changé en jeu (apparitions, Pokémon, villageois, fermes simples)
+   - [ ] Une seule mesure de Prominence avec la version « créatures vanilla seulement », pour documenter le gain réel
+   - [ ] Une instance Quilt réelle lancée avec le mod
+   - Terminé quand : les trois packs tournent sans souci avec le mod actif par défaut, et le gain réel est écrit dans TEST-DUO.
 
-**Point de départ** : prototype Fabric local dans `.claude/notes/tandem-host/` (non poussé), compilé avec `javac` contre `server-intermediary.jar` (noms intermédiaires, Java 17, même jar en 1.20.1 et 1.21.1). Contenu : `DeadSpawnGroups` + `SpawnHelperMixin` (catégories d'apparition où rien ne peut apparaître), `BalmConfigReflectionMixin` (cache), `ArchitecturyEventFactoryMixin` (appel direct des écouteurs), `ChunkImport` + `MinecraftServerMixin` + `ChunkLoadingManagerAccess` (import de chunks : génération coopérative mise de côté, **à retirer de la v1**). Banc de mesure et scripts : notes locales (`etat.md`, section « Session optimisation »).
+2. **Terminer le monde à part (6e)**
+   - [ ] Test à deux PC avec la vraie app (Raphaël + un ami, nouvel installeur des deux côtés, à compiler avec l'accord de Raphaël) : l'ami rejoint, l'hôte ferme son jeu sans couper l'ami, l'hôte revient
+   - [ ] Moins de mémoire pour le jeu de l'hôte quand le monde est à part, mesuré une fois
+   - [ ] Une instance Quilt réelle hébergée à part
+   - [ ] Décider avec Raphaël : reste en bêta facultative, ou proposé par défaut au-delà de quelques amis
+   - Terminé quand : le test à deux PC est concluant et la décision prise.
 
-**Décisions à prendre en début de session** (recommandation entre parenthèses) :
-- Construction : garder `javac` sur les noms intermédiaires (léger, sans Gradle, mais il faut produire le jar Minecraft remappé pour compiler, en local et en CI) ou passer à Gradle + Loom (standard, refmaps, CI simple, plus lourd). (Loom si la CI doit le construire ; sinon garder `javac` et générer le jar de compilation avec un script.)
-- Où vit le code : `mods/tandem-host/` dans le dépôt, licence du dépôt.
-- Comment Tandem l'ajoute : `-Dfabric.addMods=<jar>` au lancement (rien n'est écrit dans `mods/` de l'instance, rien à nettoyer après un plantage) plutôt que copier le jar. (`addMods`.) Jar embarqué dans l'app et écrit dans le dossier de données de Tandem. Point d'entrée : `launch::build_command` (`crates/tandem-core/src/launch.rs`).
-- Quand : seulement pendant une session d'hôte, ou à chaque lancement avec un réglage pour le couper. Les gains valent aussi en solo (serveur intégré). (À chaque lancement, réglage « Optimisations Tandem » activé par défaut, et par instance.)
-- Quilt charge les mods Fabric : à vérifier. NeoForge et Forge : noms différents à l'exécution (Mojang depuis NeoForge 1.20.5, SRG pour Forge 1.20.1), donc un autre jar. (v1 Fabric/Quilt, NeoForge en v2, Forge ensuite si le besoin existe.)
+3. **Pré-générer le monde en un clic** (D40, priorité 3)
+   - [ ] « Préparer le monde pour jouer à plusieurs » : génération autour du point d'apparition avant de jouer (le plus gros coût quand tout le monde explore), progression et annulation
+   - Terminé quand : le coût du terrain neuf disparaît sur la zone préparée, mesuré une fois.
 
-**Travail de la v1 (Fabric)**
-- [x] Mettre le prototype dans le dépôt, retirer l'import de chunks, nom et identifiant définitifs, version du mod dans le journal au démarrage (`mods/tandem-optimizations`, D42)
-- [x] Tolérance aux versions : Mixins facultatifs, `build.py --check` contre les 20 versions de 1.20 à 1.21.11, coupure automatique si une méthode manque ; démarré en 1.20.1, 1.21.1, 1.21.4, 1.21.11 (26.x : plus de noms intermédiaires, autre jar)
-- [x] Vérifier le correctif Architectury (exceptions, arguments primitifs, écouteurs non publics → retour au code d'origine) et le cache Balm (config rechargée en jeu : l'identifiant ne change pas, seule la classe sert de clé)
-- [x] Cache de la recherche d'apparition : étudié, écarté (lectures à des positions aléatoires, un cache exact ne retire que 1 à 2 %)
-- [x] Distance d'activation (32 blocs, 1 tick sur 4) : créatures vanilla seulement (Cobblemon : +75 % de Pokémon sinon), réglable et désactivable
-- [x] Branchement dans Tandem : jar embarqué, `-Dfabric.addMods` (Quilt : `loader.addMods`), réglage global et par instance, ligne dans le journal du jeu quand il est actif
-- [x] Mesures avant/après sur Cobbleverse et Prominence II ([résultats](TEST-DUO.md#tandem-optimizations-v1--mesures-11-octobre-2026)) ; gain de Prominence avec la version « vanilla seulement » pas remesuré
-- [ ] Tests en vrai : solo et « Jouer ensemble » sur 3 gros packs (Cobbleverse, Prominence II, Fabulously Optimized), aucun plantage, aucun comportement visible changé (apparitions, Pokémon, villageois, fermes simples)
+4. **Indicateur de charge pour l'hôte** (D40, priorité 4)
+   - [ ] Mémoire libre et santé du monde visibles pendant une session, avec un conseil simple quand ça sature
+   - Terminé quand : l'hôte voit d'un coup d'œil si son PC suit.
 
-**Terminé quand** : le mod est ajouté par Tandem sans rien toucher dans l'instance, coupable dans les Réglages, chaque optimisation est mesurée et documentée (gain, pack, nombre de joueurs), et aucun des trois packs ne plante ni ne change en jeu.
+5. **Le monde appartient au groupe (6f)**, seulement après les quatre premiers chantiers
+   - Copie du monde chez les amis pendant la partie, reprise si l'hôte part, ouverture sans l'hôte, puis choix du meilleur PC pour héberger. Pistes notées dans D43 ; à recadrer avec Raphaël avant de commencer.
 
-**Hors périmètre** : génération coopérative du terrain (mise de côté, D40), NeoForge (v2), dépasser les 8 joueurs du LAN, réglages propres à un mod.
-
-### 6e — Le monde dans son propre processus (cadré le 2026-10-11, en cours)
-Idée de Raphaël et Claude (D43). Quand on héberge, Tandem lance le monde comme un serveur invisible à part, avec les mods de l'instance, et le jeu de l'hôte le rejoint comme ses amis.
-
-Gains attendus : si le jeu de l'hôte plante, les amis continuent ; plus de limite de 8 joueurs (elle vient du LAN) ; plus d'étape « Ouvrir au réseau local » (Tandem connaît le port) ; ramasse-miettes séparés (moins de micro-gels) ; base de la 6f. Temps de tick : 0 à 10 % de mieux seulement. Coût : **+0,7 à +1,5 Go de mémoire** (mesuré au repos : 0,5 Go hors tas dupliqué sur Cobbleverse, 0,7 Go sur Prominence, plus les données des mods chargées deux fois).
-
-Choix (recommandation de Claude, à revoir avec Raphaël) :
-- Facultatif au début : interrupteur « Monde à part » dans « Jouer ensemble », proposé quand le PC a assez de mémoire libre. Le solo garde le monde intégré.
-- Fabric et Quilt d'abord (lanceur serveur officiel de Fabric), NeoForge ensuite.
-- Rien de copié : dossier `<données>/servers/<instance>/` avec les mods de l'instance (liens, mods « client seulement » écartés d'après leurs métadonnées, puis ceux qui font planter le serveur), configs et dossiers de pack liés, monde lu en place dans `saves/` (`--universe`, `--world`). Bibliothèques du serveur partagées entre instances.
-- Inventaire de l'hôte : en solo il vit dans `level.dat` ; recopié dans `playerdata/<uuid>.dat` au démarrage et remis dans `level.dat` à l'arrêt.
-- `online-mode` activé (comptes Microsoft, comme aujourd'hui), mode de jeu et difficulté du monde, hôte opérateur si le monde autorise les commandes, Tandem Optimizations ajouté aussi.
-
-Travail :
-- [x] Mesurer avec le vrai jeu (Cobbleverse) : monde intégré 6,7 Go ; à part 5,6 Go (jeu) + 2,6 Go (monde) = 8,2 Go, **+1,5 Go**. Piste : donner moins de mémoire au jeu de l'hôte quand le monde tourne à part
-- [x] Installer le serveur d'une instance Fabric/Quilt (jar Mojang lancé directement par le loader, bibliothèques partagées) et préparer son dossier (jonctions, mods client écartés par métadonnées : 32 sur 136 pour Cobbleverse)
-- [x] Démarrer, attendre « Done », arrêter proprement (`stop`), relancer sans les mods qui ne peuvent pas tourner sur un serveur (dépendance client manquante, plantage), mémorisés ; serveur tué avec Tandem (Windows). Cobbleverse prêt en 45 s, Prominence II (443 mods) en 150 s la première fois
-- [x] Inventaire de l'hôte `level.dat` ↔ `playerdata`, vérifié en vrai dans les deux sens ; réglages du monde (mode, difficulté, hardcore, opérateur si commandes)
-- [x] Brancher dans la session d'hôte : le tunnel vise le port du serveur, le jeu de l'hôte le rejoint directement (quickPlay, vérifié avec le vrai jeu)
-- [x] Interface : interrupteur « Monde à part (bêta) », progression du démarrage, « Rejoindre mon monde », alerte si le monde s'arrête (journal et mémoire du monde : plus tard)
-- [ ] Tests : vrai test à deux PC avec la vraie app (Raphaël + un ami), plus de 8 joueurs, Quilt
-- [ ] Mémoire : moins pour le jeu de l'hôte quand le monde est à part ; NeoForge ensuite
-
-**Terminé quand** : un hôte Fabric peut héberger « à part » en un clic, ses amis le rejoignent comme avant, la partie survit à la fermeture du jeu de l'hôte, et le monde revient en solo sans rien perdre.
-
-### 6f — Le monde appartient au groupe (cadré le 2026-10-11, après la 6e)
-Le monde est recopié en continu chez les amis pendant la partie. Si l'hôte part, un autre le rouvre en 10 à 30 s ; sans l'hôte, un membre peut ouvrir le monde et tout le monde est resynchronisé ensuite. Avec la 6e (Tandem contrôle les sauvegardes du monde), puis choix automatique du meilleur hôte (mini-test des PC).
-
-Pistes (à trancher en début de chantier) :
-- Groupe : identifiant du monde partagé + clés des membres (endpoints iroh), créé à la première invitation.
-- Réplication : après chaque sauvegarde (`save-all flush`, toutes les quelques minutes et au départ), seuls les chunks modifiés (dates dans les fichiers `.mca`), `level.dat`, `playerdata`, `data/` ; flux iroh dédié ; copie chez l'ami dans `<données>/shared-worlds/<id>/`.
-- Verrou : qui héberge, publié sur le relais pkarr avec une durée (bail) ; « Léo joue déjà sur ce monde, le rejoindre ? » ; jamais deux hôtes à la fois.
-- Reprise : à la perte de l'hôte, le membre élu (meilleur PC présent) rouvre la dernière copie complète, les autres sont renvoyés dessus.
-- Limites honnêtes : les dernières secondes avant un départ brutal sont perdues ; mods qui écrivent hors du monde (configs « par monde » ailleurs) à recenser.
+**Arrêté ou mis de côté** (D44) :
+- Repousser le nombre de joueurs au-delà d'un PC : monde réparti entre plusieurs PC, un PC par dimension, génération du terrain par les amis, simulation partagée.
+- Nouvelles recherches d'optimisation du tick (cache de la recherche d'apparition : écarté, gain de 1 à 2 %), cache de chunks chez les amis, mesure du débit par joueur.
+- Version NeoForge et 26.x du mod et du monde à part : après cette feuille de route, si le besoin existe.
+- Distance de simulation adaptée, réglages propres à certains mods.
 
 ## Portage macOS
 
@@ -460,4 +426,9 @@ Pistes (à trancher en début de chantier) :
 - Vérifié : fmt, Clippy, 139 tests, TypeScript, Réglages, onglet Créateurs et fiche dans l'aperçu (backend simulé).
 - Reste : test en vrai (solo et « Jouer ensemble ») avec le mod sur 3 gros packs ; remesurer Prominence avec la version « vanilla seulement » si utile.
 - Prochaine étape : cadrage et début des idées « monde dans un processus à part » et « monde qui appartient au groupe » (6e, 6f).
+
+### 2026-10-11 (recadrage de « Jouer ensemble »)
+- Exploration poussée à la demande de Raphaël : mini-mod (fait), soutien aux créateurs (fait), monde à part (base faite et branchée, bêta), cadrage d'un monde partagé par le groupe. Bilan honnête : le monde à part apporte du confort, pas de vitesse ; le plafond de joueurs est le PC de l'hôte.
+- Décision de Raphaël (D44) : on arrête de chercher de nouveaux angles et de repousser la limite de joueurs. Les sections 6c à 6f sont regroupées en une feuille de route de cinq chantiers, à finir un par un.
+- Prochaine session : chantier 1 (terminer Tandem Optimizations v1), dans une nouvelle conversation.
 

@@ -293,5 +293,11 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - 6e : le monde tourne dans un serveur invisible lancé par Tandem quand on héberge (Fabric/Quilt d'abord), le jeu de l'hôte le rejoint comme les amis. Coût mesuré : +0,7 à +1,5 Go de mémoire, d'où un réglage facultatif au début.
 - 6f : le monde est recopié chez les amis pendant la partie, avec un verrou publié sur le relais pkarr ; reprise par un autre si l'hôte part, ouverture sans l'hôte. Toujours sans serveur Tandem.
 - Écarté pour l'instant : un PC par dimension (les mods qui relient les dimensions casseraient), cache de chunks chez les amis (à reconsidérer après avoir mesuré le trafic réel).
-- Statut : validé (demande de Raphaël), 6e en cours
+- Statut : validé ; recadré par D44 (6e à terminer, 6f plus tard)
+
+### D44 · 2026-10-11 · Fin de l'exploration : une feuille de route, un chantier à la fois
+- L'exploration voulue « jusqu'à l'excès » a ouvert plusieurs chantiers en parallèle (mini-mod, monde à part, monde du groupe) et cherché à repousser le nombre de joueurs. Bilan : les gains de vitesse sont acquis (mini-mod) ; le monde à part apporte surtout du confort ; au-delà de 20 à 30 joueurs sur un pack moyen, il faudrait répartir le monde entre plusieurs PC, ce que les modpacks ne supportent pas.
+- Décision de Raphaël : plus de nouvel angle d'optimisation ni de course au nombre de joueurs. On termine dans l'ordre : Tandem Optimizations v1, monde à part, pré-génération en un clic, indicateur de charge, puis éventuellement le monde du groupe (6f). Chaque chantier est testé en vrai et documenté avant le suivant, pour éviter le surdimensionnement.
+- Mis de côté : monde réparti entre plusieurs PC, un PC par dimension, génération coopérative, cache de chunks chez les amis, NeoForge et 26.x (après la feuille de route).
+- Statut : validé
 
