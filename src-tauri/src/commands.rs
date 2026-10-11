@@ -3,7 +3,7 @@ use serde_json::Value;
 use tandem_core::content::deps::{self, Dependent, Provider};
 use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
 use tandem_core::content::project::{self, DependencyItem, ProjectDetails, ProjectVersions};
-use tandem_core::content::{self, mrpack, perf, ContentUpdate, InstalledContent};
+use tandem_core::content::{self, creators, mrpack, perf, ContentUpdate, InstalledContent};
 use tandem_core::install;
 use tandem_core::instance::{self, Instance, NewInstance};
 use tandem_core::jvm;
@@ -379,6 +379,35 @@ pub async fn version_dependencies(
     version_id: String,
 ) -> CommandResult<Vec<DependencyItem>> {
     Ok(project::dependencies(&state.ctx, &state.projects, &project_id, &version_id).await?)
+}
+
+/// The people who made the mods of a modpack version, with their support links.
+#[tauri::command]
+pub async fn pack_creators(
+    state: State<'_, AppState>,
+    project_id: String,
+    version_id: String,
+) -> CommandResult<creators::Creators> {
+    let content =
+        project::dependencies(&state.ctx, &state.projects, &project_id, &version_id).await?;
+    let ids: Vec<String> = content
+        .into_iter()
+        .filter(|d| d.kind != "incompatible")
+        .map(|d| d.project.id)
+        .collect();
+    Ok(creators::of_projects(&state.ctx, &ids).await?)
+}
+
+/// The people who made an instance's content, with their support links.
+#[tauri::command]
+pub async fn instance_creators(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CommandResult<creators::Creators> {
+    Ok(state
+        .ctx
+        .background(creators::of_instance(&state.ctx, &instance_id))
+        .await?)
 }
 
 #[tauri::command]

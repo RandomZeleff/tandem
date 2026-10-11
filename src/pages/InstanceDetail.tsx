@@ -1,6 +1,7 @@
 import { createSignal, Match, Show, Switch } from "solid-js";
 import Alert from "../components/Alert";
 import ContentList from "../components/ContentList";
+import CreatorsTab from "../components/CreatorsTab";
 import CrashPanel from "../components/CrashPanel";
 import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
@@ -14,6 +15,7 @@ import PlayButton from "../components/PlayButton";
 import WorldsTab from "../components/WorldsTab";
 import Scene from "../components/Scene";
 import ScreenshotsTab from "../components/ScreenshotsTab";
+import SupportReminder from "../components/SupportReminder";
 import Tabs, { tabPanel } from "../components/Tabs";
 import TranslationTab from "../components/translation/TranslationTab";
 import { api, errorMessage, type InstallProgress, type Instance, isTransferStage } from "../lib/api";
@@ -21,7 +23,7 @@ import { formatBytes } from "../lib/format";
 import { gameState } from "../lib/games";
 import { navigate, refetchInstances, remembered } from "../lib/store";
 
-type Tab = "console" | "content" | "worlds" | "screenshots" | "translation" | "info";
+type Tab = "console" | "content" | "worlds" | "screenshots" | "translation" | "creators" | "info";
 
 function stageLabel(p: InstallProgress | undefined): string {
   if (!p || p.stage === "metadata") return "Lecture des métadonnées Mojang…";
@@ -61,6 +63,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
     { id: "worlds", label: "Mondes" },
     { id: "screenshots", label: "Captures" },
     { id: "translation", label: "Traduction" },
+    { id: "creators", label: "Créateurs" },
     { id: "info", label: "Réglages" },
   ];
 
@@ -136,6 +139,9 @@ export default function InstanceDetail(props: { instance: Instance }) {
           )}
         </Show>
         <MissingDepsPanel instanceId={props.instance.id} />
+        <Show when={state().status === "idle"}>
+          <SupportReminder instance={props.instance} onShow={() => setTab("creators")} />
+        </Show>
         <Show when={props.instance.packProjectId && state().status === "idle"}>
           <PackUpdateBanner instance={props.instance} locked={state().status !== "idle"} />
         </Show>
@@ -170,6 +176,9 @@ export default function InstanceDetail(props: { instance: Instance }) {
             </Match>
             <Match when={tab() === "translation"}>
               <TranslationTab instance={props.instance} locked={state().status !== "idle"} />
+            </Match>
+            <Match when={tab() === "creators"}>
+              <CreatorsTab instance={props.instance} />
             </Match>
             <Match when={tab() === "info"}>
               <InstanceSettingsTab instance={props.instance} locked={state().status !== "idle"} />

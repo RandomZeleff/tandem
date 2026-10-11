@@ -131,6 +131,8 @@ pub fn run() {
             commands::remove_content,
             commands::check_content_updates,
             commands::perf_suggestions,
+            commands::instance_creators,
+            commands::pack_creators,
             commands::update_content,
             commands::set_content_enabled,
             commands::warm_mod_dependencies,

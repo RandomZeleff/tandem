@@ -11,9 +11,9 @@ use crate::download::fetch_bytes;
 use crate::error::{Error, Result};
 use crate::meta::loader::Loader;
 
-const API: &str = "https://api.modrinth.com/v2";
+pub(crate) const API: &str = "https://api.modrinth.com/v2";
 /// Organizations only exist in the v3 API.
-const API_V3: &str = "https://api.modrinth.com/v3";
+pub(crate) const API_V3: &str = "https://api.modrinth.com/v3";
 
 /// Modpack loaders Tandem can launch.
 pub const MODPACK_LOADERS: &[&str] = &["fabric", "quilt", "forge", "neoforge"];
@@ -486,6 +486,23 @@ pub async fn projects(ctx: &Context, ids: &[String]) -> Result<Vec<Project>> {
         return Ok(Vec::new());
     }
     let mut url = url(&["projects"])?;
+    url.query_pairs_mut()
+        .append_pair("ids", &serde_json::to_string(ids)?);
+    get(ctx, url).await
+}
+
+/// `GET <base>/<endpoint>?ids=[...]`, the batched form of most Modrinth endpoints
+/// (unknown ids are skipped by the API).
+pub(crate) async fn bulk<T: for<'de> Deserialize<'de>>(
+    ctx: &Context,
+    base: &str,
+    endpoint: &str,
+    ids: &[String],
+) -> Result<Vec<T>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut url = url_at(base, &[endpoint])?;
     url.query_pairs_mut()
         .append_pair("ids", &serde_json::to_string(ids)?);
     get(ctx, url).await

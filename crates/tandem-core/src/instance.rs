@@ -65,6 +65,19 @@ pub struct NewInstance {
     pub loader_version: Option<String>,
 }
 
+/// Setting holding the seconds played on an instance, all sessions together.
+pub fn play_time_setting(instance_id: &str) -> String {
+    format!("play_time.{instance_id}")
+}
+
+/// Adds a session to an instance's play time; returns the new total in seconds.
+pub async fn add_play_time(ctx: &Context, instance_id: &str, seconds: u64) -> Result<u64> {
+    let key = play_time_setting(instance_id);
+    let total = ctx.db.get_setting::<u64>(&key).await?.unwrap_or(0) + seconds;
+    ctx.db.set_setting(&key, &total).await?;
+    Ok(total)
+}
+
 /// Creates an instance and its folder, pinning the loader version so it never
 /// changes under the player's feet.
 pub async fn create(ctx: &Context, mut new: NewInstance) -> Result<Instance> {
@@ -503,6 +516,17 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn play_time_adds_up() {
+        let dir = tempfile::tempdir().unwrap();
+        let ctx = Context::init(crate::paths::DataDir::new(dir.path()))
+            .await
+            .unwrap();
+        assert_eq!(add_play_time(&ctx, "pack", 90).await.unwrap(), 90);
+        assert_eq!(add_play_time(&ctx, "pack", 30).await.unwrap(), 120);
+        assert_eq!(add_play_time(&ctx, "other", 5).await.unwrap(), 5);
+    }
 
     #[tokio::test]
     async fn duplicates_with_store_links_and_independent_files() {

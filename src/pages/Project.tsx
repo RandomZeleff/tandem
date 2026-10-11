@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createResource, createSignal, For, type JSX, Match, Show, Switch } from "solid-js";
 import Alert from "../components/Alert";
+import { PackCreators } from "../components/CreatorsTab";
 import ModpackInstallDialog from "../components/ModpackInstallDialog";
 import { Icon, type IconName, LoaderIcon, LoaderTag } from "../components/pixel";
 import DependenciesTab from "../components/project/DependenciesTab";
@@ -35,7 +36,7 @@ import { goBack, instances, navigate, remembered, setNewInstanceDialog } from ".
 import { toast } from "../lib/toast";
 import { readyProvider, translationSettings } from "../lib/translation";
 
-type Tab = "description" | "gallery" | "versions" | "content" | "dependencies";
+type Tab = "description" | "gallery" | "versions" | "content" | "creators" | "dependencies";
 
 const CONTENT_TYPES = new Set(["mod", "resourcepack", "shader"]);
 const KNOWN_LOADERS = new Set(["vanilla", "fabric", "quilt", "forge", "neoforge"]);
@@ -126,7 +127,7 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
     const list: { id: Tab; label: JSX.Element }[] = [{ id: "description", label: "Description" }];
     if (d().gallery.length > 0) list.push({ id: "gallery", label: <Counted label="Galerie" count={d().gallery.length} /> });
     list.push({ id: "versions", label: <Counted label="Versions" count={shownVersions()?.versions.length} /> });
-    if (isModpack()) list.push({ id: "content", label: "Contenu" });
+    if (isModpack()) list.push({ id: "content", label: "Contenu" }, { id: "creators", label: "Créateurs" });
     else if (d().projectType === "mod") list.push({ id: "dependencies", label: "Dépendances" });
     return list;
   };
@@ -245,6 +246,7 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
               </p>
             </Match>
           </Switch>
+          <SupportAuthor details={d()} />
           <button class="btn btn-ghost h-8 justify-start px-2 text-xs" onClick={() => openExternal(d().url)}>
             <Icon name="external" size={10} />
             Voir sur Modrinth
@@ -296,6 +298,9 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
                   busy={busy()}
                   instanceId={isContent() ? instanceId() : undefined}
                 />
+              </Match>
+              <Match when={currentTab() === "creators"}>
+                <PackCreators projectId={d().id} versionId={recommended()?.id ?? shownVersions()?.versions[0]?.id} />
               </Match>
               <Match when={currentTab() === "content" || currentTab() === "dependencies"}>
                 <DependenciesTab
@@ -637,12 +642,69 @@ const LINKS: Record<ProjectLink["kind"], { icon: IconName; label: string }> = {
 
 const MAX_AUTHORS = 8;
 
+/**
+ * The author's own support links (Ko-fi, Patreon…), next to Install. Tandem shows no
+ * ads, the ones that pay authors on Modrinth: the money goes straight to them.
+ */
+function SupportAuthor(props: { details: ProjectDetails }) {
+  const links = () => props.details.links.filter((l) => l.kind === "donation");
+  const [open, setOpen] = createSignal(false);
+  const name = () => props.details.organization?.name ?? props.details.authors[0]?.name;
+  const platform = (l: ProjectLink) => l.label || new URL(l.url).hostname.replace(/^www\./, "");
+
+  function click() {
+    const [first, ...rest] = links();
+    if (rest.length === 0) openExternal(first.url);
+    else setOpen(!open());
+  }
+
+  return (
+    <Show when={links().length > 0}>
+      <div class="flex flex-col gap-1">
+        <button
+          class="btn px-corners h-9 justify-start gap-2 px-3 text-[13px]"
+          title={links().length === 1 ? links()[0].url : undefined}
+          aria-expanded={links().length > 1 ? open() : undefined}
+          onClick={click}
+        >
+          <Icon name="heart" size={12} class="shrink-0 text-redstone-text" />
+          <span class="flex-1 truncate text-left">Soutenir {name() ?? "l'auteur"}</span>
+          <Show when={links().length === 1} fallback={<Icon name="caret" size={9} class="shrink-0 text-faint" />}>
+            <span class="shrink-0 text-xs text-muted">{platform(links()[0])}</span>
+          </Show>
+        </button>
+        <Show when={open()}>
+          <ul class="flex flex-col">
+            <For each={links()}>
+              {(link) => (
+                <li>
+                  <button
+                    class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-chalk-2 hover:text-xp-text focus-visible:text-xp-text"
+                    title={link.url}
+                    onClick={() => openExternal(link.url)}
+                  >
+                    <span class="flex-1 truncate">{platform(link)}</span>
+                    <Icon name="external" size={9} class="shrink-0 text-faint" />
+                  </button>
+                </li>
+              )}
+            </For>
+          </ul>
+        </Show>
+        <p class="px-1 text-[11px] leading-snug text-faint">Sans publicité dans Tandem, ton soutien va directement à l'auteur.</p>
+      </div>
+    </Show>
+  );
+}
+
 function Aside(props: { details: ProjectDetails }) {
   const d = () => props.details;
   const loaders = () => d().loaders.filter((l) => l !== "minecraft");
   const side = () => sideLabel(d());
   const [allAuthors, setAllAuthors] = createSignal(false);
   const authors = () => (allAuthors() ? d().authors : d().authors.slice(0, MAX_AUTHORS));
+  // Support links have their own button next to Install.
+  const otherLinks = () => d().links.filter((l) => l.kind !== "donation");
 
   return (
     <aside class="flex flex-col gap-4">
@@ -693,10 +755,10 @@ function Aside(props: { details: ProjectDetails }) {
         </Section>
       </Show>
 
-      <Show when={d().links.length > 0}>
+      <Show when={otherLinks().length > 0}>
         <Section title="Liens">
           <ul class="flex flex-col">
-            <For each={d().links}>
+            <For each={otherLinks()}>
               {(link) => (
                 <li>
                   <button
@@ -705,7 +767,7 @@ function Aside(props: { details: ProjectDetails }) {
                     onClick={() => openExternal(link.url)}
                   >
                     <Icon name={LINKS[link.kind].icon} size={12} class="shrink-0 text-muted" />
-                    <span class="flex-1 truncate">{link.kind === "donation" && link.label ? `Don (${link.label})` : LINKS[link.kind].label}</span>
+                    <span class="flex-1 truncate">{LINKS[link.kind].label}</span>
                     <Icon name="external" size={9} class="shrink-0 text-faint" />
                   </button>
                 </li>

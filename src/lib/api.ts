@@ -503,6 +503,30 @@ export function screenshotUrl(instanceId: string, shot: Screenshot, thumb = fals
   return `${convertFileSrc(`${instanceId}/${shot.fileName}`, "tandem-shot")}?v=${shot.takenAt}${thumb ? "&thumb" : ""}`;
 }
 
+export interface SupportLink {
+  /** As the author named it (Ko-fi, Patreon…); may be empty. */
+  platform: string;
+  url: string;
+}
+
+export interface Creator {
+  name: string;
+  avatarUrl: string | null;
+  /** Their Modrinth page. */
+  url: string;
+  organization: boolean;
+  /** Titles of their projects in the instance. */
+  projects: string[];
+  support: SupportLink[];
+}
+
+export interface Creators {
+  /** Modrinth projects in the instance. */
+  projects: number;
+  /** Those who accept support first. */
+  creators: Creator[];
+}
+
 export interface PerfSuggestion {
   projectId: string;
   title: string;
@@ -695,6 +719,8 @@ export const api = {
   modProviders: (instanceId: string, modIds: string[]) => invoke<ModProvider[]>("mod_providers", { instanceId, modIds }),
   contentConflicts: (instanceId: string) => invoke<ModConflict[]>("content_conflicts", { instanceId }),
   perfSuggestions: (instanceId: string) => invoke<PerfSuggestion[]>("perf_suggestions", { instanceId }),
+  instanceCreators: (instanceId: string) => invoke<Creators>("instance_creators", { instanceId }),
+  packCreators: (projectId: string, versionId: string) => invoke<Creators>("pack_creators", { projectId, versionId }),
   checkContentUpdates: (instanceId: string) => invoke<ContentUpdate[]>("check_content_updates", { instanceId }),
   /** Every outdated project when `projectIds` is omitted. */
   updateContent: (instanceId: string, projectIds?: string[]) =>

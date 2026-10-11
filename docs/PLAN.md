@@ -135,12 +135,12 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - [x] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel, ou dossier choisi) — D35
 - [x] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne — [AUDIT-UI.md](AUDIT-UI.md#passe-finale--2026-10-10-fin-de-la-phase-47)
 
-## Phase 4.8 — Soutenir les créateurs (plus tard, idée de Raphaël le 2026-10-11)
+## Phase 4.8 — Soutenir les créateurs (idée de Raphaël, faite le 2026-10-11)
 Tandem n'affiche pas de publicité (celle qui paie les auteurs sur Modrinth) : le mettre en valeur auprès des créateurs. Modrinth donne les liens de soutien de chaque projet (`donation_urls` : Ko-fi, Patreon, PayPal, GitHub Sponsors, Buy Me a Coffee, autre) ; aujourd'hui ils sont discrets, une ligne « Don » dans la colonne Liens de la fiche.
-- [ ] Bouton « Soutenir l'auteur » bien visible dans la fiche, à côté d'« Installer », icône de la plateforme ; seulement si l'auteur a mis un lien
-- [ ] « Les créateurs de ce pack » dans chaque instance : auteurs des contenus installés regroupés, avec leurs liens (« tes 136 mods sont faits par 89 créateurs, 34 acceptent les dons ») ; liens retrouvés par une requête groupée vers Modrinth, comme la reconnaissance des fichiers
-- [ ] Fiche d'un modpack : l'auteur du pack, puis les créateurs des mods qu'il contient avec leurs liens
-- [ ] Petit rappel unique, par exemple après 10 h de jeu sur une instance (« ses créateurs acceptent les soutiens »), fermable pour toujours
+- [x] Bouton « Soutenir l'auteur » bien visible dans la fiche, à côté d'« Installer » ; seulement si l'auteur a mis un lien (plusieurs liens : menu)
+- [x] Onglet « Créateurs » dans chaque instance : auteurs regroupés par organisation ou propriétaire d'équipe, avec leurs liens (trois requêtes groupées vers Modrinth)
+- [x] Fiche d'un modpack : l'auteur du pack (bouton « Soutenir »), onglet « Créateurs » pour les mods qu'il contient
+- [x] Petit rappel unique après 10 h de jeu sur une instance (temps de jeu maintenant compté), fermable pour toujours
 - Principes : jamais insistant ni bloquant ; toujours le lien direct de l'auteur, Tandem ne prend rien ; ton chaleureux, pas culpabilisant ; repli « Voir sur Modrinth » quand l'auteur n'a pas de lien. Les liens sont par projet, pas par auteur : regrouper par équipe ou organisation Modrinth.
 
 ## Phase 6 — Multijoueur P2P sans serveur
@@ -207,13 +207,13 @@ Priorité 1 de la 6c (D40). Un mod côté serveur, ajouté par Tandem au lanceme
 - Quilt charge les mods Fabric : à vérifier. NeoForge et Forge : noms différents à l'exécution (Mojang depuis NeoForge 1.20.5, SRG pour Forge 1.20.1), donc un autre jar. (v1 Fabric/Quilt, NeoForge en v2, Forge ensuite si le besoin existe.)
 
 **Travail de la v1 (Fabric)**
-- [ ] Mettre le prototype dans le dépôt, retirer l'import de chunks, nom et identifiant définitifs, version du mod dans le journal au démarrage
-- [ ] Tolérance aux versions : chaque Mixin facultatif (`required: false`, `defaultRequire: 0`), aucun plantage si une cible manque ; vérifier en 1.20.1, 1.21.1, 1.21.4 et la dernière version prise en charge par Fabric
-- [ ] Vérifier le correctif Architectury (exceptions, arguments primitifs, écouteurs non publics → retour au code d'origine) et le cache Balm (config rechargée en jeu : l'identifiant ne change pas, seule la classe sert de clé)
-- [ ] Cache de la recherche d'apparition (jusqu'à 17 % du tick sur Prominence) : mesurer d'abord ce qui se répète (biome, liste par catégorie, structures, chunks voisins), ne cacher que ce qui ne dépend pas de la position exacte ; identique en jeu
-- [ ] Distance d'activation des entités (−15 à 20 % sur Prominence avec ServerCore) : entités loin de tout joueur tickées moins souvent ; jamais pour les entités en combat, montées, tenues en laisse, apprivoisées près de leur maître, les projectiles, les boss ; distance et intervalle prudents ; réglable et désactivable
-- [ ] Branchement dans Tandem : jar embarqué, `-Dfabric.addMods`, réglage global et par instance, ligne dans le journal du jeu quand il est actif
-- [ ] Mesures avant/après sur Cobbleverse (1.21.1) et Prominence II (1.20.1) avec `loadtest_run.py` (référence, puis chaque optimisation séparément, puis toutes), JFR à chaque palier
+- [x] Mettre le prototype dans le dépôt, retirer l'import de chunks, nom et identifiant définitifs, version du mod dans le journal au démarrage (`mods/tandem-optimizations`, D42)
+- [x] Tolérance aux versions : Mixins facultatifs, `build.py --check` contre les 20 versions de 1.20 à 1.21.11, coupure automatique si une méthode manque ; démarré en 1.20.1, 1.21.1, 1.21.4, 1.21.11 (26.x : plus de noms intermédiaires, autre jar)
+- [x] Vérifier le correctif Architectury (exceptions, arguments primitifs, écouteurs non publics → retour au code d'origine) et le cache Balm (config rechargée en jeu : l'identifiant ne change pas, seule la classe sert de clé)
+- [x] Cache de la recherche d'apparition : étudié, écarté (lectures à des positions aléatoires, un cache exact ne retire que 1 à 2 %)
+- [x] Distance d'activation (32 blocs, 1 tick sur 4) : créatures vanilla seulement (Cobblemon : +75 % de Pokémon sinon), réglable et désactivable
+- [x] Branchement dans Tandem : jar embarqué, `-Dfabric.addMods` (Quilt : `loader.addMods`), réglage global et par instance, ligne dans le journal du jeu quand il est actif
+- [x] Mesures avant/après sur Cobbleverse et Prominence II ([résultats](TEST-DUO.md#tandem-optimizations-v1--mesures-11-octobre-2026)) ; gain de Prominence avec la version « vanilla seulement » pas remesuré
 - [ ] Tests en vrai : solo et « Jouer ensemble » sur 3 gros packs (Cobbleverse, Prominence II, Fabulously Optimized), aucun plantage, aucun comportement visible changé (apparitions, Pokémon, villageois, fermes simples)
 
 **Terminé quand** : le mod est ajouté par Tandem sans rien toucher dans l'instance, coupable dans les Réglages, chaque optimisation est mesurée et documentée (gain, pack, nombre de joueurs), et aucun des trois packs ne plante ni ne change en jeu.
@@ -419,3 +419,11 @@ Priorité 1 de la 6c (D40). Un mod côté serveur, ajouté par Tandem au lanceme
 - Vérifié : fmt, Clippy, 134 tests (dont le refus d'un pack CurseForge), TypeScript, import `.mrpack` et Réglages dans l'aperçu (backend simulé).
 - Cadrage de la session « mini-mod hôte » écrit (6d ci-dessus) : décisions à prendre, travail de la v1 Fabric, critères de fin.
 - Ajouté au plan : Phase 4.8 « Soutenir les créateurs » (liens de soutien Modrinth mis en valeur), pour plus tard.
+
+### 2026-10-11 (Tandem Optimizations, soutien aux créateurs)
+- 6d faite : **Tandem Optimizations** (D42), mod ajouté au lancement des instances Fabric et Quilt 1.20 à 1.21.11, jamais écrit dans l'instance, coupable dans les Réglages et par instance. Distance d'activation ajoutée (vanilla seulement, après avoir mesuré que Cobblemon accumulait 75 % de Pokémon en plus), vérification de construction contre 20 versions (a attrapé un plantage en 1.21.9+ et un cas qui ne compilait pas en 1.21.5+). Mesures dans TEST-DUO : jusqu'à −30 % de temps de tick sur Prominence avant la restriction aux créatures vanilla.
+- Phase 4.8 faite : bouton « Soutenir l'auteur » dans les fiches, onglet « Créateurs » (instance et modpack), temps de jeu par instance et rappel unique après 10 h.
+- Vérifié : fmt, Clippy, 139 tests, TypeScript, Réglages, onglet Créateurs et fiche dans l'aperçu (backend simulé).
+- Reste : test en vrai (solo et « Jouer ensemble ») avec le mod sur 3 gros packs ; remesurer Prominence avec la version « vanilla seulement » si utile.
+- Prochaine étape : cadrage et début des idées « monde dans un processus à part » et « monde qui appartient au groupe » (6e, 6f).
+

@@ -342,6 +342,25 @@ export function installMocks() {
         case "install_content":
           await new Promise((r) => setTimeout(r, 900));
           return fakeInstall(args.instanceId as string, args.projectId as string);
+        case "instance_creators":
+        case "pack_creators": {
+          await new Promise((r) => setTimeout(r, 500));
+          const titles =
+            cmd === "pack_creators"
+              ? CATALOGUE.mod.slice(0, 40).map((h) => h.title)
+              : (content[args.instanceId as string] ?? []).map((c) => c.title);
+          const people = ["CaffeineMC", "jellysquid3", "modmuss50", "Ampflower", "TerraformersMC", "LambdAurora", "Uncandango", "Fuzs"];
+          const creators = people.map((name, i) => ({
+            name,
+            avatarUrl: null,
+            url: `https://modrinth.com/user/${name}`,
+            organization: name.endsWith("MC"),
+            projects: titles.filter((_, j) => j % people.length === i),
+            support: i % 3 === 2 ? [] : [{ platform: i % 2 ? "Patreon" : "Ko-fi", url: `https://ko-fi.com/${name}` }],
+          })).filter((c) => c.projects.length > 0);
+          creators.sort((a, b) => Number(a.support.length === 0) - Number(b.support.length === 0) || b.projects.length - a.projects.length);
+          return { projects: titles.length, creators };
+        }
         case "perf_suggestions": {
           await new Promise((r) => setTimeout(r, 400));
           const instance = instances.find((i) => i.id === args.instanceId);

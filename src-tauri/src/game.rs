@@ -10,6 +10,7 @@ use tandem_core::account::AccountKind;
 use tandem_core::auth;
 use tandem_core::crash::{self, CrashAnalysis};
 use tandem_core::install::{self, InstallProgress, Stage};
+use tandem_core::instance;
 use tandem_core::jvm;
 use tandem_core::launch::{self, LaunchSpec, QuickPlay};
 use tandem_core::optimizations;
@@ -313,6 +314,10 @@ async fn supervise(
         {
             reader.abort();
         }
+    }
+    let played = started.elapsed().map(|d| d.as_secs()).unwrap_or(0);
+    if let Err(err) = instance::add_play_time(&ctx, &id, played).await {
+        tracing::warn!(instance = %id, error = %err, "play time not saved");
     }
     // Before freeing the slot, so the game cannot be relaunched mid-backup.
     backup_played_worlds(&ctx, &id, &game_dir, started).await;
