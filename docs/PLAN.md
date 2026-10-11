@@ -233,13 +233,14 @@ Choix (recommandation de Claude, à revoir avec Raphaël) :
 - `online-mode` activé (comptes Microsoft, comme aujourd'hui), mode de jeu et difficulté du monde, hôte opérateur si le monde autorise les commandes, Tandem Optimizations ajouté aussi.
 
 Travail :
-- [ ] Mesurer avec le vrai jeu : mémoire totale jeu + monde à part contre monde intégré (Prominence, Cobbleverse)
-- [ ] Installer le serveur d'une instance Fabric/Quilt (jar du serveur, lanceur Fabric, bibliothèques partagées) et préparer son dossier (liens, mods client écartés, `server.properties`, `eula.txt`)
-- [ ] Démarrer, attendre « Done », arrêter proprement (`stop`), relancer si un mod client fait planter (l'écarter et réessayer)
-- [ ] Inventaire de l'hôte `level.dat` ↔ `playerdata`
-- [ ] Brancher dans la session d'hôte : le tunnel vise le port du serveur, le jeu de l'hôte le rejoint directement (quickPlay)
-- [ ] Interface : interrupteur, progression du démarrage, journal du monde, mémoire utilisée
-- [ ] Tests : 2 packs, vrai jeu, plantage simulé du jeu de l'hôte (les amis restent), plus de 8 faux joueurs, inventaire et position retrouvés en solo ensuite
+- [x] Mesurer avec le vrai jeu (Cobbleverse) : monde intégré 6,7 Go ; à part 5,6 Go (jeu) + 2,6 Go (monde) = 8,2 Go, **+1,5 Go**. Piste : donner moins de mémoire au jeu de l'hôte quand le monde tourne à part
+- [x] Installer le serveur d'une instance Fabric/Quilt (jar Mojang lancé directement par le loader, bibliothèques partagées) et préparer son dossier (jonctions, mods client écartés par métadonnées : 32 sur 136 pour Cobbleverse)
+- [x] Démarrer, attendre « Done », arrêter proprement (`stop`), relancer sans les mods qui ne peuvent pas tourner sur un serveur (dépendance client manquante, plantage), mémorisés ; serveur tué avec Tandem (Windows). Cobbleverse prêt en 45 s, Prominence II (443 mods) en 150 s la première fois
+- [x] Inventaire de l'hôte `level.dat` ↔ `playerdata`, vérifié en vrai dans les deux sens ; réglages du monde (mode, difficulté, hardcore, opérateur si commandes)
+- [x] Brancher dans la session d'hôte : le tunnel vise le port du serveur, le jeu de l'hôte le rejoint directement (quickPlay, vérifié avec le vrai jeu)
+- [x] Interface : interrupteur « Monde à part (bêta) », progression du démarrage, « Rejoindre mon monde », alerte si le monde s'arrête (journal et mémoire du monde : plus tard)
+- [ ] Tests : vrai test à deux PC avec la vraie app (Raphaël + un ami), plus de 8 joueurs, Quilt
+- [ ] Mémoire : moins pour le jeu de l'hôte quand le monde est à part ; NeoForge ensuite
 
 **Terminé quand** : un hôte Fabric peut héberger « à part » en un clic, ses amis le rejoignent comme avant, la partie survit à la fermeture du jeu de l'hôte, et le monde revient en solo sans rien perdre.
 

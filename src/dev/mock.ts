@@ -673,10 +673,18 @@ export function installMocks() {
         case "cancel_microsoft_login":
           return null;
         case "duo_host": {
+          const separate = !!args.separateWorld;
+          if (separate) {
+            void emit("duo://world-server", { status: "preparing" });
+            await new Promise((r) => setTimeout(r, 1200));
+            void emit("duo://world-server", { status: "starting" });
+            await new Promise((r) => setTimeout(r, 2500));
+            void emit("duo://world-server", { status: "ready" });
+          }
           await new Promise((r) => setTimeout(r, 900));
           const instanceId = args.instanceId as string | null;
           const link = (pingMs: number, direct: boolean) => ({ pingMs, direct });
-          setTimeout(() => void emit("duo://host", { type: "world", world: { motd: "Zeleff - Survie", port: 51234 } }), 4000);
+          if (!separate) setTimeout(() => void emit("duo://host", { type: "world", world: { motd: "Zeleff - Survie", port: 51234 } }), 4000);
           setTimeout(
             () =>
               void emit("duo://host", {
@@ -695,7 +703,7 @@ export function installMocks() {
             if (pings++ > 60) clearInterval(timer);
             void emit("duo://host", { type: "link", id: "57460a3016", link: pings < 3 ? link(171, false) : link(23 + (pings % 5), true) });
           }, 2000);
-          return { code: "7K2P-QX9M", instanceId, world: null };
+          return { code: "7K2P-QX9M", instanceId, world: separate ? { motd: args.separateWorld, port: 51234 } : null, separate };
         }
         case "duo_stop_host":
         case "duo_kick":
@@ -758,6 +766,9 @@ export function installMocks() {
             link: { pingMs: 31, direct: true },
           };
         case "duo_play":
+          void fakeLaunch(instances[0].id);
+          return null;
+        case "duo_host_play":
           void fakeLaunch(instances[0].id);
           return null;
         case "duo_state":

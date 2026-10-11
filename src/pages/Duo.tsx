@@ -5,7 +5,7 @@ import InstanceSlot from "../components/InstanceSlot";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
 import Select from "../components/Select";
-import { Checkbox, Icon, LoaderTag, SkinHead } from "../components/pixel";
+import { Checkbox, Icon, LoaderTag, SkinHead, Toggle } from "../components/pixel";
 import { openAccounts } from "../lib/accounts";
 import { api, errorMessage, type InstallProgress, type InstanceDiff, type LinkStatus } from "../lib/api";
 import {
@@ -18,6 +18,7 @@ import {
   duo,
   formatCode,
   joinFriend,
+  joinOwnWorld,
   kickGuest,
   leaveFriend,
   playWithFriend,
@@ -26,6 +27,7 @@ import {
   startDuoEvents,
   startHosting,
   stopHosting,
+  worldServer,
 } from "../lib/duo";
 import { loaderLabel } from "../lib/format";
 import { gameState, output } from "../lib/games";
@@ -153,6 +155,7 @@ function AccountGate(props: { children: JSX.Element }) {
 function Start() {
   const [hostInstance, setHostInstance] = remembered<string>("duo-host-instance", instances()[0]?.id ?? "");
   const [world, setWorld] = remembered<string>("duo-host-world", "");
+  const [separate, setSeparate] = remembered<boolean>("duo-separate-world", false);
   const [code, setCode] = createSignal("");
   const [busy, setBusy] = createSignal<"host" | "join" | null>(null);
   const [error, setError] = createSignal<string | null>(null);
@@ -177,12 +180,16 @@ function Start() {
     { value: "menu", label: "Je choisis dans le jeu" },
   ];
   const running = () => !!hostInstance() && gameState(hostInstance()).status !== "idle";
+  /** The world can run in its own process: Fabric or Quilt, a world picked, game closed. */
+  const canSeparate = () =>
+    !!chosen() && (chosen()!.loader === "fabric" || chosen()!.loader === "quilt") && !!pickedWorld() && !running();
+  const hostingSeparate = () => canSeparate() && separate();
 
   async function host() {
     setBusy("host");
     setError(null);
     try {
-      await startHosting(hostInstance() || null, quickPlay() ? pickedWorld()?.folder : undefined);
+      await startHosting(hostInstance() || null, quickPlay() ? pickedWorld()?.folder : undefined, hostingSeparate());
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -225,10 +232,33 @@ function Start() {
               <Select class="h-10 w-full text-sm" value={pickedWorld()?.folder ?? "menu"} options={worldOptions()} onChange={setWorld} />
             </label>
           </Show>
+          <Show when={canSeparate()}>
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <span class="text-sm font-medium">Monde à part (bêta)</span>
+                <span class="text-xs text-muted">
+                  Ton monde tourne dans son propre programme : si ton jeu plante, tes amis continuent, et plus de limite de 8
+                  joueurs. Demande 2 à 4 Go de mémoire en plus.
+                </span>
+              </div>
+              <Toggle checked={separate()} label="Monde à part" onChange={setSeparate} />
+            </div>
+          </Show>
           <button class="btn btn-gold px-corners mt-auto h-11" disabled={busy() !== null || !hostInstance()} onClick={() => void host()}>
             <Icon name="invite" size={14} />
-            {busy() === "host" ? "Création de l'invitation…" : running() ? "Créer une invitation" : "Inviter et lancer le jeu"}
+            {busy() === "host"
+              ? worldServer() === "preparing"
+                ? "Préparation du monde…"
+                : worldServer() === "starting"
+                  ? "Démarrage du monde…"
+                  : "Création de l'invitation…"
+              : running()
+                ? "Créer une invitation"
+                : "Inviter et lancer le jeu"}
           </button>
+          <Show when={busy() === "host" && worldServer() === "starting"}>
+            <span class="text-center text-xs text-muted">Une à deux minutes la première fois, le temps de charger les mods.</span>
+          </Show>
         </section>
 
         <section class="panel px-corners-md flex flex-col gap-4 p-5">
@@ -315,6 +345,34 @@ function Hosting() {
       </section>
 
       <div class="flex flex-col gap-5">
+        <Show when={host().separate && worldServer() === "stopped"}>
+          <Alert>Ton monde s'est arrêté et tes amis ont été déconnectés. Arrête l'invitation, puis relance-la pour le rouvrir.</Alert>
+        </Show>
+        <Show when={host().separate}>
+          <ol class="panel px-corners-md flex flex-col divide-y divide-line">
+            <Step done={worldServer() !== "stopped"} current={false} title="Ton monde tourne à part">
+              <span class="text-xs text-muted">
+                {host().world?.motd} : il reste ouvert même si tu fermes ton jeu, tant que l'invitation est active.
+              </span>
+            </Step>
+            <Step done={running()} current={!running()} title="Rejoins ton monde">
+              <Show when={!running() && worldServer() !== "stopped"}>
+                <div>
+                  <button class="btn btn-primary px-corners h-9 px-4 text-sm" onClick={() => joinOwnWorld()}>
+                    <Icon name="play" size={11} />
+                    Rejoindre mon monde
+                  </button>
+                </div>
+              </Show>
+            </Step>
+            <Step done={host().guests.length > 0} current={host().guests.length === 0} title="Tes amis rejoignent avec le code">
+              <Show when={host().guests.length === 0}>
+                <span class="text-xs text-muted">Leur jeu se lance directement dans ton monde.</span>
+              </Show>
+            </Step>
+          </ol>
+        </Show>
+        <Show when={!host().separate}>
         <ol class="panel px-corners-md flex flex-col divide-y divide-line">
           <Step done={running() || !!host().world} current={!running() && !host().world} title={`Lance ${instance()?.name ?? "ton instance"}`}>
             <Show when={instance() && !running() && !host().world}>
@@ -355,6 +413,7 @@ function Hosting() {
             </Show>
           </Step>
         </ol>
+        </Show>
 
         <Show when={host().guests.length > 0}>
           <section class="flex flex-col gap-2">

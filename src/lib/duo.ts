@@ -14,6 +14,7 @@ import {
   type InstallProgress,
   type InstanceDiff,
   type LinkStatus,
+  type WorldServerStatus,
 } from "./api";
 import { gameState, launch } from "./games";
 import { notifyInGame } from "./notify";
@@ -67,6 +68,13 @@ let lanReminder: ReturnType<typeof setTimeout> | undefined;
 
 let started = false;
 
+/** Where the world server of the session being hosted is at (6e). */
+const [worldServer, setWorldServer] = createSignal<WorldServerStatus | null>(null);
+export { worldServer };
+
+/** Setting: host the world in its own process (Fabric and Quilt). */
+export const SEPARATE_WORLD_SETTING = "duo_separate_world";
+
 /** Listens to session events and loads the session already running, once. */
 export async function startDuoEvents() {
   if (started) return;
@@ -113,6 +121,13 @@ export async function startDuoEvents() {
         break;
     }
   });
+  await listen<{ status: WorldServerStatus }>("duo://world-server", ({ payload }) => {
+    setWorldServer(payload.status);
+    if (payload.status === "stopped" && duo.host?.separate) {
+      toast("Ton monde s'est arrêté : tes amis ont été déconnectés.", { tone: "info", durationMs: 10000 });
+      void notifyInGame("Ton monde s'est arrêté", "Tes amis ont été déconnectés. Arrête l'invitation pour le rouvrir.");
+    }
+  });
   await listen<DuoGuestEvent>("duo://guest", ({ payload }) => {
     if (!duo.guest) return;
     switch (payload.type) {
@@ -137,7 +152,7 @@ export async function startDuoEvents() {
   // The host entered a world but has not opened it to LAN yet: a reminder over the game.
   await listen<GameOutput>(EVENTS.output, ({ payload }) => {
     const host = duo.host;
-    if (!host || payload.instanceId !== host.instanceId || host.world) return;
+    if (!host || payload.instanceId !== host.instanceId || host.world || host.separate) return;
     if (!payload.lines.some((line) => line.includes(WORLD_STARTED))) return;
     clearTimeout(lanReminder);
     lanReminder = setTimeout(() => {
@@ -153,18 +168,36 @@ export async function startDuoEvents() {
   if (current) setDuo({ host: current.host ? { ...current.host, guests: [] } : null, guest: current.guest });
 }
 
-/** Creates the invitation, then starts the game (straight into `world` on 1.20+). */
-export async function startHosting(instanceId: string | null, world?: string) {
-  const view = await api.duoHost(instanceId);
+/**
+ * Creates the invitation, then starts the game (straight into `world` on 1.20+). With
+ * `separate`, the world first starts in its own process and the game joins it.
+ */
+export async function startHosting(instanceId: string | null, world?: string, separate = false) {
+  const inProcess = separate && !!instanceId && !!world;
+  setWorldServer(inProcess ? "preparing" : null);
+  let view;
+  try {
+    view = await api.duoHost(instanceId, inProcess ? world : undefined);
+  } catch (err) {
+    setWorldServer(null);
+    throw err;
+  }
   setDuo("host", { ...view, guests: [] });
   if (instanceId && gameState(instanceId).status === "idle") {
-    void launch(instanceId, () => api.launchInstance(instanceId, world));
+    void launch(instanceId, view.separate ? api.duoHostPlay : () => api.launchInstance(instanceId, world));
   }
+}
+
+/** The host's game back into the world hosted à part (after closing it, or a crash). */
+export function joinOwnWorld() {
+  const id = duo.host?.instanceId;
+  if (id && duo.host?.separate) void launch(id, api.duoHostPlay);
 }
 
 export async function stopHosting() {
   await api.duoStopHost();
   setDuo("host", null);
+  setWorldServer(null);
 }
 
 export const kickGuest = (id: string) => api.duoKick(id);

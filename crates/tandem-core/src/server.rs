@@ -69,6 +69,25 @@ pub fn supports(loader: Loader) -> bool {
     matches!(loader, Loader::Fabric | Loader::Quilt)
 }
 
+/// Memory for a world server, from the load tests (Cobbleverse held 18 players in 3 GB,
+/// Prominence II 14 in 4 GB). Lowered when the game and the world together would leave
+/// the system less than 4 GB.
+pub fn memory_mb(total_mb: u64, mod_count: usize, game_mb: u32) -> u32 {
+    let wanted: u64 = match mod_count {
+        0..=50 => 2048,
+        51..=150 => 3072,
+        _ => 4096,
+    };
+    let room = total_mb.saturating_sub(4096 + u64::from(game_mb));
+    (wanted.min(room) / 512 * 512).max(2048) as u32
+}
+
+/// A local TCP port nobody uses right now.
+pub fn free_port() -> Result<u16> {
+    let listener = std::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0))?;
+    Ok(listener.local_addr()?.port())
+}
+
 fn fail(message: impl Into<String>) -> Error {
     Error::WorldServer(message.into())
 }
@@ -229,6 +248,11 @@ impl RunningServer {
         tokio::task::spawn_blocking(move || host_player::take_back(&world, &uuid))
             .await
             .map_err(|e| Error::Io(std::io::Error::other(e)))?
+    }
+
+    /// The console, to read elsewhere (lines stop when the server exits).
+    pub fn take_lines(&mut self) -> mpsc::UnboundedReceiver<String> {
+        std::mem::replace(&mut self.lines, mpsc::unbounded_channel().1)
     }
 
     /// Exits on its own (crash): the exit code once it does.
@@ -696,10 +720,17 @@ async fn link_dir(target: &Path, link: &Path) -> Result<()> {
                 return Ok(());
             }
         }
-        if std::fs::symlink_metadata(&link).is_ok() {
-            // An old link (or an empty folder from an older layout): a link is removed as
-            // a directory without touching what it points to.
-            std::fs::remove_dir(&link)?;
+        match std::fs::read_link(&link) {
+            // An old link: removed as a directory, without touching what it points to.
+            Ok(_) => std::fs::remove_dir(&link)?,
+            // A real folder the server made itself (a mod's data, before the instance had
+            // one): kept, never replaced.
+            Err(_) if std::fs::symlink_metadata(&link).is_ok() => {
+                if std::fs::remove_dir(&link).is_err() {
+                    return Ok(());
+                }
+            }
+            Err(_) => {}
         }
         #[cfg(windows)]
         junction::create(&target, &link)?;
@@ -720,6 +751,15 @@ fn strip_verbatim(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn world_memory_leaves_room_for_the_system() {
+        assert_eq!(memory_mb(16_384, 136, 6144), 3072);
+        assert_eq!(memory_mb(16_384, 443, 8192), 4096);
+        // 8 GB: what is left after the game and 4 GB for the system, never under 2 GB.
+        assert_eq!(memory_mb(8192, 443, 3072), 2048);
+        assert_eq!(memory_mb(12_288, 443, 5120), 3072);
+    }
 
     #[test]
     fn finds_the_mod_a_crash_names() {

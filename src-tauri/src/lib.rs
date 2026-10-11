@@ -183,6 +183,7 @@ pub fn run() {
             duo::duo_prepare_copy,
             duo::duo_leave,
             duo::duo_play,
+            duo::duo_host_play,
             duo::duo_state,
         ])
         .build(tauri::generate_context!())

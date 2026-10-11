@@ -607,7 +607,12 @@ export interface DuoHostView {
   code: string;
   instanceId: string | null;
   world: LanWorld | null;
+  /** The world runs in its own process: the host joins it like the friends. */
+  separate: boolean;
 }
+
+/** The world server of a session hosted "à part". */
+export type WorldServerStatus = "preparing" | "starting" | "ready" | "stopped";
 
 export interface DuoGuest {
   id: string;
@@ -747,7 +752,9 @@ export const api = {
     invoke<void>("set_local_content_enabled", { instanceId, kind, fileName, enabled }),
   removeLocalContent: (instanceId: string, kind: ContentKind, fileName: string) =>
     invoke<void>("remove_local_content", { instanceId, kind, fileName }),
-  duoHost: (instanceId: string | null) => invoke<DuoHostView>("duo_host", { instanceId }),
+  duoHost: (instanceId: string | null, separateWorld?: string) =>
+    invoke<DuoHostView>("duo_host", { instanceId, separateWorld: separateWorld ?? null }),
+  duoHostPlay: () => invoke<void>("duo_host_play"),
   duoStopHost: () => invoke<void>("duo_stop_host"),
   duoKick: (id: string) => invoke<void>("duo_kick", { id }),
   /** Without an instance, the one that best matches the host's is picked. */

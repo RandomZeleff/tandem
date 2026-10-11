@@ -12,7 +12,8 @@ use tandem_core::duo::sync::{self, SyncReport};
 use tandem_core::duo::{self, InstanceDiff, LinkStatus};
 use tandem_core::instance::{self, InstanceSettings, NewInstance};
 use tandem_core::launch::QuickPlay;
-use tandem_core::Context;
+use tandem_core::server::{self, RunningServer, ServerOptions};
+use tandem_core::{jvm, Context};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::Mutex;
 
@@ -20,6 +21,8 @@ use crate::error::{CommandError, CommandResult};
 use crate::{game, modpack, AppState};
 
 pub const HOST_EVENT: &str = "duo://host";
+/// Progress and end of the world server (6e): `{ status, attempt? }`.
+pub const WORLD_SERVER_EVENT: &str = "duo://world-server";
 pub const GUEST_EVENT: &str = "duo://guest";
 
 static SESSIONS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -33,6 +36,35 @@ pub struct Duo {
 struct Hosting {
     host: Host,
     instance_id: Option<String>,
+    /// The world in its own process, when hosted that way (6e).
+    server: Option<RunningServer>,
+}
+
+impl Hosting {
+    fn view(&self) -> HostView {
+        HostView {
+            code: self.host.code(),
+            instance_id: self.instance_id.clone(),
+            world: self.host.world(),
+            separate: self.server.is_some(),
+        }
+    }
+
+    async fn stop(self) {
+        self.host.stop().await;
+        if let Some(server) = self.server {
+            if let Err(err) = server.stop().await {
+                tracing::warn!(error = %err, "world server stop");
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WorldServerPayload {
+    /// `preparing`, `starting`, `ready` or `stopped`.
+    status: &'static str,
 }
 
 struct Joining {
@@ -72,6 +104,8 @@ pub struct HostView {
     pub code: String,
     pub instance_id: Option<String>,
     pub world: Option<LanWorld>,
+    /// The world runs in its own process: the host's game joins it like the friends.
+    pub separate: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -123,19 +157,18 @@ async fn summary_of(ctx: &Context, instance_id: &str) -> CommandResult<InstanceS
     Ok(duo::summary(ctx, &instance).await?)
 }
 
+/// Hosts a session. With `separate_world`, that world of `instance_id` first starts in
+/// its own process (6e) and is served at once: no "Open to LAN" step.
 #[tauri::command]
 pub async fn duo_host(
     app: AppHandle,
     state: State<'_, AppState>,
     instance_id: Option<String>,
+    separate_world: Option<String>,
 ) -> CommandResult<HostView> {
     let mut hosting = state.duo.host.lock().await;
     if let Some(current) = hosting.as_ref() {
-        return Ok(HostView {
-            code: current.host.code(),
-            instance_id: current.instance_id.clone(),
-            world: current.host.world(),
-        });
+        return Ok(current.view());
     }
     if state.duo.guest.lock().await.is_some() {
         return Err(CommandError::msg(
@@ -148,11 +181,23 @@ pub async fn duo_host(
         None => None,
     };
     let mine = summary.clone();
+    let mut world_server = match (&separate_world, &instance_id) {
+        (Some(world), Some(id)) => Some(start_world_server(&app, &state.ctx, id, world).await?),
+        (Some(_), None) => return Err(CommandError::msg("Choisis l'instance du monde à héberger")),
+        _ => None,
+    };
+    let fixed_world = world_server.as_ref().map(|server| LanWorld {
+        motd: separate_world.clone().unwrap_or_default(),
+        port: server.port,
+    });
+    if let Some(server) = world_server.as_mut() {
+        watch_world_server(app.clone(), server);
+    }
     let emitter = app.clone();
     let host = Host::start(
         state.ctx.http.clone(),
         HostConfig {
-            world: None,
+            world: fixed_world,
             player: name,
             instance: summary,
             game_dir: instance_id
@@ -184,20 +229,113 @@ pub async fn duo_host(
             let _ = emitter.emit(HOST_EVENT, payload);
         },
     )
-    .await?;
-    let view = HostView {
-        code: host.code(),
-        instance_id: instance_id.clone(),
-        world: host.world(),
+    .await;
+    let host = match host {
+        Ok(host) => host,
+        Err(err) => {
+            if let Some(server) = world_server {
+                let _ = server.stop().await;
+            }
+            return Err(err.into());
+        }
     };
-    *hosting = Some(Hosting { host, instance_id });
+    let started = Hosting {
+        host,
+        instance_id,
+        server: world_server,
+    };
+    let view = started.view();
+    *hosting = Some(started);
     Ok(view)
+}
+
+async fn start_world_server(
+    app: &AppHandle,
+    ctx: &Context,
+    instance_id: &str,
+    world: &str,
+) -> CommandResult<RunningServer> {
+    let instance = ctx.db.get_instance(instance_id).await?;
+    if !server::supports(instance.loader) {
+        return Err(CommandError::msg(
+            "Le monde à part marche pour l'instant avec Fabric et Quilt.",
+        ));
+    }
+    let account = ctx
+        .db
+        .active_account()
+        .await?
+        .ok_or_else(|| CommandError::msg("Aucun compte actif"))?;
+    let status = |status| {
+        let _ = app.emit(WORLD_SERVER_EVENT, WorldServerPayload { status });
+    };
+    status("preparing");
+    let prepared = server::prepare(ctx, &instance).await?;
+    let total = jvm::total_memory_mb();
+    let game_dir = ctx.data.instance_dir(instance_id);
+    let game_mb = instance
+        .memory_mb
+        .unwrap_or_else(|| jvm::auto_memory_mb(total, jvm::count_mods(&game_dir)));
+    let options = ServerOptions {
+        world: world.to_owned(),
+        port: server::free_port()?,
+        memory_mb: server::memory_mb(total, jvm::count_mods(&prepared.dir), game_mb),
+        max_players: 20,
+        online_mode: true,
+        host: Some((account.mc_uuid.clone(), account.username.clone())),
+    };
+    status("starting");
+    let running = server::start(ctx, &prepared, &options).await?;
+    status("ready");
+    Ok(running)
+}
+
+/// Keeps the server's console flowing (to the launcher's log) and tells the page when the
+/// world stops on its own.
+fn watch_world_server(app: AppHandle, server: &mut RunningServer) {
+    let mut lines = server.take_lines();
+    tauri::async_runtime::spawn(async move {
+        while let Some(line) = lines.recv().await {
+            tracing::debug!(target: "world_server", "{line}");
+        }
+        tracing::info!("world server stopped");
+        let _ = app.emit(WORLD_SERVER_EVENT, WorldServerPayload { status: "stopped" });
+    });
+}
+
+/// Launches the host's game straight into the world server.
+#[tauri::command]
+pub async fn duo_host_play(app: AppHandle, state: State<'_, AppState>) -> CommandResult<()> {
+    let (instance_id, port) = {
+        let hosting = state.duo.host.lock().await;
+        let hosting = hosting
+            .as_ref()
+            .ok_or_else(|| CommandError::msg("Aucune invitation en cours"))?;
+        let port = hosting
+            .server
+            .as_ref()
+            .map(|s| s.port)
+            .ok_or_else(|| CommandError::msg("Le monde n'est pas hébergé à part"))?;
+        let instance_id = hosting
+            .instance_id
+            .clone()
+            .ok_or_else(|| CommandError::msg("Aucune instance"))?;
+        (instance_id, port)
+    };
+    game::launch(
+        app,
+        state.ctx.clone(),
+        state.games.clone(),
+        instance_id,
+        Some(QuickPlay::Server("127.0.0.1".to_owned(), port)),
+    )
+    .await
 }
 
 #[tauri::command]
 pub async fn duo_stop_host(state: State<'_, AppState>) -> CommandResult<()> {
     if let Some(hosting) = state.duo.host.lock().await.take() {
-        hosting.host.stop().await;
+        hosting.stop().await;
     }
     Ok(())
 }
@@ -495,11 +633,7 @@ pub struct DuoState {
 
 #[tauri::command]
 pub async fn duo_state(state: State<'_, AppState>) -> CommandResult<DuoState> {
-    let host = state.duo.host.lock().await.as_ref().map(|h| HostView {
-        code: h.host.code(),
-        instance_id: h.instance_id.clone(),
-        world: h.host.world(),
-    });
+    let host = state.duo.host.lock().await.as_ref().map(Hosting::view);
     let guest = state.duo.guest.lock().await.as_ref().map(Joining::view);
     Ok(DuoState { host, guest })
 }
@@ -507,7 +641,7 @@ pub async fn duo_state(state: State<'_, AppState>) -> CommandResult<DuoState> {
 /// Ends any session when the launcher closes, so guests are told at once.
 pub async fn shutdown(state: &AppState) {
     if let Some(hosting) = state.duo.host.lock().await.take() {
-        hosting.host.stop().await;
+        hosting.stop().await;
     }
     if let Some(joining) = state.duo.guest.lock().await.take() {
         joining.guest.leave().await;
