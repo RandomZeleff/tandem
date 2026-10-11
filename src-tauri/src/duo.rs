@@ -152,6 +152,7 @@ pub async fn duo_host(
     let host = Host::start(
         state.ctx.http.clone(),
         HostConfig {
+            world: None,
             player: name,
             instance: summary,
             game_dir: instance_id

@@ -189,8 +189,30 @@ pub async fn load_profile(
     game_version: &str,
     loader_version: &str,
 ) -> Result<LoaderProfile> {
+    fetch_profile(ctx, loader, game_version, loader_version, "profile").await
+}
+
+/// The dedicated server counterpart of [`load_profile`] (Fabric and Quilt): libraries and
+/// main class to run the game's server jar with the loader.
+pub async fn load_server_profile(
+    ctx: &Context,
+    loader: Loader,
+    game_version: &str,
+    loader_version: &str,
+) -> Result<LoaderProfile> {
+    fetch_profile(ctx, loader, game_version, loader_version, "server").await
+}
+
+async fn fetch_profile(
+    ctx: &Context,
+    loader: Loader,
+    game_version: &str,
+    loader_version: &str,
+    kind: &str,
+) -> Result<LoaderProfile> {
+    let suffix = if kind == "server" { "-server" } else { "" };
     let id = format!("{loader}-loader-{loader_version}-{game_version}");
-    let path = ctx.data.version_dir(&id).join(format!("{id}.json"));
+    let path = ctx.data.version_dir(&id).join(format!("{id}{suffix}.json"));
     if let Ok(bytes) = tokio::fs::read(&path).await {
         if let Ok(profile) = serde_json::from_slice(&bytes) {
             return Ok(profile);
@@ -203,7 +225,7 @@ pub async fn load_profile(
             "loader",
             game_version,
             loader_version,
-            "profile",
+            kind,
             "json",
         ],
     )?;

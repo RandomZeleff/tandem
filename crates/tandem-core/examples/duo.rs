@@ -180,6 +180,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let host = Host::start(
                 http.clone(),
                 HostConfig {
+                    world: None,
                     player: "Zeleff".into(),
                     instance: Some(summary),
                     game_dir: Some(game_dir.path().to_owned()),
@@ -306,6 +307,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let host = Host::start(
                 http.clone(),
                 HostConfig {
+                    world: None,
                     player: "Zeleff".into(),
                     instance: Some(summary.clone()),
                     game_dir: Some(host_dir.path().to_owned()),
@@ -375,6 +377,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let host = Host::start(
                 http.clone(),
                 HostConfig {
+                    world: None,
                     player: "Zeleff".into(),
                     instance: Some(summary.clone()),
                     game_dir: Some(ctx.data.instance_dir(id)),
@@ -427,6 +430,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let host = Host::start(
                 http.clone(),
                 HostConfig {
+                    world: None,
                     player: "Zeleff".into(),
                     instance: None,
                     game_dir: None,
@@ -471,6 +475,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let host = Host::start(
                 http,
                 HostConfig {
+                    world: None,
                     player: name,
                     instance: None,
                     game_dir: None,

@@ -33,6 +33,8 @@ pub struct HostConfig {
     /// Folder of `instance`: guests may ask for its mods (those listed in `instance`)
     /// and its pack files (see [`protocol::PACK_ROOTS`]).
     pub game_dir: Option<PathBuf>,
+    /// A world Tandem runs itself (6e): served at once, no LAN discovery.
+    pub world: Option<LanWorld>,
 }
 
 /// A guest, as the host's interface shows it.
@@ -119,7 +121,8 @@ impl Host {
             return Err(fail(format!("impossible de publier l'invitation ({err})")));
         }
 
-        let (world_tx, world_rx) = watch::channel(None);
+        let fixed_world = config.world.clone();
+        let (world_tx, world_rx) = watch::channel(fixed_world.clone());
         let shared = Arc::new(Shared {
             code: code.clone(),
             config,
@@ -130,11 +133,13 @@ impl Host {
         });
         let mut tasks = Vec::new();
 
-        tasks.push(tokio::spawn(async move {
-            if let Err(err) = lan::watch(world_tx).await {
-                tracing::warn!(error = %err, "LAN discovery stopped");
-            }
-        }));
+        if fixed_world.is_none() {
+            tasks.push(tokio::spawn(async move {
+                if let Err(err) = lan::watch(world_tx).await {
+                    tracing::warn!(error = %err, "LAN discovery stopped");
+                }
+            }));
+        }
         tasks.push(tokio::spawn({
             let shared = shared.clone();
             let mut world = shared.world.clone();

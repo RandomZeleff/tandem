@@ -18,10 +18,22 @@ pub struct ProcessGroup {
 impl ProcessGroup {
     /// Starts tracking a freshly spawned game. Processes it starts from now on are included.
     pub fn track(child: &Child) -> Self {
+        Self::new(child, false)
+    }
+
+    /// Like [`ProcessGroup::track`], for a process that must not outlive Tandem (the
+    /// world server of a hosting session): on Windows it is killed when Tandem exits or
+    /// crashes. Unix has no such guarantee; `kill` still reaches the whole group.
+    pub fn track_owned(child: &Child) -> Self {
+        Self::new(child, true)
+    }
+
+    #[cfg_attr(unix, allow(unused_variables))]
+    fn new(child: &Child, kill_on_close: bool) -> Self {
         #[cfg(windows)]
         {
             let job = child.raw_handle().and_then(|handle| {
-                windows::Job::with_process(handle)
+                windows::Job::with_process(handle, kill_on_close)
                     .inspect_err(|err| tracing::warn!(error = %err, "no job object for the game"))
                     .ok()
             });
@@ -64,11 +76,13 @@ mod windows {
 
     use windows_sys::Win32::Foundation::CloseHandle;
     use windows_sys::Win32::System::JobObjects::{
-        AssignProcessToJobObject, CreateJobObjectW, TerminateJobObject,
+        AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
+        SetInformationJobObject, TerminateJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
     };
 
-    /// An anonymous job object. Closing it does not kill the game: closing the launcher
-    /// while playing must leave the game running.
+    /// An anonymous job object. For the game, closing it does not kill the game: closing
+    /// the launcher while playing must leave the game running.
     pub struct Job(*mut c_void);
 
     // A job handle is a kernel object handle, usable from any thread.
@@ -76,7 +90,7 @@ mod windows {
     unsafe impl Sync for Job {}
 
     impl Job {
-        pub fn with_process(process: *mut c_void) -> io::Result<Self> {
+        pub fn with_process(process: *mut c_void, kill_on_close: bool) -> io::Result<Self> {
             // SAFETY: null attributes and name create a fresh anonymous job; the handle is
             // owned by `Job` and closed on drop.
             let handle = unsafe { CreateJobObjectW(ptr::null(), ptr::null()) };
@@ -84,6 +98,23 @@ mod windows {
                 return Err(io::Error::last_os_error());
             }
             let job = Job(handle);
+            if kill_on_close {
+                // SAFETY: an all-zero struct is a valid "no limits" value.
+                let mut info: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = unsafe { std::mem::zeroed() };
+                info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+                // SAFETY: `info` lives for the call and its size is passed along.
+                let ok = unsafe {
+                    SetInformationJobObject(
+                        job.0,
+                        JobObjectExtendedLimitInformation,
+                        ptr::from_ref(&info).cast(),
+                        std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+                    )
+                };
+                if ok == 0 {
+                    return Err(io::Error::last_os_error());
+                }
+            }
             // SAFETY: both handles are valid; `process` belongs to a live child we own.
             if unsafe { AssignProcessToJobObject(job.0, process) } == 0 {
                 return Err(io::Error::last_os_error());

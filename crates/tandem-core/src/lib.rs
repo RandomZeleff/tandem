@@ -24,6 +24,7 @@ pub mod paths;
 pub mod process;
 pub mod screenshots;
 pub mod secrets;
+pub mod server;
 pub mod stats;
 pub mod store;
 pub mod translate;
