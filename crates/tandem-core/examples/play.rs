@@ -92,7 +92,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         libraries_dir: &ctx.data.libraries(),
         account: &account,
         access_token: "0",
-        memory_mb: jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir)),
+        // `TANDEM_MEMORY_MB=3072`: heap size instead of the automatic one.
+        memory_mb: std::env::var("TANDEM_MEMORY_MB")
+            .ok()
+            .and_then(|mb| mb.parse().ok())
+            .unwrap_or_else(|| {
+                jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir))
+            }),
         extra_jvm_args: Vec::new(),
         window: None,
         // `TANDEM_JOIN=127.0.0.1:25565`: the game joins that server at once.

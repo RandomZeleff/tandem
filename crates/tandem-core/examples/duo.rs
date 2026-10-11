@@ -411,6 +411,56 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tandem_core::instance::delete(&ctx, id).await?;
             println!("{id} deleted");
         }
+        Some("tunnel") => {
+            // A server on this computer seen through a real session, as a guest's game
+            // would: prints the local port to join, then the traffic every 5 s.
+            let port: u16 = args
+                .get(1)
+                .and_then(|p| p.parse().ok())
+                .ok_or("usage: duo tunnel <server-port>")?;
+            let (_announcing, announces) = watch::channel(Some(LanWorld {
+                motd: "Zeleff - Load test".into(),
+                port,
+            }));
+            tokio::spawn(lan::announce(announces));
+            let (world_tx, mut world_rx) = watch::channel(None);
+            let host = Host::start(
+                http.clone(),
+                HostConfig {
+                    player: "Zeleff".into(),
+                    instance: None,
+                    game_dir: None,
+                },
+                move |event| {
+                    if let HostEvent::World { world } = &event {
+                        let _ = world_tx.send(world.clone());
+                    }
+                },
+            )
+            .await?;
+            tokio::time::timeout(Duration::from_secs(10), world_rx.wait_for(|w| w.is_some()))
+                .await
+                .map_err(|_| "the server was not seen as a LAN world")??;
+            let (guest, _) = Guest::join(http.clone(), &host.code(), "Léo", None, |_| {}).await?;
+            println!("guest port {}", guest.port());
+            let started = Instant::now();
+            loop {
+                tokio::select! {
+                    _ = tokio::signal::ctrl_c() => break,
+                    _ = tokio::time::sleep(Duration::from_secs(5)) => {}
+                }
+                let (sent, received) = guest.traffic();
+                let link = guest.link();
+                println!(
+                    "traffic t={} sent={sent} received={received} ping={} direct={}",
+                    started.elapsed().as_secs(),
+                    link.map_or(0, |l| l.ping_ms),
+                    link.is_some_and(|l| l.direct)
+                );
+            }
+            host.stop().await;
+            guest.leave().await;
+        }
         Some("stand-in") => {
             let port = stand_in_world().await?;
             println!("stand-in world on 127.0.0.1:{port} (Ctrl+C to stop)");

@@ -96,3 +96,30 @@ Raphaël et un ami, deux PC, deux comptes Microsoft, installeurs de la livraison
 - Pas relevé : durée exacte avant l'arrivée dans le monde.
 - Retour de Raphaël : rien à corriger côté fonctionnement ; à peaufiner plus tard pour l'accessibilité et réduire les frictions.
 
+
+## Test de charge : combien d'amis sur un PC moyen (11 octobre 2026)
+
+**Montage.** PC de Raphaël : Ryzen 5 8400F (6 cœurs, 12 threads), 15,5 Go de RAM, avec Chrome, Discord et Claude ouverts (environ 3 Go). Modpack **Cobbleverse 1.7.42** (Fabric 1.21.1, 136 mods, le pack Cobblemon le plus joué ; aucun pack Cobblemon populaire n'atteint 200 mods en 1.21.1). Serveur Fabric dédié à 3 Go de mémoire pour le monde de l'hôte, plus le vrai jeu (3 Go) qui le rejoint **par un vrai tunnel Tandem** : 6 Go au total, comme Tandem en donnerait au jeu de l'hôte. Toutes les 2 minutes, un invité de plus (faux joueur Carpet, côté serveur). **Tous les joueurs explorent en ligne droite à la vitesse d'un sprint**, le cas le plus lourd : chunks neufs en permanence, apparitions de Pokémon autour de chacun. Distance de vue 12. Outils : `.claude/notes/scripts/loadtest_setup.py` et `loadtest_run.py`.
+
+| Joueurs | Temps par tick (moy. / pic P95) | CPU du PC | RAM libre min. | Échanges disque (pages/s) | Débit vers un invité |
+|---|---|---|---|---|---|
+| 2 | 7 ms / 15 ms | 38 % | 521 Mo | 557 | 1,0 Mbit/s |
+| 3 | 14 ms / 33 ms | 59 % | 433 Mo | 2 124 | 0,4 Mbit/s |
+| 4 | 20 ms / 38 ms | 58 % | 575 Mo | 737 | 0,5 Mbit/s |
+| 5 | 30 ms / 58 ms | 73 % | 979 Mo | 289 | 0,5 Mbit/s |
+| 6 | 37 ms / 75 ms | 82 % | 623 Mo | 1 963 | 0,5 Mbit/s |
+| 7 | 46 ms / 92 ms | 86 % | 368 Mo | 1 607 | 0,5 Mbit/s |
+| 8 | 41 ms / 76 ms | 83 % | 351 Mo | 1 616 | 0,5 Mbit/s |
+| 9 | 45 ms / 79 ms | 83 % | 368 Mo | 559 | 0,4 Mbit/s |
+| 10 | 43 ms / 113 ms | 88 % | 315 Mo | 11 170 | 0,3 Mbit/s |
+| 11 | 51 ms / 103 ms | 88 % | 584 Mo | 4 226 | 0,3 Mbit/s |
+
+Le serveur doit finir chaque tick en moins de 50 ms pour tenir ses 20 TPS.
+
+**Lecture.**
+- **Ce qui serre en premier : la RAM.** Dès le premier ami, il reste moins de 600 Mo libres et Windows échange avec le disque. Ça ne casse rien, mais le PC n'a plus de marge. (Le vrai jeu de l'hôte fait tout dans un seul processus : un peu moins gourmand que ce montage à deux processus.)
+- **Ce qui casse ensuite : le processeur.** Le temps par tick monte d'environ 7 ms par explorateur. Confortable jusqu'à 5 joueurs (hôte + 4 amis) ; à 6-7 joueurs, les pics dépassent 50 ms (petits ralentissements) ; à partir de 8, le CPU plafonne vers 85 % et la génération du monde prend du retard. Le temps par tick ne monte plus, mais le débit envoyé à chaque joueur baisse (moins de chunks prêts), et à l'arrêt **6 500 à 8 000 chunks** étaient encore en attente.
+- **Le tunnel Tandem n'est pas la limite.** Un joueur qui explore reçoit 0,3 à 1 Mbit/s et en envoie environ 0,01. Héberger 4 amis demande donc environ 2 à 4 Mbit/s d'envoi : la fibre et la plupart des box ADSL ou 4G suffisent. Le ping dans le tunnel (même PC) passe de 3 à 8 ms, à cause de la charge du PC, pas de Tandem.
+- **Limites du test.** Les invités ajoutés sont des faux joueurs côté serveur : ils chargent le monde comme de vrais joueurs mais ne passent pas par le réseau (un seul vrai jeu passait par le tunnel). Tout le monde explore sans arrêt : des amis qui jouent autour d'une base chargent bien moins le serveur. Les images par seconde du jeu de l'hôte n'ont pas été mesurées.
+
+**En une phrase :** sur un PC moyen avec un modpack Cobblemon, **l'hôte et 4 amis tiennent sans problème** même en explorant tous en même temps ; à 6-7 ça commence à ralentir par moments ; 8 (le maximum d'un monde ouvert en LAN) passe encore si tout le monde n'explore pas en même temps.

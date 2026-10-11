@@ -251,6 +251,12 @@ impl Guest {
         link_status(&self.conn)
     }
 
+    /// Bytes sent to and received from the host so far (UDP, all overheads included).
+    pub fn traffic(&self) -> (u64, u64) {
+        let stats = self.conn.stats();
+        (stats.udp_tx.bytes, stats.udp_rx.bytes)
+    }
+
     /// Receives one of the host's mods, by SHA-1, into `out` (unchecked: the caller checks
     /// the hash).
     pub async fn fetch_mod(
