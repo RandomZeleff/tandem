@@ -215,6 +215,26 @@ Ce que le mod complet change sur Prominence : jusqu'à 30 % de temps de tick en 
 
 Versions : construit et vérifié contre les 20 versions de 1.20 à 1.21.11, démarré sur de vrais serveurs 1.20.1, 1.21.1, 1.21.4 et 1.21.11 (les bébés grandissent au même rythme, aucune erreur).
 
+### Validation en vrai (12 octobre 2026)
+
+Le mod tel que Tandem l'ajoute (exemples `play` et `server`, mêmes arguments que l'app), sur un monde existant, compte hors ligne :
+
+| Pack | Solo (monde du jeu) | « Jouer ensemble » (monde à part + un invité) |
+|---|---|---|
+| Cobbleverse (Fabric 1.21.1) | 4 min, OK | invité connecté, OK |
+| Prominence II (Fabric 1.20.1) | OK (voir plus bas) | invité 2 min 30, OK |
+| Fabulously Optimized (Fabric 1.21.4) | OK | invité 2 min 15, OK |
+| Instance Quilt 1.20.1 (QSL, Architectury, Balm, Waystones, Friends&Foes, Lithium) | OK, chargé par `-Dloader.addMods` | non testé (même code que Fabric) |
+
+Le mod s'annonce partout (`Tandem Optimizations 1.0.0 active`), aucune erreur ni avertissement Mixin de sa part. Les catégories d'apparition sautées sont les bonnes : toutes les vanilla sur Cobbleverse (le pack bloque toutes les créatures vanilla), seulement `MISC` ailleurs.
+
+**Prominence et la version « créatures vanilla seulement »** (une mesure, même banc que le tableau ci-dessus, serveur 4 Go) : 8,3 / 31,4 / 46,8 / 52,5 ms à 2 / 6 / 10 / 14 joueurs. C'est le niveau de la version complète (12,4 / 29,9 / 46,8 / 52,3) : sur ce pack, la charge vient surtout des créatures vanilla. Le gain réel par rapport à sans le mod (15,0 / 42,6 / 55,2 / 69,5) est donc d'environ **25 % de temps de tick en moins**, et le serveur tient ses 20 TPS jusqu'à 10 joueurs. Prudence : la ligne « sans le mod » date d'une autre séance, le chiffre à 2 joueurs varie beaucoup d'une séance à l'autre.
+
+Trouvé au passage (pas dans le mod) :
+- **Quilt** : Tandem installait Fabric API en dépendance à côté de QFAPI, qui le contient déjà, et le jeu refusait de démarrer (« Duplicate mandatory mod ids »). Corrigé : sur Quilt, l'un des deux suffit.
+- **Essential** (Prominence II) : un plantage sur deux essais à l'ouverture directe du monde (`gg.essential.sps.WorldsManager`, état pas encore prêt), notre mod absent de la pile ; pas reproduit au second essai ni sans le mod. Course dans Essential avec le compte hors ligne, à surveiller avec un vrai compte (l'hôte arrive aussi directement dans son monde avec « Jouer ensemble »).
+- **Monde à part** : le serveur de Prominence n'a pas pu écrire `config/treechop-common.toml` (fichier utilisé par un autre processus), à regarder dans le chantier 2.
+
 ## Repousser les limites : pistes de niveau 1 à 3 (11 octobre 2026)
 
 Trois niveaux étudiés, des plus sûrs aux plus ambitieux, en écartant ce qui casserait les mods.

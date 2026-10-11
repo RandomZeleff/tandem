@@ -190,10 +190,10 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 
 **Chantiers, dans l'ordre :**
 
-1. **Terminer Tandem Optimizations v1**
-   - [ ] Tests en vrai, en solo et dans « Jouer ensemble », sur Cobbleverse, Prominence II et Fabulously Optimized : aucun plantage, rien de changé en jeu (apparitions, Pokémon, villageois, fermes simples)
-   - [ ] Une seule mesure de Prominence avec la version « créatures vanilla seulement », pour documenter le gain réel
-   - [ ] Une instance Quilt réelle lancée avec le mod
+1. **Terminer Tandem Optimizations v1** ✅ (12 octobre 2026)
+   - [x] Tests en vrai, en solo et dans « Jouer ensemble », sur Cobbleverse, Prominence II et Fabulously Optimized : aucun plantage, rien de changé en jeu (apparitions, Pokémon, villageois, fermes simples) — [TEST-DUO.md](TEST-DUO.md#validation-en-vrai-12-octobre-2026)
+   - [x] Une seule mesure de Prominence avec la version « créatures vanilla seulement », pour documenter le gain réel (≈ −25 % de temps de tick)
+   - [x] Une instance Quilt réelle lancée avec le mod (a révélé un bug d'installation Quilt, corrigé)
    - Terminé quand : les trois packs tournent sans souci avec le mod actif par défaut, et le gain réel est écrit dans TEST-DUO.
 
 2. **Terminer le monde à part (6e)**
@@ -432,3 +432,8 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Décision de Raphaël (D44) : on arrête de chercher de nouveaux angles et de repousser la limite de joueurs. Les sections 6c à 6f sont regroupées en une feuille de route de cinq chantiers, à finir un par un.
 - Prochaine session : chantier 1 (terminer Tandem Optimizations v1), dans une nouvelle conversation.
 
+### 2026-10-12 (chantier 1 : Tandem Optimizations v1 terminé)
+- Fait : tests en vrai du mod tel que Tandem l'ajoute, en solo et en monde à part avec un invité, sur Cobbleverse, Prominence II et Fabulously Optimized, plus une instance Quilt réelle. Aucun plantage dû au mod. Mesure Prominence « créatures vanilla seulement » : ≈ −25 % de temps de tick, même niveau que la version complète.
+- Corrigé : sur Quilt, Tandem installait Fabric API à côté de QFAPI et le jeu ne démarrait plus.
+- Noté : course dans Essential à l'ouverture directe du monde (1 essai sur 2, compte hors ligne), conflit d'écriture d'une config TreeChop en monde à part (chantier 2).
+- Prochaine étape : chantier 2 (terminer le monde à part), qui commence par un test à deux PC : nouvel installeur à compiler avec l'accord de Raphaël.
