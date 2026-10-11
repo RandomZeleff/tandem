@@ -46,7 +46,7 @@ export default function Instances() {
           <span class="text-[13px] text-muted">Chaque instance a son propre dossier, ses mondes et ses réglages.</span>
         </div>
         <div class="flex gap-2 whitespace-nowrap">
-          <button class="btn px-corners h-10 px-4" onClick={() => setLauncherImport(true)} title="Modrinth App, Prism, CurseForge, launcher officiel…">
+          <button class="btn px-corners h-10 px-4" onClick={() => setLauncherImport(true)} title="Modrinth App, Prism, app CurseForge, launcher officiel… (fichiers déjà sur ce PC)">
             <Icon name="arrow" size={12} />
             Depuis un autre launcher
           </button>
@@ -54,7 +54,7 @@ export default function Instances() {
             class="btn px-corners h-10 px-4"
             disabled={importing()}
             onClick={() => void importFile()}
-            title="Fichier .mrpack (Modrinth) ou .zip (CurseForge)"
+            title="Fichier .mrpack (Modrinth)"
           >
             <Icon name="folder" size={12} />
             {importing() ? "Import…" : "Importer un modpack"}

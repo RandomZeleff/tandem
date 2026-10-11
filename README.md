@@ -20,7 +20,7 @@ Most launchers make playing together painful: you sign up for a hosting site, pa
 
 - **Co-op without a server** — open your world to LAN, share a short invite code, and your friend joins through a direct peer-to-peer connection (relay fallback). No mods, works on any version or loader.
 - **Instances** — isolated game setups, fast version switching, multiple instances running side by side.
-- **CurseForge import** for modpacks.
+- **Import from other launchers** — bring your existing instances over from the Modrinth App, Prism, the CurseForge app or the official launcher (files are copied from your disk).
 - **AI modpack translation** — translate mods, quests and guide books into your language as a toggleable resource pack.
 - **Smooth accounts** — sign in with your Microsoft account, switch accounts in one click.
 

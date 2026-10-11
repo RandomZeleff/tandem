@@ -46,7 +46,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 - [x] Client API Modrinth : recherche + installation mods, shaders, resource packs, modpacks, datapacks (par monde)
 - [x] Résolution de dépendances + compatibilité version/loader : dépendances requises récursives, choix de la version compatible, détection des incompatibilités
 - [x] Import/export `.mrpack` (+ installation de modpacks depuis Découvrir ; Fabric/Quilt uniquement)
-- [x] Import modpacks CurseForge (`manifest.json`, clé API, gestion des mods non distribuables) — Phase 4.7, D34
+- [x] ~~Import modpacks CurseForge (`manifest.json`, clé API, gestion des mods non distribuables) — Phase 4.7, D34~~ retiré le 2026-10-11 (D41 : pas de CurseForge)
 - [x] Mises à jour de contenu par instance (+ activer/désactiver un contenu)
 - [x] Changement de version d'une instance (avec vérif de compatibilité des mods) — Phase 4.7
 
@@ -131,7 +131,7 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - [x] Changement de version d'une instance (jeu et/ou loader) avec vérification des mods
 - [x] Datapacks par monde (Modrinth)
 - [x] Détection des incompatibilités entre mods (déclarées dans les jars et sur Modrinth)
-- [x] Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte, sinon téléchargés à la main et repris dans Téléchargements — D34
+- [x] ~~Import CurseForge (`.zip`) avec la clé du joueur ; mods non distribuables retrouvés sur Modrinth par empreinte, sinon téléchargés à la main et repris dans Téléchargements — D34~~ retiré le 2026-10-11 (D41)
 - [x] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel, ou dossier choisi) — D35
 - [x] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne — [AUDIT-UI.md](AUDIT-UI.md#passe-finale--2026-10-10-fin-de-la-phase-47)
 
@@ -379,3 +379,8 @@ Mis de côté (faisable, gain trop étroit pour l'instant) :
 - Prochaine étape : décider avec Raphaël du mini-mod (ajouté par Tandem pendant une session d'hôte), y ajouter la distance d'activation, puis NeoForge.
 - Suite : pistes de niveau 1 à 3 étudiées. Niveau 1 (cœurs inutilisés) : plafond 12 à 30 %, surtout un cache de la recherche d'apparition. Niveau 2 : réseau sans intérêt CPU ; génération du terrain par les amis faisable (génération non reproductible de toute façon, injection de chunks dans l'hôte en marche prouvée). Niveau 3 écarté (casse les mods).
 - Décision avec Raphaël (D40) : priorités notées dans la 6c (mini-mod branché, vrai jeu de l'hôte mesuré, pré-génération en un clic), génération coopérative mise de côté ; rien de commencé.
+
+### 2026-10-11 (Windows : plus de CurseForge)
+- Choix de Raphaël (D41) : Tandem n'utilise plus CurseForge. Retiré : module `content::curseforge`, commandes de la clé et des téléchargements à la main, dialogue de clé, réglage, panneau de l'instance. Un `.zip` CurseForge est refusé avec un message qui oriente vers « Depuis un autre launcher ». Gardé : l'import d'instances déjà installées (dont l'app CurseForge), qui ne fait que copier des fichiers locaux.
+- Vérifié : fmt, Clippy, 134 tests (dont le refus d'un pack CurseForge), TypeScript, import `.mrpack` et Réglages dans l'aperçu (backend simulé).
+

@@ -27,7 +27,7 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 
 ### D6 · 2026-10-08 · Modrinth en source principale, CurseForge en secondaire
 - Pourquoi : API ouverte et propre ; CurseForge exige une clé et certains mods interdisent la distribution tierce.
-- Statut : validé
+- Statut : remplacé par D41 (Modrinth seule source)
 
 ### D7 · 2026-10-08 · Accès API Minecraft : app Azure + validation Mojang
 - Les nouvelles apps Azure reçoivent un 403 sur `api.minecraftservices.com` tant que leur Client ID n'est pas approuvé.
@@ -220,7 +220,7 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Le dépôt est public : une clé CurseForge embarquée serait lisible par tous (et ses conditions la réservent au projet qui l'a demandée). Comme pour la traduction (D33), le joueur colle sa propre clé, vérifiée auprès de l'API (`/games/432`) avant d'être rangée dans le coffre du système. Elle n'est demandée qu'au premier import d'un `.zip` CurseForge, dans un dialogue, ou dans Réglages.
 - Un seul bouton « Importer un modpack » : le fichier est reconnu à son contenu (`manifest.json` → CurseForge, sinon `.mrpack`), pas à son extension.
 - Fichiers dont l'auteur interdit la distribution par des tiers (pas d'URL dans l'API) : d'abord cherchés sur Modrinth par SHA-1 (même fichier, au bit près) ; le reste est listé dans l'instance (`.tandem/manual-downloads.json`) avec un lien vers la page exacte du fichier. Tandem surveille le dossier Téléchargements (toutes les 3 s pendant que le panneau est affiché, et au retour dans la fenêtre) et y reprend chaque fichier reconnu par taille puis SHA-1, même renommé par le navigateur.
-- Statut : validé
+- Statut : abandonné le 2026-10-11 (D41), code retiré
 
 ### D35 · 2026-10-10 · Import depuis d'autres launchers : copie, jamais de lien vers l'original
 - Sources lues à leur place habituelle : Modrinth App (sa base `app.db` ouverte en lecture seule, `immutable`, sans prendre son verrou ; schéma actuel `instances` + `instance_content_sets` + `instance_links`, ancien schéma `profiles` en secours), Prism / PolyMC (`instance.cfg` + `mmc-pack.json`, dossier d'instances personnalisé respecté), app CurseForge (`minecraftinstance.json`), launcher officiel (`launcher_profiles.json`, version et loader lus dans `versions/<id>/<id>.json` → `inheritsFrom`). MultiMC portable ou dossier ailleurs : « Choisir un dossier… » reconnaît un dossier de launcher, une instance, ou un simple dossier de jeu (version et loader devinés d'après les mods, identifiés sur Modrinth par SHA-1, et la version des mondes).
@@ -269,4 +269,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Priorité ensuite au ressenti des groupes courants (2 à 5 amis) : mémoire et fluidité du jeu de l'hôte, pré-génération en un clic.
 - Mis de côté : génération du terrain par les amis (faisable : la génération de Minecraft n'est de toute façon pas reproductible, et l'injection de chunks dans l'hôte en marche est prouvée), gain trop étroit sous la limite LAN de 8 joueurs face à son coût. Écartés : simulation partagée entre PC, mobs confiés aux amis (cassent les mods), compression ou relais réseau (coût CPU nul).
 - Statut : proposé, pas commencé (feu vert de Raphaël attendu)
+
+### D41 · 2026-10-11 · Pas de CurseForge : Modrinth seule source de contenu
+- Choix du mainteneur : Tandem n'utilise pas l'API CurseForge et ne télécharge rien depuis CurseForge. L'import de modpacks CurseForge (D34 : clé du joueur, panneau des téléchargements à la main) est retiré.
+- Considérations aussi pesées : leurs conditions d'API (pas de cache des données, clé non partageable, pas de produit concurrent, accès révocable sans motif) et l'approbation demandée, mal adaptées à un lanceur public.
+- Modrinth suffit comme source : très bien fournie en Fabric, Quilt et NeoForge récent (le choix par défaut à partir de 1.21) ; le manque se limite aux vieux modpacks Forge exclusifs à CurseForge. FTB écarté aussi (son app passe par Overwolf, ses packs récupèrent leurs mods sur CurseForge).
+- Gardé : l'import depuis les autres launchers (D35), y compris l'app CurseForge. Tandem copie des fichiers déjà présents sur le PC du joueur, sans contacter CurseForge. Un `.zip` CurseForge choisi dans « Importer un modpack » est refusé avec un message qui oriente vers cet import.
+- Question ouverte : dans « Jouer ensemble », les mods non reconnus sur Modrinth sont envoyés par l'hôte à ses amis (D39). Pour une instance importée de l'app CurseForge, ça peut inclure des mods venus de CurseForge. À trancher avec Raphaël.
+- Statut : validé
 

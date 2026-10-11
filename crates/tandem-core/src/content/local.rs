@@ -1,5 +1,5 @@
 //! Files in the content folders that Tandem does not track: mods added by hand, files
-//! from CurseForge packs or other launchers that Modrinth does not know. They can still
+//! from other launchers that Modrinth does not know. They can still
 //! be listed, switched off (same `.disabled` renaming) and removed.
 
 use std::collections::{HashMap, HashSet};

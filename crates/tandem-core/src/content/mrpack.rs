@@ -144,11 +144,17 @@ pub async fn read_index(pack: &Path) -> Result<PackIndex> {
     let pack = pack.to_owned();
     blocking(move || {
         let mut archive = zip::ZipArchive::new(std::fs::File::open(&pack)?)?;
-        let mut entry = archive.by_name(INDEX_FILE).map_err(|_| {
-            Error::InvalidInput(format!(
-                "{INDEX_FILE} absent : ce n'est pas un fichier .mrpack"
-            ))
-        })?;
+        if archive.index_for_name(INDEX_FILE).is_none() {
+            // CurseForge packs (`manifest.json`): Tandem downloads nothing from CurseForge.
+            return Err(Error::InvalidInput(if archive.index_for_name("manifest.json").is_some() {
+                "Ce modpack vient de CurseForge : Tandem n'installe rien depuis CurseForge. \
+                 S'il est déjà installé dans un autre launcher, importe-le avec « Depuis un autre launcher »."
+                    .into()
+            } else {
+                format!("{INDEX_FILE} absent : ce n'est pas un fichier .mrpack")
+            }));
+        }
+        let mut entry = archive.by_name(INDEX_FILE)?;
         let mut json = String::new();
         entry.read_to_string(&mut json)?;
         let index: PackIndex = serde_json::from_str(&json)?;
@@ -680,5 +686,20 @@ mod tests {
             "client"
         );
         assert!(!tmp.path().join("escape.txt").exists());
+    }
+
+    #[tokio::test]
+    async fn refuses_curseforge_packs_with_a_clear_message() {
+        let tmp = tempfile::tempdir().unwrap();
+        let pack = tmp.path().join("pack.zip");
+        {
+            let mut zip = zip::ZipWriter::new(std::fs::File::create(&pack).unwrap());
+            zip.start_file("manifest.json", zip::write::SimpleFileOptions::default())
+                .unwrap();
+            zip.write_all(b"{}").unwrap();
+            zip.finish().unwrap();
+        }
+        let err = read_index(&pack).await.unwrap_err().to_string();
+        assert!(err.contains("CurseForge"), "{err}");
     }
 }
