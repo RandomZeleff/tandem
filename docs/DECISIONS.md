@@ -287,3 +287,11 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Écarté : cache de la recherche d'apparition (le profil montre des lectures à des positions aléatoires, un cache exact ne retire que 1 à 2 %).
 - 26.1 et plus : Minecraft n'est plus obfusqué, Fabric n'a plus de noms intermédiaires. Il faudra un second jar aux noms de Mojang, qui servira aussi pour NeoForge (mêmes noms depuis 1.20.5). Forge 1.20.1 (noms SRG) seulement si le besoin existe.
 - Statut : validé (feu vert de Raphaël pour la session, 2026-10-11)
+
+### D43 · 2026-10-11 · Héberger le monde à part, puis un monde qui appartient au groupe
+- Après le mini-mod, les gains restants de « Jouer ensemble » ne sont plus dans le temps de tick mais dans la fiabilité : la partie s'arrête si l'hôte part ou si son jeu plante, l'hôte doit ouvrir le monde en LAN, 8 joueurs au plus.
+- 6e : le monde tourne dans un serveur invisible lancé par Tandem quand on héberge (Fabric/Quilt d'abord), le jeu de l'hôte le rejoint comme les amis. Coût mesuré : +0,7 à +1,5 Go de mémoire, d'où un réglage facultatif au début.
+- 6f : le monde est recopié chez les amis pendant la partie, avec un verrou publié sur le relais pkarr ; reprise par un autre si l'hôte part, ouverture sans l'hôte. Toujours sans serveur Tandem.
+- Écarté pour l'instant : un PC par dimension (les mods qui relient les dimensions casseraient), cache de chunks chez les amis (à reconsidérer après avoir mesuré le trafic réel).
+- Statut : validé (demande de Raphaël), 6e en cours
+

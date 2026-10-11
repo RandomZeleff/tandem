@@ -220,6 +220,39 @@ Priorité 1 de la 6c (D40). Un mod côté serveur, ajouté par Tandem au lanceme
 
 **Hors périmètre** : génération coopérative du terrain (mise de côté, D40), NeoForge (v2), dépasser les 8 joueurs du LAN, réglages propres à un mod.
 
+### 6e — Le monde dans son propre processus (cadré le 2026-10-11, en cours)
+Idée de Raphaël et Claude (D43). Quand on héberge, Tandem lance le monde comme un serveur invisible à part, avec les mods de l'instance, et le jeu de l'hôte le rejoint comme ses amis.
+
+Gains attendus : si le jeu de l'hôte plante, les amis continuent ; plus de limite de 8 joueurs (elle vient du LAN) ; plus d'étape « Ouvrir au réseau local » (Tandem connaît le port) ; ramasse-miettes séparés (moins de micro-gels) ; base de la 6f. Temps de tick : 0 à 10 % de mieux seulement. Coût : **+0,7 à +1,5 Go de mémoire** (mesuré au repos : 0,5 Go hors tas dupliqué sur Cobbleverse, 0,7 Go sur Prominence, plus les données des mods chargées deux fois).
+
+Choix (recommandation de Claude, à revoir avec Raphaël) :
+- Facultatif au début : interrupteur « Monde à part » dans « Jouer ensemble », proposé quand le PC a assez de mémoire libre. Le solo garde le monde intégré.
+- Fabric et Quilt d'abord (lanceur serveur officiel de Fabric), NeoForge ensuite.
+- Rien de copié : dossier `<données>/servers/<instance>/` avec les mods de l'instance (liens, mods « client seulement » écartés d'après leurs métadonnées, puis ceux qui font planter le serveur), configs et dossiers de pack liés, monde lu en place dans `saves/` (`--universe`, `--world`). Bibliothèques du serveur partagées entre instances.
+- Inventaire de l'hôte : en solo il vit dans `level.dat` ; recopié dans `playerdata/<uuid>.dat` au démarrage et remis dans `level.dat` à l'arrêt.
+- `online-mode` activé (comptes Microsoft, comme aujourd'hui), mode de jeu et difficulté du monde, hôte opérateur si le monde autorise les commandes, Tandem Optimizations ajouté aussi.
+
+Travail :
+- [ ] Mesurer avec le vrai jeu : mémoire totale jeu + monde à part contre monde intégré (Prominence, Cobbleverse)
+- [ ] Installer le serveur d'une instance Fabric/Quilt (jar du serveur, lanceur Fabric, bibliothèques partagées) et préparer son dossier (liens, mods client écartés, `server.properties`, `eula.txt`)
+- [ ] Démarrer, attendre « Done », arrêter proprement (`stop`), relancer si un mod client fait planter (l'écarter et réessayer)
+- [ ] Inventaire de l'hôte `level.dat` ↔ `playerdata`
+- [ ] Brancher dans la session d'hôte : le tunnel vise le port du serveur, le jeu de l'hôte le rejoint directement (quickPlay)
+- [ ] Interface : interrupteur, progression du démarrage, journal du monde, mémoire utilisée
+- [ ] Tests : 2 packs, vrai jeu, plantage simulé du jeu de l'hôte (les amis restent), plus de 8 faux joueurs, inventaire et position retrouvés en solo ensuite
+
+**Terminé quand** : un hôte Fabric peut héberger « à part » en un clic, ses amis le rejoignent comme avant, la partie survit à la fermeture du jeu de l'hôte, et le monde revient en solo sans rien perdre.
+
+### 6f — Le monde appartient au groupe (cadré le 2026-10-11, après la 6e)
+Le monde est recopié en continu chez les amis pendant la partie. Si l'hôte part, un autre le rouvre en 10 à 30 s ; sans l'hôte, un membre peut ouvrir le monde et tout le monde est resynchronisé ensuite. Avec la 6e (Tandem contrôle les sauvegardes du monde), puis choix automatique du meilleur hôte (mini-test des PC).
+
+Pistes (à trancher en début de chantier) :
+- Groupe : identifiant du monde partagé + clés des membres (endpoints iroh), créé à la première invitation.
+- Réplication : après chaque sauvegarde (`save-all flush`, toutes les quelques minutes et au départ), seuls les chunks modifiés (dates dans les fichiers `.mca`), `level.dat`, `playerdata`, `data/` ; flux iroh dédié ; copie chez l'ami dans `<données>/shared-worlds/<id>/`.
+- Verrou : qui héberge, publié sur le relais pkarr avec une durée (bail) ; « Léo joue déjà sur ce monde, le rejoindre ? » ; jamais deux hôtes à la fois.
+- Reprise : à la perte de l'hôte, le membre élu (meilleur PC présent) rouvre la dernière copie complète, les autres sont renvoyés dessus.
+- Limites honnêtes : les dernières secondes avant un départ brutal sont perdues ; mods qui écrivent hors du monde (configs « par monde » ailleurs) à recenser.
+
 ## Portage macOS
 
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
