@@ -166,6 +166,17 @@ Choix tranchés :
 - [ ] (plus tard) Synchro du monde / « host migration »
 - [ ] (plus tard) Relais Tandem en option
 
+### 6c — Optimiser « Jouer ensemble » à fond (session dédiée, voulue par Raphaël)
+Point de départ : les deux tests de charge de [TEST-DUO.md](TEST-DUO.md#test-de-charge--combien-damis-sur-un-pc-moyen-11-octobre-2026). Sur un PC moyen avec Cobbleverse : la génération du terrain fait la majorité de la charge ; sur un monde déjà généré, la limite devient le fil principal du serveur (un cœur, environ 2 ms par joueur) ; la RAM est serrée dès le premier ami ; un monde ouvert en LAN est limité à 8 joueurs.
+- [ ] Mesurer d'abord : relancer le test (monde pré-généré) en distance de simulation 8 au lieu de 12, et profiler le tick avec spark (part de Cobblemon : apparitions, IA des Pokémon)
+- [ ] Distance de simulation adaptée quand on héberge un groupe (réglage du jeu de l'hôte, appliqué ou proposé avant le lancement)
+- [ ] Pré-générer le monde de l'hôte à l'avance (« préparer le monde pour jouer à plusieurs »), puis éventuellement la pré-génération partagée entre amis pour les très grandes zones
+- [ ] Réglages « multijoueur » des mods lourds selon le profilage (plafond de Pokémon par joueur, etc.)
+- [ ] Indicateur de charge pour l'hôte (RAM libre, santé du serveur) avec conseils
+- [ ] Dépasser les 8 joueurs du LAN (agent Java, ou monde de l'hôte en serveur à part) ; agent Java d'ouverture LAN automatique dans la même veine
+- [ ] Héberger sur le PC le plus fort du groupe avec un monde qui suit le groupe (transfert d'hôte)
+- Pistes écartées : partager la simulation d'un même monde entre plusieurs PC (latence entre box, mods qui supposent un seul serveur) ; mods de multithreading du tick (Folia : sans mods ; mods Fabric expérimentaux : trop risqués avec un gros modpack)
+
 ## Portage macOS
 
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
@@ -345,3 +356,9 @@ Choix tranchés :
 - Vérifié à travers une vraie session iroh (exemple `duo copytest`) : Fabulously Optimized 49 mods en 4,6 s ; DawnCraft 299 mods (143 envoyés par l'hôte) + 3 809 fichiers de pack, identiques, en 37 s. Corrigé en route : fichiers identiques reçus en parallèle sous le même nom temporaire. Vraie copie de DawnCraft (`duo copyinto`) lancée jusqu'au menu en 42 s, puis supprimée. Parcours dans l'aperçu (backend simulé). fmt, Clippy, 136 tests, `duo selftest`.
 - Pas vérifié : la commande dans la vraie fenêtre entre deux PC (création depuis un modpack Modrinth, puis connexion au monde de l'hôte).
 - Prochaine étape : test réel à deux PC (nouvel installeur des deux côtés), puis la session « agent Java » pour ouvrir le monde en LAN automatiquement.
+
+### 2026-10-11 (Windows : jouer à plusieurs, tests de charge)
+- Page renommée « Jouer ensemble » à la demande de Raphaël, textes de l'hôte au pluriel.
+- Tests de charge (résultats dans [TEST-DUO.md](TEST-DUO.md)) : serveur Cobbleverse (136 mods) sur le PC de Raphaël, un vrai jeu par un vrai tunnel Tandem, faux joueurs Carpet qui sprintent. Terrain neuf : hôte + 4 amis confortable, saturation CPU vers 8 joueurs, RAM serrée dès 2. Monde pré-généré : environ 20 joueurs tiennent, limite = fil principal du serveur. Génération pure 77 chunks/s, environ 11 Ko par chunk. Tunnel : 0,3 à 1 Mbit/s par joueur, jamais la limite.
+- Outils : exemple `duo tunnel <port>` (serveur vu à travers une vraie session, débit mesuré), `TANDEM_MEMORY_MB` pour `play`, scripts locaux de montage et de pilotage du test.
+- Prochaine étape : session dédiée à l'optimisation (6c ci-dessus), et le test réel à deux PC des nouveautés (nouvel installeur des deux côtés).
