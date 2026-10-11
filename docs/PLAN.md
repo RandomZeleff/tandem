@@ -168,16 +168,22 @@ Choix tranchés :
 
 ### 6c — Optimiser « Jouer ensemble » à fond (session dédiée, voulue par Raphaël)
 Point de départ : les deux tests de charge de [TEST-DUO.md](TEST-DUO.md#test-de-charge--combien-damis-sur-un-pc-moyen-11-octobre-2026). Sur un PC moyen avec Cobbleverse : la génération du terrain fait la majorité de la charge ; sur un monde déjà généré, la limite devient le fil principal du serveur (un cœur, environ 2 ms par joueur) ; la RAM est serrée dès le premier ami ; un monde ouvert en LAN est limité à 8 joueurs.
-- [x] Mesurer d'abord : profilage du tick (JFR) sur Cobbleverse et Prominence II, variantes comparées ([résultats](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026))
-- [ ] Mini-mod « hôte » ajouté par Tandem pendant une session (prototype Fabric fait, local) : catégories d'apparition mortes sautées, Architectury et Balm corrigés ; à ajouter : distance d'activation des entités, version NeoForge, branchement dans Tandem
-- [ ] Distance de simulation adaptée quand on héberge un groupe (gain mesuré faible : −8 % de 12 à 8 ; priorité basse)
-- [ ] Pré-générer le monde de l'hôte à l'avance (« préparer le monde pour jouer à plusieurs »), avec c2me si possible (génération deux fois plus rapide), puis éventuellement la pré-génération partagée entre amis
-- [ ] Réglages « multijoueur » des mods lourds selon le profilage (plafond de Pokémon par joueur, etc.)
-- [ ] Indicateur de charge pour l'hôte (RAM libre, santé du serveur) avec conseils
+- [x] Mesurer d'abord : profilage du tick (JFR) sur Cobbleverse et Prominence II, variantes comparées ([résultats](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026)), puis pistes de niveau 1 à 3 ([résultats](TEST-DUO.md#repousser-les-limites--pistes-de-niveau-1-à-3-11-octobre-2026))
+
+Priorités retenues (D40, pas encore commencées, au feu vert de Raphaël) :
+1. [ ] Mini-mod « hôte » branché dans Tandem, ajouté seulement pendant une session d'hôte (prototype Fabric local : catégories d'apparition mortes sautées, Architectury et Balm corrigés, import de chunks). À ajouter : recherche d'apparition mise en cache (jusqu'à 17 % du tick sur un pack riche en mobs), distance d'activation des entités (−15 à 20 % sur Prominence), puis version NeoForge
+2. [ ] Mesurer le vrai jeu de l'hôte avec des amis : mémoire (première limite au premier test), micro-gels du ramasse-miettes, images par seconde
+3. [ ] Pré-générer le monde de l'hôte en un clic (« préparer le monde pour jouer à plusieurs »), avec c2me si possible (génération deux fois plus rapide)
+4. [ ] Indicateur de charge pour l'hôte (RAM libre, santé du serveur) avec conseils
+
+Plus tard :
 - [ ] Dépasser les 8 joueurs du LAN (agent Java, ou monde de l'hôte en serveur à part) ; agent Java d'ouverture LAN automatique dans la même veine
-- [ ] Génération du terrain par les amis (niveau 2, [faisabilité prouvée](TEST-DUO.md#repousser-les-limites--pistes-de-niveau-1-à-3-11-octobre-2026)) : générateur sans joueurs chez l'ami, chunks envoyés par le tunnel et injectés par le mini-mod
-- [ ] Recherche d'apparition mise en cache dans le mini-mod (jusqu'à 17 % du tick sur un pack riche en mobs)
 - [ ] Héberger sur le PC le plus fort du groupe avec un monde qui suit le groupe (transfert d'hôte)
+- [ ] Réglages « multijoueur » des mods lourds selon le profilage
+- [ ] Distance de simulation adaptée quand on héberge un groupe (gain mesuré faible : −8 % de 12 à 8)
+
+Mis de côté (faisable, gain trop étroit pour l'instant) :
+- Génération du terrain par les amis (niveau 2, [faisabilité prouvée](TEST-DUO.md#repousser-les-limites--pistes-de-niveau-1-à-3-11-octobre-2026)) : utile seulement si beaucoup d'amis explorent du terrain neuf en même temps, plafonné par la limite LAN de 8, coûteux (serveur sans joueurs et 2 à 3 Go de RAM chez chaque ami). La pré-génération avant de jouer donne l'essentiel du gain. À reprendre si Tandem dépasse les 8 joueurs
 - Pistes écartées : partager la simulation d'un même monde entre plusieurs PC, y compris confier les mobs à l'ami le plus proche (copie vivante du monde à synchroniser, mods qui supposent un seul serveur) ; compression ou relais réseau (coût CPU nul mesuré) ; mods de multithreading du tick (Folia : sans mods ; mods Fabric expérimentaux : trop risqués avec un gros modpack)
 
 ## Portage macOS
@@ -372,3 +378,4 @@ Point de départ : les deux tests de charge de [TEST-DUO.md](TEST-DUO.md#test-de
 - Prototype de mini-mod Fabric (local, `.claude/notes/tandem-host`) : 47 → 28 ms par tick à 18 joueurs sur Cobbleverse, −8 à 13 % sur Prominence, même jar pour 1.20.1 et 1.21.1.
 - Prochaine étape : décider avec Raphaël du mini-mod (ajouté par Tandem pendant une session d'hôte), y ajouter la distance d'activation, puis NeoForge.
 - Suite : pistes de niveau 1 à 3 étudiées. Niveau 1 (cœurs inutilisés) : plafond 12 à 30 %, surtout un cache de la recherche d'apparition. Niveau 2 : réseau sans intérêt CPU ; génération du terrain par les amis faisable (génération non reproductible de toute façon, injection de chunks dans l'hôte en marche prouvée). Niveau 3 écarté (casse les mods).
+- Décision avec Raphaël (D40) : priorités notées dans la 6c (mini-mod branché, vrai jeu de l'hôte mesuré, pré-génération en un clic), génération coopérative mise de côté ; rien de commencé.

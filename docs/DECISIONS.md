@@ -262,3 +262,11 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Pas de sauvegardes, d'options du joueur ni de packs de ressources : la copie sert à rejoindre, pas à cloner.
 - Compatibilité : `VERSION` reste 1 ; un hôte plus ancien ferme les flux inconnus, l'invité le dit (« la version de Tandem de l'hôte ne sait pas encore… ») et garde ce qu'il a pu obtenir.
 - Statut : validé
+
+### D40 · 2026-10-11 · Optimiser l'hébergement : mini-mod côté hôte, génération coopérative mise de côté
+- Constat (profilage JFR sur deux packs, [TEST-DUO.md](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026)) : une fois le gaspillage retiré, le tick est surtout du vrai travail (IA des entités). Les gains restants viennent de corrections ciblées côté serveur, pas de réglages (distance de simulation, VMP : peu d'effet).
+- Retenu : un **mini-mod ajouté par Tandem seulement pendant une session d'hôte**, côté serveur (rien chez les amis). Fabric d'abord, compilé contre les noms intermédiaires (un même jar de 1.20 à 1.21), NeoForge ensuite. Contenu : apparitions qui ne peuvent rien produire sautées, bibliothèques lentes corrigées (Architectury, Balm), puis cache de la recherche d'apparition et distance d'activation des entités. Uniquement des changements sans effet visible en jeu, ou réglables.
+- Priorité ensuite au ressenti des groupes courants (2 à 5 amis) : mémoire et fluidité du jeu de l'hôte, pré-génération en un clic.
+- Mis de côté : génération du terrain par les amis (faisable : la génération de Minecraft n'est de toute façon pas reproductible, et l'injection de chunks dans l'hôte en marche est prouvée), gain trop étroit sous la limite LAN de 8 joueurs face à son coût. Écartés : simulation partagée entre PC, mobs confiés aux amis (cassent les mods), compression ou relais réseau (coût CPU nul).
+- Statut : proposé, pas commencé (feu vert de Raphaël attendu)
+
