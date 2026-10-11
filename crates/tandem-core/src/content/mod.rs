@@ -23,11 +23,32 @@ use crate::db::Database;
 use crate::download::{self, DownloadTask};
 use crate::error::{Error, Result};
 use crate::instance::Instance;
+use crate::meta::loader::Loader;
 use crate::store;
 use modrinth::{Project, Version};
 
 /// Upper bound on projects pulled by one operation, guarding against dependency loops.
 const MAX_PROJECTS_PER_INSTALL: usize = 64;
+
+/// Fabric API and Quilted Fabric API (QSL), Modrinth ids.
+const FABRIC_API: &str = "P7dR8mSH";
+const QUILTED_FABRIC_API: &str = "qvIfYCYJ";
+
+/// The project that already provides `project_id` on this loader: on Quilt, QFAPI
+/// bundles Fabric API, and the game refuses to start with both ("Duplicate mandatory
+/// mod ids").
+fn same_api(loader: Loader, project_id: &str) -> Option<&'static str> {
+    match (loader, project_id) {
+        (Loader::Quilt, FABRIC_API) => Some(QUILTED_FABRIC_API),
+        (Loader::Quilt, QUILTED_FABRIC_API) => Some(FABRIC_API),
+        _ => None,
+    }
+}
+
+/// Whether `project_id`, or the project that provides it, is in `known`.
+fn already_provided(loader: Loader, project_id: &str, known: &HashSet<String>) -> bool {
+    known.contains(project_id) || same_api(loader, project_id).is_some_and(|id| known.contains(id))
+}
 
 /// Suffix the game and the major launchers use to skip a file.
 const DISABLED_SUFFIX: &str = ".disabled";
@@ -268,9 +289,10 @@ impl Plan {
             else {
                 continue;
             };
-            if !known.insert(project_id.clone()) {
+            if already_provided(instance.loader, &project_id, known) {
                 continue;
             }
+            known.insert(project_id.clone());
             let project = modrinth::project(ctx, &project_id).await?;
             let kind = ContentKind::from_modrinth(&project.project_type).ok_or_else(|| {
                 Error::InvalidInput(format!("{} ne peut pas être installé ici", project.title))
@@ -379,7 +401,7 @@ pub async fn install(
     let mut known: HashSet<String> = existing.keys().cloned().collect();
 
     let root = modrinth::project(ctx, project).await?;
-    if known.contains(&root.id) {
+    if already_provided(instance.loader, &root.id, &known) {
         return Err(Error::InvalidInput(format!(
             "{} est déjà installé",
             root.title
@@ -685,6 +707,16 @@ mod tests {
     use super::*;
     use crate::instance::NewInstance;
     use crate::paths::DataDir;
+
+    #[test]
+    fn quilt_never_gets_both_fabric_apis() {
+        let known: HashSet<String> = [QUILTED_FABRIC_API.to_owned()].into();
+        assert!(already_provided(Loader::Quilt, FABRIC_API, &known));
+        assert!(!already_provided(Loader::Fabric, FABRIC_API, &known));
+        let known: HashSet<String> = [FABRIC_API.to_owned()].into();
+        assert!(already_provided(Loader::Quilt, QUILTED_FABRIC_API, &known));
+        assert!(!already_provided(Loader::Quilt, "AANobbMI", &known));
+    }
 
     fn sodium() -> InstalledContent {
         InstalledContent {
