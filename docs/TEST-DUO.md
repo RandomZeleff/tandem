@@ -123,3 +123,25 @@ Le serveur doit finir chaque tick en moins de 50 ms pour tenir ses 20 TPS.
 - **Limites du test.** Les invités ajoutés sont des faux joueurs côté serveur : ils chargent le monde comme de vrais joueurs mais ne passent pas par le réseau (un seul vrai jeu passait par le tunnel). Tout le monde explore sans arrêt : des amis qui jouent autour d'une base chargent bien moins le serveur. Les images par seconde du jeu de l'hôte n'ont pas été mesurées.
 
 **En une phrase :** sur un PC moyen avec un modpack Cobblemon, **l'hôte et 4 amis tiennent sans problème** même en explorant tous en même temps ; à 6-7 ça commence à ralentir par moments ; 8 (le maximum d'un monde ouvert en LAN) passe encore si tout le monde n'explore pas en même temps.
+
+### Comparaison : monde déjà généré (11 octobre 2026)
+
+Même montage, mais la zone autour du point d'apparition est générée à l'avance (Chunky, 1 500 × 1 500 blocs) et les joueurs y tournent en cercles à la vitesse d'un sprint, sans jamais voir de terrain neuf. 4 invités ajoutés toutes les 2 minutes.
+
+| Joueurs | Terrain neuf : tick moy. / pic | CPU du PC | Monde pré-généré : tick moy. / pic | CPU du PC |
+|---|---|---|---|---|
+| 2 | 7 / 15 ms | 38 % | 5 / 15 ms | 28 % |
+| 6 | 37 / 75 ms | 82 % | 18 / 28 ms | 32 % |
+| 10 | 43 / 113 ms (CPU saturé) | 88 % | 28 / 48 ms | 34 % |
+| 14 | — | — | 38 / 62 ms | 37 % |
+| 18 | — | — | 43 / 65 ms | 35 % |
+| 22 | — | — | 45 / 74 ms | 37 % |
+
+Génération pure sur une zone vierge, PC entier dessus et personne en jeu : **77 chunks/s**, environ **11 Ko par chunk** sur le disque.
+
+**Lecture.**
+- **La génération du terrain fait la majorité de la charge.** À 6 joueurs, le temps par tick est divisé par deux et le CPU passe de 82 % à 32 %. Un joueur qui sprinte en terrain neuf demande environ 9 à 10 chunks/s : à 77 chunks/s, 8 explorateurs suffisent à saturer le PC, ce que montrait le premier test.
+- **Sur un monde déjà généré, la limite devient le fil principal du serveur** : il n'utilise qu'un cœur (10 % du CPU du PC), et chaque joueur lui ajoute environ 2 ms par tick (Pokémon, entités autour de chacun). Sur ce processeur, ça tient jusqu'à **une vingtaine de joueurs**. Au-delà, seul un processeur plus rapide par cœur aide.
+- **La RAM ne change pas** : 300 à 700 Mo libres dans les deux cas.
+- **Mais un monde ouvert en LAN est limité à 8 joueurs** par Minecraft lui-même. Dépasser 8 demanderait de modifier le jeu (l'agent Java prévu), ou de faire tourner le monde de l'hôte comme un serveur à part.
+- **Coût d'une pré-génération** : une zone de 4 000 × 4 000 blocs (62 500 chunks) prend environ 13 min sur ce PC seul et pèse environ 700 Mo. Partagée entre 5 PC : environ 3 min chacun, plus l'envoi d'environ 140 Mo par ami vers l'hôte. Pré-générer à l'avance sur le seul PC de l'hôte donne déjà l'essentiel du gain.
