@@ -15,6 +15,7 @@ import type {
   Loader,
   LogEntry,
   NewInstance,
+  PregenView,
   ProjectType,
   Screenshot,
   SearchHit,
@@ -153,6 +154,34 @@ function fakeInstall(instanceId: string, projectId: string): InstalledContent[] 
 }
 
 const settings: Record<string, unknown> = {};
+
+/** World preparations (chantier 3): progress simulated with timers. */
+const pregens: Record<string, PregenView & { cancelled?: boolean }> = {};
+function simulatePregen(view: PregenView & { cancelled?: boolean }) {
+  const total = (Math.ceil(view.radius / 16) * 2 + 1) ** 2;
+  const send = () => void emit("pregen://progress", { ...view, cancelled: undefined });
+  send();
+  let chunks = 0;
+  const finish = (status: "done" | "cancelled") => {
+    view.status = "stopping";
+    send();
+    setTimeout(() => {
+      view.status = status;
+      delete pregens[view.instanceId];
+      send();
+    }, 1500);
+  };
+  setTimeout(function tick() {
+    if (view.cancelled) return finish("cancelled");
+    chunks = Math.min(total, chunks + Math.round(total / 40));
+    const rate = 55 + Math.random() * 20;
+    view.status = "running";
+    view.progress = { chunks, total, percent: (chunks / total) * 100, rate, etaSecs: Math.round((total - chunks) / rate), done: chunks >= total };
+    send();
+    if (chunks >= total) return finish("done");
+    setTimeout(tick, 700);
+  }, 2500);
+}
 
 const ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 4" shape-rendering="crispEdges"><rect width="4" height="4" fill="#5DBB3F"/><rect y="2" width="4" height="2" fill="#7A5420"/></svg>');
 const worlds: Record<string, World[]> = {
@@ -369,6 +398,25 @@ export function installMocks() {
           return CATALOGUE.mod
             .filter((h) => ["AANobbMI", "gvQqBUqZ", "uXXizFIs", "LQ3K71Q1"].includes(h.projectId) && !installed.has(h.projectId))
             .map((h) => ({ projectId: h.projectId, title: h.title, iconUrl: h.iconUrl }));
+        }
+        case "pregen_supported": {
+          const instance = instances.find((i) => i.id === args.instanceId);
+          return instance?.loader === "fabric" || instance?.loader === "quilt";
+        }
+        case "pregen_status":
+          return pregens[args.instanceId as string] ?? null;
+        case "pregen_start": {
+          const id = args.instanceId as string;
+          if (pregens[id]) throw "Un monde de cette instance est déjà en préparation.";
+          const view = { instanceId: id, world: args.world as string, radius: args.radius as number, status: "starting" as const, progress: null, error: null };
+          pregens[id] = { ...view };
+          simulatePregen(pregens[id]);
+          return view;
+        }
+        case "pregen_cancel": {
+          const view = pregens[args.instanceId as string];
+          if (view) view.cancelled = true;
+          return null;
         }
         case "list_worlds":
           return [...(worlds[args.instanceId as string] ?? [])];

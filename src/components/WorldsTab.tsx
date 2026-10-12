@@ -1,15 +1,16 @@
-import { createResource, createSignal, For, Show } from "solid-js";
+import { createEffect, createResource, createSignal, For, on, onMount, Show } from "solid-js";
 import Alert from "./Alert";
-import { api, errorMessage, type BackupKind, type GameMode, type World, type WorldBackup } from "../lib/api";
+import { api, errorMessage, type BackupKind, type GameMode, type PregenView, type World, type WorldBackup } from "../lib/api";
 import { formatBytes, formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { toast } from "../lib/toast";
 import Dialog from "./Dialog";
 import LoadingRows from "./LoadingRows";
-import { Icon, Toggle } from "./pixel";
+import { Icon, Toggle, XpBar } from "./pixel";
 import ProjectIcon from "./ProjectIcon";
 import { navigate } from "../lib/store";
 import { openProject } from "../lib/projects";
+import { formatEta, isPregenActive, PREGEN_SIZES, pregens, watchPregen } from "../lib/pregen";
 
 const MODES: Record<GameMode, string> = {
   survival: "Survie",
@@ -40,6 +41,22 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
   const [auto, { mutate: setAuto }] = createResource(async () => (await api.getSetting<boolean>(AUTO_BACKUP_SETTING)) ?? true);
   const [busy, setBusy] = createSignal<string | null>(null);
   const [restoring, setRestoring] = createSignal<WorldBackup | null>(null);
+  const [preparing, setPreparing] = createSignal<World | null>(null);
+  const [radius, setRadius] = createSignal<number>(PREGEN_SIZES[1].radius);
+  const [canPrepare] = createResource(() => props.instanceId, (id) => api.pregenSupported(id).catch(() => false));
+  onMount(() => void watchPregen(props.instanceId));
+  const pregen = () => pregens[props.instanceId];
+  const pregenActive = () => isPregenActive(pregen());
+  // The world grew: its size is read again once the preparation ends.
+  createEffect(
+    on(
+      () => pregen()?.status,
+      (status) => {
+        if (status === "done" || status === "cancelled") void refetchWorlds();
+      },
+      { defer: true },
+    ),
+  );
 
   const backupsOf = (world: string) => (backups() ?? []).filter((b) => b.world === world);
 
@@ -58,6 +75,17 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
   async function toggleAuto(value: boolean) {
     setAuto(value);
     await api.setSetting(AUTO_BACKUP_SETTING, value);
+  }
+
+  async function startPregen() {
+    const world = preparing();
+    if (!world) return;
+    setPreparing(null);
+    try {
+      await api.pregenStart(props.instanceId, world.folder, radius());
+    } catch (err) {
+      setError(errorMessage(err));
+    }
   }
 
   async function confirmRestore() {
@@ -113,8 +141,12 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
                 instanceId={props.instanceId}
                 world={world}
                 backups={backupsOf(world.folder)}
-                locked={props.locked}
+                locked={props.locked || pregenActive()}
                 busy={busy()}
+                pregen={pregen()?.world === world.folder && isPregenActive(pregen()) ? pregen() : undefined}
+                canPrepare={canPrepare() === true && !props.locked && !pregenActive()}
+                onPrepare={() => setPreparing(world)}
+                onCancelPregen={() => void api.pregenCancel(props.instanceId)}
                 onBackup={() =>
                   run(world.folder, async () => {
                     await api.backupWorld(props.instanceId, world.folder);
@@ -131,6 +163,48 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
       </Show>
       </Show>
       <p class="text-xs text-faint">Les 5 dernières sauvegardes automatiques de chaque monde sont gardées ; les manuelles, toutes.</p>
+
+      <Show when={preparing()}>
+        {(world) => (
+          <Dialog title="Préparer pour jouer à plusieurs" onClose={() => setPreparing(null)} width={600}>
+            <p class="text-chalk-2">
+              Tandem génère à l'avance le terrain de « {world().name} » autour du point d'apparition. Quand vous explorez à
+              plusieurs, le PC de l'hôte n'a plus à créer ce terrain pendant la partie : c'est ce qui le ralentit le plus.
+            </p>
+            <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Taille de la zone">
+              <For each={PREGEN_SIZES}>
+                {(size) => (
+                  <button
+                    role="radio"
+                    aria-checked={radius() === size.radius}
+                    class="panel px-corners-md flex flex-col items-start gap-0.5 p-3 text-left"
+                    classList={{ "shadow-[inset_0_0_0_2px_var(--color-xp)]": radius() === size.radius }}
+                    onClick={() => setRadius(size.radius)}
+                  >
+                    <span class="text-sm font-medium">{size.label}</span>
+                    <span class="text-xs text-muted">{size.hint}</span>
+                    <span class="text-xs text-faint">
+                      environ {size.minutes}, {size.disk}
+                    </span>
+                  </button>
+                )}
+              </For>
+            </div>
+            <p class="text-xs text-muted">
+              Le jeu reste fermé pendant la préparation et le monde grossit sur le disque. Tu peux annuler à tout moment : ce
+              qui est fait est gardé.
+            </p>
+            <div class="flex justify-end gap-2">
+              <button class="btn btn-ghost" onClick={() => setPreparing(null)}>
+                Annuler
+              </button>
+              <button class="btn btn-primary px-corners" onClick={() => void startPregen()}>
+                Préparer
+              </button>
+            </div>
+          </Dialog>
+        )}
+      </Show>
 
       <Show when={restoring()}>
         {(backup) => (
@@ -160,6 +234,10 @@ function WorldCard(props: {
   backups: WorldBackup[];
   locked: boolean;
   busy: string | null;
+  pregen: PregenView | undefined;
+  canPrepare: boolean;
+  onPrepare: () => void;
+  onCancelPregen: () => void;
   onBackup: () => void;
   onRestore: (backup: WorldBackup) => void;
   onOpen: () => void;
@@ -180,6 +258,16 @@ function WorldCard(props: {
             {formatRelative(iso(props.world.lastPlayed))}
           </span>
         </div>
+        <Show when={props.canPrepare}>
+          <button
+            class="btn btn-ghost h-8 px-2.5 text-xs"
+            title="Générer le terrain à l'avance, pour explorer à plusieurs sans ralentir l'hôte"
+            onClick={props.onPrepare}
+          >
+            <Icon name="duo" size={10} />
+            Préparer
+          </button>
+        </Show>
         <button class="btn btn-ghost h-8 px-2.5 text-xs" aria-expanded={packsOpen()} onClick={() => setPacksOpen(!packsOpen())}>
           Datapacks
         </button>
@@ -200,6 +288,9 @@ function WorldCard(props: {
           {props.busy === props.world.folder ? "Sauvegarde…" : "Sauvegarder"}
         </button>
       </div>
+      <Show when={props.pregen}>
+        {(view) => <PregenPanel view={view()} onCancel={props.onCancelPregen} />}
+      </Show>
       <Show when={packsOpen()}>
         <DatapackList instanceId={props.instanceId} world={props.world} locked={props.locked} />
       </Show>
@@ -230,6 +321,36 @@ function WorldCard(props: {
         </ul>
       </Show>
     </li>
+  );
+}
+
+/** Progress of the world's preparation for playing with friends. */
+function PregenPanel(props: { view: PregenView; onCancel: () => void }) {
+  const p = () => props.view.progress;
+  const text = () => {
+    const view = props.view;
+    if (view.status === "starting") return "démarrage du monde… (une minute ou deux avec beaucoup de mods)";
+    if (view.status === "stopping") return "enregistrement du monde…";
+    const progress = p();
+    if (!progress) return "génération du terrain…";
+    const parts = [
+      `${Math.floor(progress.percent)} %`,
+      `${progress.chunks.toLocaleString("fr-FR")} chunks`,
+      `${Math.round(progress.rate)} par seconde`,
+    ];
+    if (progress.etaSecs !== null && progress.etaSecs > 0) parts.push(`encore ${formatEta(progress.etaSecs)}`);
+    return parts.join(" · ");
+  };
+  return (
+    <div class="flex flex-col gap-2 border-t border-line px-3.5 py-3" aria-live="polite">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-xs text-chalk-2">Préparation pour jouer à plusieurs : {text()}</span>
+        <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.view.status === "stopping"} onClick={props.onCancel}>
+          Annuler
+        </button>
+      </div>
+      <XpBar value={(p()?.percent ?? 0) / 100} label="Préparation du monde" height={10} segments={24} />
+    </div>
   );
 }
 

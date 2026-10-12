@@ -33,6 +33,17 @@ pub struct Duo {
     guest: Mutex<Option<Joining>>,
 }
 
+impl Duo {
+    /// Whether this instance's world runs apart for an invitation right now.
+    pub async fn serves(&self, instance_id: &str) -> bool {
+        self.host
+            .lock()
+            .await
+            .as_ref()
+            .is_some_and(|h| h.server.is_some() && h.instance_id.as_deref() == Some(instance_id))
+    }
+}
+
 struct Hosting {
     host: Host,
     instance_id: Option<String>,
@@ -181,6 +192,13 @@ pub async fn duo_host(
         None => None,
     };
     let mine = summary.clone();
+    if let (Some(_), Some(id)) = (&separate_world, &instance_id) {
+        if state.pregens.running(id).await {
+            return Err(CommandError::msg(
+                "Un monde de cette instance est en préparation : attends la fin ou annule-la.",
+            ));
+        }
+    }
     let mut world_server = match (&separate_world, &instance_id) {
         (Some(world), Some(id)) => Some(start_world_server(&app, &state.ctx, id, world).await?),
         (Some(_), None) => return Err(CommandError::msg("Choisis l'instance du monde à héberger")),
@@ -284,6 +302,7 @@ async fn start_world_server(
         max_players: 20,
         online_mode: true,
         host: Some((account.mc_uuid.clone(), account.username.clone())),
+        extra_mods: Vec::new(),
     };
     status("starting");
     let running = server::start(ctx, &prepared, &options).await?;

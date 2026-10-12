@@ -46,6 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         host: std::env::var("TANDEM_HOST")
             .ok()
             .and_then(|h| h.split_once(':').map(|(u, n)| (u.to_owned(), n.to_owned()))),
+        extra_mods: Vec::new(),
     };
     let level = ctx
         .data

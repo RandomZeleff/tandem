@@ -21,6 +21,7 @@ pub mod logging;
 pub mod meta;
 pub mod optimizations;
 pub mod paths;
+pub mod pregen;
 pub mod process;
 pub mod screenshots;
 pub mod secrets;

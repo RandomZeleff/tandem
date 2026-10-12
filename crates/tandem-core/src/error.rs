@@ -53,6 +53,8 @@ pub enum Error {
     Duo(String),
     #[error("Monde à part : {0}")]
     WorldServer(String),
+    #[error("Préparer le monde : {0}")]
+    Pregen(String),
     #[error("{0} n'est pas encore pris en charge")]
     LoaderNotSupported(String),
     #[error("{loader} n'existe pas pour Minecraft {game_version}")]

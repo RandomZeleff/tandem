@@ -122,6 +122,8 @@ pub struct ServerOptions {
     /// The hosting player, `(uuid, name)`: their solo inventory goes to the server and
     /// back, and they are operator when the world allows commands.
     pub host: Option<(String, String)>,
+    /// Mods added at launch next to the instance's (Chunky for a world preparation).
+    pub extra_mods: Vec<PathBuf>,
 }
 
 /// Installs what the server needs (server jar, the loader's server libraries, Java, as
@@ -395,7 +397,25 @@ async fn command(
         "-Dsun.stderr.encoding=UTF-8".to_owned(),
     ];
     args.extend(jvm::gc_flags(&[]));
-    args.extend(optimizations::jvm_args(ctx, &prepared.instance).await?);
+    let add_mods = match prepared.instance.loader {
+        Loader::Quilt => "-Dloader.addMods=",
+        _ => "-Dfabric.addMods=",
+    };
+    let mut added = optimizations::jvm_args(ctx, &prepared.instance).await?;
+    if !options.extra_mods.is_empty() {
+        let extra = options
+            .extra_mods
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect::<Vec<_>>()
+            .join(separator);
+        // One property for all of them: a second one would replace the first.
+        match added.iter_mut().find(|a| a.starts_with(add_mods)) {
+            Some(arg) => *arg = format!("{arg}{separator}{extra}"),
+            None => added.push(format!("{add_mods}{extra}")),
+        }
+    }
+    args.extend(added);
     args.extend([
         "-cp".to_owned(),
         prepared
@@ -581,6 +601,22 @@ async fn add_excluded(dir: &Path, jar: &str) -> Result<()> {
     let text: String = excluded.into_iter().map(|j| j + "\n").collect();
     tokio::fs::write(dir.join(EXCLUDED_FILE), text).await?;
     Ok(())
+}
+
+/// Ids of the enabled mods in a `mods` folder (from their Fabric or Quilt metadata).
+pub async fn mod_ids(mods_dir: &Path) -> BTreeSet<String> {
+    let dir = mods_dir.to_owned();
+    tokio::task::spawn_blocking(move || {
+        std::fs::read_dir(&dir)
+            .into_iter()
+            .flatten()
+            .flatten()
+            .filter(|e| e.file_name().to_string_lossy().ends_with(".jar"))
+            .filter_map(|e| mod_meta(&e.path()).id)
+            .collect()
+    })
+    .await
+    .unwrap_or_default()
 }
 
 /// The mods linked into the server, by file name and by mod id.

@@ -846,6 +846,11 @@ pub async fn launch_instance(
     id: String,
     world: Option<String>,
 ) -> CommandResult<()> {
+    if state.pregens.running(&id).await {
+        return Err(CommandError::msg(
+            "Un monde de cette instance est en préparation : attends la fin ou annule-la.",
+        ));
+    }
     let quick_play = world.map(tandem_core::launch::QuickPlay::World);
     game::launch(app, state.ctx.clone(), state.games.clone(), id, quick_play).await
 }

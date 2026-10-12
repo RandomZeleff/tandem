@@ -4,6 +4,7 @@ mod duo;
 mod error;
 mod game;
 mod modpack;
+mod pregen;
 mod screenshot_protocol;
 mod translation;
 
@@ -35,6 +36,7 @@ pub struct AppState {
     pub translations: tandem_core::translate::service::Service,
     pub logins: accounts::Logins,
     pub duo: duo::Duo,
+    pub pregens: pregen::Pregens,
     _log_guard: WorkerGuard,
 }
 
@@ -78,6 +80,7 @@ pub fn run() {
                 translations: Default::default(),
                 logins: Default::default(),
                 duo: Default::default(),
+                pregens: Default::default(),
                 _log_guard: log_guard,
             });
             // Tauri creates the window and its webview before `setup`: most of this is theirs.
@@ -175,6 +178,10 @@ pub fn run() {
             accounts::begin_microsoft_login,
             accounts::finish_microsoft_login,
             accounts::cancel_microsoft_login,
+            pregen::pregen_start,
+            pregen::pregen_cancel,
+            pregen::pregen_status,
+            pregen::pregen_supported,
             duo::duo_host,
             duo::duo_stop_host,
             duo::duo_kick,

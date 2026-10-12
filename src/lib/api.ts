@@ -489,6 +489,29 @@ export interface WorldBackup {
   sizeBytes: number;
 }
 
+/** Mirrors `tandem_core::pregen::Progress`. */
+export interface PregenProgress {
+  chunks: number;
+  total: number;
+  percent: number;
+  /** Chunks per second. */
+  rate: number;
+  etaSecs: number | null;
+  done: boolean;
+}
+
+export type PregenStatus = "starting" | "running" | "stopping" | "done" | "cancelled" | "failed";
+
+/** A world being prepared for playing with friends (chantier 3). */
+export interface PregenView {
+  instanceId: string;
+  world: string;
+  radius: number;
+  status: PregenStatus;
+  progress: PregenProgress | null;
+  error: string | null;
+}
+
 export interface Screenshot {
   /** File in screenshots/, which identifies the screenshot. */
   fileName: string;
@@ -548,6 +571,7 @@ export const EVENTS = {
   stats: "game://stats",
   installFinished: "install://finished",
   translateProgress: "translate://progress",
+  pregenProgress: "pregen://progress",
   instancesChanged: "instances://changed",
 } as const;
 
@@ -715,6 +739,11 @@ export const api = {
   restoreWorldBackup: (instanceId: string, world: string, fileName: string) =>
     invoke<void>("restore_world_backup", { instanceId, world, fileName }),
   openWorldBackups: (instanceId: string, world: string) => invoke<void>("open_world_backups", { instanceId, world }),
+  pregenStart: (instanceId: string, world: string, radius: number) =>
+    invoke<PregenView>("pregen_start", { instanceId, world, radius }),
+  pregenCancel: (instanceId: string) => invoke<void>("pregen_cancel", { instanceId }),
+  pregenStatus: (instanceId: string) => invoke<PregenView | null>("pregen_status", { instanceId }),
+  pregenSupported: (instanceId: string) => invoke<boolean>("pregen_supported", { instanceId }),
   listScreenshots: (instanceId: string) => invoke<Screenshot[]>("list_screenshots", { instanceId }),
   deleteScreenshot: (instanceId: string, fileName: string) => invoke<void>("delete_screenshot", { instanceId, fileName }),
   openScreenshotsFolder: (instanceId: string) => invoke<void>("open_screenshots_folder", { instanceId }),
