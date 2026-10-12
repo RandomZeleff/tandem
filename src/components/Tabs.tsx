@@ -65,7 +65,7 @@ export default function Tabs<T extends string>(props: {
               classList={
                 segmented()
                   ? {
-                      "flex items-center gap-1.5 rounded-sm px-3 text-[13px] whitespace-nowrap transition-colors duration-100": true,
+                      "flex items-center gap-1.5 rounded-sm px-3 text-meta whitespace-nowrap transition-colors duration-100": true,
                       "bg-slate-600 font-semibold text-chalk shadow-[0_1px_0_rgb(0_0_0/0.35),inset_0_1px_0_rgb(255_255_255/0.08)]": selected(),
                       "text-muted hover:text-chalk focus-visible:text-chalk": !selected(),
                     }

@@ -29,7 +29,7 @@ function Hero(props: { instance: Instance }) {
 
       <div class="relative mt-auto flex w-full flex-col gap-5 px-9 pb-8">
         <div class="flex min-w-0 flex-col gap-2">
-          <h1 class="title-display truncate text-[64px] leading-[0.9]">{props.instance.name}</h1>
+          <h1 class="title-display truncate text-hero">{props.instance.name}</h1>
           <p class="flex flex-wrap items-center gap-x-2 text-sm text-chalk-2">
             <span>{props.instance.gameVersion}</span>
             <span class="text-faint">·</span>
@@ -61,7 +61,7 @@ function Hero(props: { instance: Instance }) {
 
         <div class="flex flex-wrap items-center gap-3">
           <PlayButton id={props.instance.id} size="lg" name={props.instance.name} />
-          <button class="btn btn-light px-corners-md h-[54px] px-6 text-[15px]" onClick={() => navigate({ page: "multi" })}>
+          <button class="btn btn-light px-corners-md h-[54px] px-6 text-base" onClick={() => navigate({ page: "multi" })}>
             <Icon name="invite" size={12} />
             <Show when={duo.host} fallback="Inviter des amis">
               {guests() === 0 ? "Partie ouverte" : guests() === 1 ? "1 ami connecté" : `${guests()} amis connectés`}
@@ -95,12 +95,12 @@ function Welcome() {
       <Scene variant="day" />
       <div class="absolute inset-0 bg-[linear-gradient(0deg,rgb(16_17_19/0.85)_0%,rgb(16_17_19/0.4)_45%,transparent_75%)]" />
       <div class="relative mt-auto flex max-w-[600px] flex-col gap-4 px-9 pb-8">
-        <h1 class="title-display text-[64px] leading-[0.9]">Prêt à miner ?</h1>
+        <h1 class="title-display text-hero">Prêt à miner ?</h1>
         <p class="text-base text-chalk-2">
           Crée une instance : Tandem télécharge le jeu et la bonne version de Java pour toi.
         </p>
         <button
-          class="btn btn-primary px-corners-md title-display h-[54px] w-fit px-7 text-[26px] uppercase"
+          class="btn btn-primary px-corners-md title-display h-[54px] w-fit px-7 text-[28px] uppercase"
           onClick={() => setNewInstanceDialog({})}
         >
           <Icon name="plus" size={12} />
@@ -137,7 +137,7 @@ function JoinFriend() {
         <h2 id="home-join" class="panel-title">
           Rejoindre un ami
         </h2>
-        <p class="text-[13px] text-muted">Entre le code qu'il t'a envoyé : Tandem prépare tout et lance le jeu.</p>
+        <p class="text-meta text-muted">Entre le code qu'il t'a envoyé : Tandem prépare tout et lance le jeu.</p>
       </div>
       <Show
         when={!duo.guest}
@@ -151,7 +151,7 @@ function JoinFriend() {
           when={canPlayOnline()}
           fallback={
             <div class="flex flex-col gap-2.5">
-              <p class="text-[13px] text-chalk-2">Il faut un compte Microsoft pour jouer avec des amis.</p>
+              <p class="text-meta text-chalk-2">Il faut un compte Microsoft pour jouer avec des amis.</p>
               <button class="btn px-corners h-10" onClick={() => openAccounts()}>
                 Ajouter mon compte
               </button>
@@ -204,7 +204,7 @@ function News() {
       </h2>
       <Show
         when={versions()}
-        fallback={<p class="text-[13px] text-faint">{versions.error ? "Hors ligne pour l'instant." : "Chargement…"}</p>}
+        fallback={<p class="text-meta text-faint">{versions.error ? "Hors ligne pour l'instant." : "Chargement…"}</p>}
       >
         {(list) => (
           <>
@@ -214,7 +214,7 @@ function News() {
               </span>
               <div class="flex flex-col">
                 <span class="text-sm font-semibold">Minecraft {list().latest.release}</span>
-                <span class="text-[13px] text-muted">Dernière version stable</span>
+                <span class="text-meta text-muted">Dernière version stable</span>
               </div>
             </div>
             <Show when={list().latest.snapshot !== list().latest.release}>
@@ -225,10 +225,10 @@ function News() {
                 <div class="flex min-w-0 flex-col gap-2">
                   <div class="flex flex-col">
                     <span class="text-sm font-semibold">Snapshot {list().latest.snapshot}</span>
-                    <span class="text-[13px] text-muted">Teste-la dans une instance à part, sans toucher à tes mondes.</span>
+                    <span class="text-meta text-muted">Teste-la dans une instance à part, sans toucher à tes mondes.</span>
                   </div>
                   <button
-                    class="btn px-corners h-8 w-fit px-3 text-[13px]"
+                    class="btn px-corners h-8 w-fit px-3 text-meta"
                     onClick={() => setNewInstanceDialog({ version: list().latest.snapshot })}
                   >
                     Créer une instance de test

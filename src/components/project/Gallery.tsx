@@ -33,7 +33,7 @@ export default function Gallery(props: { images: GalleryImage[] }) {
                     />
                   </span>
                   <Show when={image.title}>
-                    <span class="mt-1.5 truncate text-[13px] text-chalk-2 group-hover:text-chalk">{image.title}</span>
+                    <span class="mt-1.5 truncate text-meta text-chalk-2 group-hover:text-chalk">{image.title}</span>
                   </Show>
                 </button>
               </li>

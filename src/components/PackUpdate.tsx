@@ -118,12 +118,12 @@ function UpdateDialog(props: { instance: Instance; versions: PackVersion[]; onCl
       <div class="max-h-56 overflow-y-auto bg-slate-800 p-3.5 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
         <Show when={changelog() !== undefined} fallback={<div class="skeleton h-16" />}>
           <Show when={changelog()} fallback={<p class="text-sm text-muted">Pas de journal des changements pour cette version.</p>}>
-            <RichText html={changelog()!} class="text-[13px]" />
+            <RichText html={changelog()!} class="text-meta" />
           </Show>
         </Show>
       </div>
 
-      <ul class="flex flex-col gap-1.5 text-[13px] text-chalk-2">
+      <ul class="flex flex-col gap-1.5 text-meta text-chalk-2">
         <li class="flex gap-2">
           <Icon name="check" size={11} class="mt-1 shrink-0 text-xp-text" />
           Tes mondes, captures, réglages du jeu et fichiers que tu as modifiés sont gardés ; un mod que tu as désactivé le reste.

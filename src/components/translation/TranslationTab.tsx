@@ -138,7 +138,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
         <div class="flex flex-wrap items-center gap-3">
           <h2 class="panel-title mr-auto">Traduction IA</h2>
           <Select
-            class="h-9 w-56 text-[13px]"
+            class="h-9 w-56 text-meta"
             label="Langue de la traduction"
             value={currentLocale()}
             disabled={run().running}
@@ -148,7 +148,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
           <Show
             when={provider()}
             fallback={
-              <button class="btn btn-gold px-corners h-9 text-[13px]" onClick={() => navigate({ page: "settings" })}>
+              <button class="btn btn-gold px-corners h-9 text-meta" onClick={() => navigate({ page: "settings" })}>
                 <Icon name="gear" size={11} />
                 Choisir un service de traduction
               </button>
@@ -156,7 +156,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
           >
             {(config) => (
               <button
-                class="btn btn-ghost h-9 max-w-72 px-2.5 text-[13px]"
+                class="btn btn-ghost h-9 max-w-72 px-2.5 text-meta"
                 title="Changer de service dans les réglages"
                 onClick={() => navigate({ page: "settings" })}
               >
@@ -171,7 +171,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
           {(o) => (
             <>
               <CoverageBar counts={o().totals} />
-              <p class="text-[13px] text-chalk-2">
+              <p class="text-meta text-chalk-2">
                 <strong class="text-chalk">{integer.format(o().totals.total)}</strong> textes ·{" "}
                 <span class="text-diamond">{integer.format(o().totals.existing)}</span> déjà traduits par les auteurs ·{" "}
                 <span class="text-xp-text">{integer.format(o().totals.translated)}</span> par Tandem ·{" "}
@@ -272,7 +272,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
                 </span>
                 <input
                   type="search"
-                  class="field h-8 w-full pl-7 text-[13px]"
+                  class="field h-8 w-full pl-7 text-meta"
                   placeholder="Chercher un mod…"
                   aria-label="Chercher un mod"
                   value={query()}
@@ -280,7 +280,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
                 />
               </div>
               <Select
-                class="h-8 w-44 text-[13px]"
+                class="h-8 w-44 text-meta"
                 label="Filtre"
                 value={filter()}
                 options={[

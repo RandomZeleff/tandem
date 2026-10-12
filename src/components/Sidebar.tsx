@@ -191,7 +191,7 @@ export default function Sidebar() {
                   when={unseenArrivals() > 0}
                   fallback={
                     <Show when={duoActive()}>
-                      <span class="step-pulse mr-1 size-2 rounded-[1px] bg-gold" title="Partie à plusieurs en cours" />
+                      <span class="step-pulse mr-1 size-2 rounded-[1px] bg-xp" title="Partie à plusieurs en cours" />
                     </Show>
                   }
                 >
@@ -210,7 +210,7 @@ export default function Sidebar() {
 
       <div class="flex min-h-0 flex-col gap-0.5 px-3 pt-4">
         <span class="px-2.5 pb-1.5 text-xs font-semibold text-faint">Récentes</span>
-        <Show when={recents().length > 0} fallback={<p class="px-2.5 text-[13px] text-faint">Aucune instance pour l'instant.</p>}>
+        <Show when={recents().length > 0} fallback={<p class="px-2.5 text-meta text-faint">Aucune instance pour l'instant.</p>}>
           <For each={recents()}>
             {(instance) => {
               const state = () => gameState(instance.id);
@@ -228,7 +228,7 @@ export default function Sidebar() {
                 >
                   <InstanceSlot instance={instance} size={32} />
                   <span class="flex min-w-0 flex-1 flex-col">
-                    <span class="truncate text-[13px] font-semibold">{instance.name}</span>
+                    <span class="truncate text-meta font-semibold">{instance.name}</span>
                     <span class="text-xs text-faint">
                       {instance.gameVersion} · <LoaderTag loader={instance.loader} size={12} />
                     </span>

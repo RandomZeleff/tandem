@@ -187,7 +187,7 @@ export default function TranslationSettings() {
               </Field>
               <Show when={preset() === "custom" || !presetInfo()?.baseUrl}>
                 <Field label="Adresse de l'API (compatible OpenAI)" for="tr-url">
-                  <input id="tr-url" class="field h-9 w-full font-mono text-[13px]" placeholder="https://…/v1" value={baseUrl()} onInput={(e) => setBaseUrl(e.currentTarget.value)} />
+                  <input id="tr-url" class="field h-9 w-full font-mono text-meta" placeholder="https://…/v1" value={baseUrl()} onInput={(e) => setBaseUrl(e.currentTarget.value)} />
                 </Field>
               </Show>
               <Show when={presetInfo()?.needsKey || preset() === "custom"}>
@@ -197,7 +197,7 @@ export default function TranslationSettings() {
                       id="tr-key"
                       type="password"
                       autocomplete="off"
-                      class="field h-9 min-w-0 flex-1 font-mono text-[13px]"
+                      class="field h-9 min-w-0 flex-1 font-mono text-meta"
                       placeholder={hasKey() ? "•••••••• (enregistrée dans le coffre du système)" : "Colle ta clé ici"}
                       value={key()}
                       onInput={(e) => setKey(e.currentTarget.value)}
@@ -217,16 +217,16 @@ export default function TranslationSettings() {
                     fallback={
                       <input
                         id="tr-model"
-                        class="field h-9 min-w-0 flex-1 font-mono text-[13px]"
+                        class="field h-9 min-w-0 flex-1 font-mono text-meta"
                         placeholder={presetInfo()?.local ? "ex. qwen2.5:7b" : "Teste la connexion pour voir la liste"}
                         value={model()}
                         onInput={(e) => setModel(e.currentTarget.value)}
                       />
                     }
                   >
-                    <Select id="tr-model" class="h-9 min-w-0 flex-1 font-mono text-[13px]" value={model()} options={models()!.map((m) => ({ value: m, label: m }))} onChange={setModel} />
+                    <Select id="tr-model" class="h-9 min-w-0 flex-1 font-mono text-meta" value={model()} options={models()!.map((m) => ({ value: m, label: m }))} onChange={setModel} />
                   </Show>
-                  <button class="btn px-corners h-9 shrink-0 text-[13px]" disabled={testing() || !baseUrl().trim()} onClick={() => void test()}>
+                  <button class="btn px-corners h-9 shrink-0 text-meta" disabled={testing() || !baseUrl().trim()} onClick={() => void test()}>
                     {testing() ? "Test…" : "Tester"}
                   </button>
                 </div>

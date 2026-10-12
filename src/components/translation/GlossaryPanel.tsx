@@ -53,11 +53,11 @@ export default function GlossaryPanel(props: { instanceId: string; locale: strin
         <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
       <form class="flex flex-wrap items-center gap-2" onSubmit={(e) => void add(e)}>
-        <input class="field h-9 min-w-40 flex-1 text-[13px]" placeholder="Terme anglais (ex. Void Essence)" aria-label="Terme anglais" value={term()} onInput={(e) => setTerm(e.currentTarget.value)} />
+        <input class="field h-9 min-w-40 flex-1 text-meta" placeholder="Terme anglais (ex. Void Essence)" aria-label="Terme anglais" value={term()} onInput={(e) => setTerm(e.currentTarget.value)} />
         <Icon name="arrow" size={10} class="text-faint" />
-        <input class="field h-9 min-w-40 flex-1 text-[13px]" placeholder="Traduction (ex. Essence du Néant)" aria-label="Traduction" value={translation()} onInput={(e) => setTranslation(e.currentTarget.value)} />
+        <input class="field h-9 min-w-40 flex-1 text-meta" placeholder="Traduction (ex. Essence du Néant)" aria-label="Traduction" value={translation()} onInput={(e) => setTranslation(e.currentTarget.value)} />
         <Checkbox class="text-xs text-muted" checked={shared()} label="Toutes les instances" onChange={setShared} />
-        <button class="btn px-corners h-9 text-[13px]" type="submit" disabled={!term().trim() || !translation().trim()}>
+        <button class="btn px-corners h-9 text-meta" type="submit" disabled={!term().trim() || !translation().trim()}>
           <Icon name="plus" size={10} />
           Ajouter
         </button>
@@ -66,7 +66,7 @@ export default function GlossaryPanel(props: { instanceId: string; locale: strin
         <ul class="flex flex-wrap gap-1.5">
           <For each={terms()}>
             {(t) => (
-              <li class="chip h-7 gap-1.5 pr-1 text-[12px]">
+              <li class="chip h-7 gap-1.5 pr-1 text-xs">
                 <span class="text-chalk-2">{t.term}</span>
                 <Icon name="arrow" size={8} class="text-faint" />
                 <span>{t.translation}</span>

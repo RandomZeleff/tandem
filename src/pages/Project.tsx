@@ -190,7 +190,9 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
           <ProjectIcon url={d().iconUrl} size={96} />
         </span>
         <div class="relative flex min-w-0 flex-1 flex-col gap-2">
-          <div class="flex items-center gap-2 text-[13px] text-muted">
+          <h1 class="title-display text-title">{d().title}</h1>
+          <p class="text-sm text-chalk-2 select-text">{d().summary}</p>
+          <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-meta text-muted">
             <span class="chip h-5 px-1.5 text-xs text-chalk-3">{projectTypeLabel(d().projectType)}</span>
             <Show when={d().organization ?? d().authors[0]}>
               <span>
@@ -206,10 +208,6 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
                 </Show>
               </span>
             </Show>
-          </div>
-          <h1 class="title-display text-[40px] leading-[0.95]">{d().title}</h1>
-          <p class="text-[14px] text-chalk-2 select-text">{d().summary}</p>
-          <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-muted">
             <span class="flex items-center gap-1.5" title={`${d().downloads.toLocaleString("fr-FR")} téléchargements`}>
               <Icon name="download" size={10} />
               {formatCount(d().downloads)}
@@ -255,7 +253,7 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
               <DatapackAction details={d()} instanceId={instanceId()} onInstance={setInstanceId} />
             </Match>
             <Match when={true}>
-              <p class="text-[13px] text-chalk-2">
+              <p class="text-meta text-chalk-2">
                 Tandem n'installe pas encore les {projectTypeLabel(d().projectType).toLowerCase()}s.
               </p>
             </Match>
@@ -489,7 +487,7 @@ function ContentAction(props: {
       when={instances().length > 0}
       fallback={
         <>
-          <p class="text-[13px] text-chalk-2">Crée d'abord une instance pour l'y installer.</p>
+          <p class="text-meta text-chalk-2">Crée d'abord une instance pour l'y installer.</p>
           <button class="btn btn-primary px-corners h-10" onClick={() => setNewInstanceDialog({})}>
             <Icon name="plus" size={12} />
             Nouvelle instance
@@ -498,7 +496,7 @@ function ContentAction(props: {
       }
     >
       <Select
-        class="h-9 w-full text-[13px]"
+        class="h-9 w-full text-meta"
         label="Instance"
         value={props.instanceId}
         options={instances().map((i) => ({
@@ -608,9 +606,9 @@ function DatapackAction(props: { details: ProjectDetails; instanceId: string; on
   }
 
   return (
-    <Show when={instances().length > 0} fallback={<p class="text-[13px] text-chalk-2">Crée d'abord une instance et un monde.</p>}>
+    <Show when={instances().length > 0} fallback={<p class="text-meta text-chalk-2">Crée d'abord une instance et un monde.</p>}>
       <Select
-        class="h-9 w-full text-[13px]"
+        class="h-9 w-full text-meta"
         label="Instance"
         value={props.instanceId}
         options={instances().map((i) => ({ value: i.id, label: i.name, hint: i.gameVersion, icon: <LoaderIcon loader={i.loader} size={12} /> }))}
@@ -618,7 +616,7 @@ function DatapackAction(props: { details: ProjectDetails; instanceId: string; on
       />
       <Show when={(worlds() ?? []).length > 0} fallback={<p class="text-xs text-muted">{worlds() ? "Aucun monde : crée-en un en jeu." : "Chargement des mondes…"}</p>}>
         <Select
-          class="h-9 w-full text-[13px]"
+          class="h-9 w-full text-meta"
           label="Monde"
           value={world()}
           options={(worlds() ?? []).map((w) => ({ value: w.folder, label: w.name, hint: w.version ?? undefined }))}
@@ -676,7 +674,7 @@ function SupportAuthor(props: { details: ProjectDetails }) {
     <Show when={links().length > 0}>
       <div class="flex flex-col gap-1">
         <button
-          class="btn px-corners h-9 justify-start gap-2 px-3 text-[13px]"
+          class="btn px-corners h-9 justify-start gap-2 px-3 text-meta"
           title={links().length === 1 ? links()[0].url : undefined}
           aria-expanded={links().length > 1 ? open() : undefined}
           onClick={click}
@@ -693,7 +691,7 @@ function SupportAuthor(props: { details: ProjectDetails }) {
               {(link) => (
                 <li>
                   <button
-                    class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-chalk-2 hover:text-xp-text focus-visible:text-xp-text"
+                    class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-meta text-chalk-2 hover:text-xp-text focus-visible:text-xp-text"
                     title={link.url}
                     onClick={() => openExternal(link.url)}
                   >
@@ -723,7 +721,7 @@ function Aside(props: { details: ProjectDetails }) {
   return (
     <aside class="flex flex-col gap-4">
       <Section title="Compatibilité">
-        <dl class="flex flex-col gap-2.5 text-[13px]">
+        <dl class="flex flex-col gap-2.5 text-meta">
           <Show when={d().gameVersions.length > 0}>
             <div>
               <dt class="text-xs text-muted">Minecraft</dt>
@@ -776,7 +774,7 @@ function Aside(props: { details: ProjectDetails }) {
               {(link) => (
                 <li>
                   <button
-                    class="flex w-full items-center gap-2.5 px-1 py-1.5 text-left text-[13px] text-chalk-2 hover:text-xp-text focus-visible:text-xp-text"
+                    class="flex w-full items-center gap-2.5 px-1 py-1.5 text-left text-meta text-chalk-2 hover:text-xp-text focus-visible:text-xp-text"
                     title={link.url}
                     onClick={() => openExternal(link.url)}
                   >
@@ -792,7 +790,7 @@ function Aside(props: { details: ProjectDetails }) {
       </Show>
 
       <Section title="Détails">
-        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[13px]">
+        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-meta">
           <Show when={d().license}>
             {(license) => (
               <>
@@ -839,7 +837,7 @@ function Person(props: { name: string; avatar: string | null; role: string; onCl
           </Show>
         </span>
         <span class="flex min-w-0 flex-col">
-          <span class="truncate text-[13px] text-chalk group-hover:text-xp-text">{props.name}</span>
+          <span class="truncate text-meta text-chalk group-hover:text-xp-text">{props.name}</span>
           <Show when={props.role}>
             <span class="truncate text-xs text-muted">{props.role}</span>
           </Show>

@@ -54,7 +54,7 @@ export default function TitleBar() {
           class="flex h-full w-60 shrink-0 items-center gap-2.5 px-[22px] shadow-[inset_-1px_0_0_var(--color-divider)]"
         >
           <Logo />
-          <span data-tauri-drag-region class="title-display text-[20px] leading-none">
+          <span data-tauri-drag-region class="title-display text-xl leading-none">
             Tandem
           </span>
         </div>

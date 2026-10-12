@@ -127,7 +127,7 @@ export default function LauncherImportDialog(props: { onClose: () => void }) {
                                 <span class="shrink-0 text-xs text-xp-text">déjà importée</span>
                               </Show>
                             </span>
-                            <span class="truncate text-[13px] text-muted">
+                            <span class="truncate text-meta text-muted">
                               <Show when={group.title === "Dossier choisi" && f.source !== "folder"}>{SOURCES[f.source]} · </Show>
                               {details(f)}
                             </span>

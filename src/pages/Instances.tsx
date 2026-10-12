@@ -42,7 +42,7 @@ export default function Instances() {
     <div class="mx-auto flex max-w-[1400px] flex-col gap-5">
       <div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div class="flex min-w-0 flex-col gap-1.5">
-          <h1 class="title-display text-[44px] leading-[0.9]">Instances</h1>
+          <h1 class="title-display text-title">Instances</h1>
           <span class="text-base text-chalk-2">Chaque instance a son propre dossier, ses mondes et ses réglages.</span>
         </div>
         <div class="flex gap-2 whitespace-nowrap">

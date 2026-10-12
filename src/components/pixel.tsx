@@ -226,7 +226,7 @@ export function Checkbox(props: { checked: boolean; label: JSX.Element; disabled
       role="checkbox"
       aria-checked={props.checked}
       disabled={props.disabled}
-      class={`group flex items-center gap-2 disabled:cursor-default disabled:opacity-50 ${props.class ?? "text-[13px] text-muted"}`}
+      class={`group flex items-center gap-2 disabled:cursor-default disabled:opacity-50 ${props.class ?? "text-meta text-muted"}`}
       onClick={() => props.onChange(!props.checked)}
     >
       <span

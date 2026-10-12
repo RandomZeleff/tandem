@@ -62,7 +62,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
   return (
     <div class="flex h-full flex-col gap-4 overflow-y-auto">
       <div class="flex items-center justify-between gap-3">
-        <span class="text-[13px] text-muted">
+        <span class="text-meta text-muted">
           {shots() === undefined
             ? "Chargement…"
             : list().length === 0

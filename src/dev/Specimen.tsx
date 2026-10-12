@@ -26,7 +26,7 @@ export default function Specimen() {
             <p class="text-sm text-chalk-2">
               Texte courant (14). Tandem installe le modpack, copie les mods chez ton ami et ouvre le monde sans serveur.
             </p>
-            <p class="text-[13px] text-muted">Texte secondaire (13) · Fabric 1.20.1 · 678 mods · joué il y a 2 h</p>
+            <p class="text-meta text-muted">Texte secondaire (13) · Fabric 1.20.1 · 678 mods · joué il y a 2 h</p>
             <p class="text-xs text-faint">Légende (12) · Modifié le 12 octobre</p>
           </div>
         </section>
@@ -65,7 +65,7 @@ export default function Specimen() {
                 Ouvrir le dossier
               </button>
               <button class="btn btn-microsoft">Se connecter avec Microsoft</button>
-              <button class="btn h-8 px-3 text-[13px]">Petit bouton</button>
+              <button class="btn h-8 px-3 text-meta">Petit bouton</button>
               <button class="btn btn-ghost size-9 px-0" aria-label="Plus">
                 <Icon name="dots" size={12} />
               </button>
@@ -78,15 +78,15 @@ export default function Specimen() {
             <h2 class="panel-title">Champs</h2>
             <div class="panel flex flex-col gap-3 p-6">
               <label class="flex flex-col gap-1.5">
-                <span class="text-[13px] font-medium text-muted">Nom de l'instance</span>
+                <span class="text-meta font-medium text-muted">Nom de l'instance</span>
                 <input class="field" value="Prominence II" />
               </label>
               <label class="flex flex-col gap-1.5">
-                <span class="text-[13px] font-medium text-muted">Code d'invitation</span>
+                <span class="text-meta font-medium text-muted">Code d'invitation</span>
                 <input class="field" placeholder="Colle le code de ton ami" />
               </label>
               <div class="flex flex-col gap-1.5">
-                <span class="text-[13px] font-medium text-muted">Version</span>
+                <span class="text-meta font-medium text-muted">Version</span>
                 <Select
                   value={version()}
                   onChange={setVersion}
@@ -162,7 +162,7 @@ export default function Specimen() {
                   </span>
                   <span class="flex min-w-0 flex-1 flex-col">
                     <span class="text-sm font-semibold">{name}</span>
-                    <span class="text-[13px] text-muted">Mis à jour il y a 3 jours</span>
+                    <span class="text-meta text-muted">Mis à jour il y a 3 jours</span>
                   </span>
                   <span class="chip">0.6.2</span>
                 </button>

@@ -70,7 +70,7 @@ function BrowserWait(props: { url: string }) {
         </p>
       </div>
       <Show when={props.url}>
-        <p class="text-[13px] text-muted">
+        <p class="text-meta text-muted">
           Le navigateur ne s'est pas ouvert ?{" "}
           <button class="underline hover:text-chalk" onClick={() => openExternal(props.url)}>
             Ouvrir la page
@@ -125,7 +125,7 @@ function Welcome(props: { account: Account; onDone: () => void }) {
         <AccountAvatar account={props.account} size={88} />
       </span>
       <div class="flex flex-col gap-1">
-        <p class="title-display text-[32px] leading-none">Bienvenue, {props.account.username} !</p>
+        <p class="title-display text-3xl leading-none">Bienvenue, {props.account.username} !</p>
         <p class="text-sm text-chalk-2">Ton compte Microsoft est connecté et possède Minecraft. Tu peux jouer.</p>
       </div>
       <button class="btn btn-primary px-corners px-6" onClick={props.onDone}>
@@ -160,7 +160,7 @@ function AccountRow(props: { account: Account; onRemove: () => void }) {
             <span class="chip h-5 shrink-0 px-1.5 text-xs text-xp-text">utilisé</span>
           </Show>
         </span>
-        <span class="text-[13px] text-muted">
+        <span class="text-meta text-muted">
           <AccountKindLabel account={props.account} />
         </span>
       </div>
@@ -198,7 +198,7 @@ function OfflineForm() {
   return (
     <section class="flex flex-col gap-2">
       <h3 class="panel-title">Jouer hors ligne</h3>
-      <p class="text-[13px] text-muted">
+      <p class="text-meta text-muted">
         <Show
           when={allowed()}
           fallback="Disponible une fois un compte Microsoft connecté : Tandem vérifie d'abord que tu possèdes le jeu."

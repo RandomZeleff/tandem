@@ -46,7 +46,7 @@ function CreatorsView(props: { data: Resource<Creators>; empty: string }) {
         {(d) => (
           <Show when={d().creators.length > 0} fallback={<p class="text-sm text-muted">{props.empty}</p>}>
             <section class="panel px-corners-md flex flex-col gap-1.5 p-4">
-              <p class="text-[15px]">
+              <p class="text-base">
                 {d().projects} contenu{d().projects > 1 ? "s" : ""}, fait{d().projects > 1 ? "s" : ""} par{" "}
                 <strong>
                   {d().creators.length} créateur{d().creators.length > 1 ? "s" : ""}

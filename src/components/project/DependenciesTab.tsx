@@ -72,7 +72,7 @@ export default function DependenciesTab(props: {
     <div class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Select
-          class="w-64 text-[13px]"
+          class="w-64 text-meta"
           label="Version"
           value={versionId()}
           placeholder={props.versions ? "Aucune version" : "Chargement…"}
@@ -91,7 +91,7 @@ export default function DependenciesTab(props: {
             </span>
             <input
               type="search"
-              class="field h-[34px] w-full pl-8 text-[13px]"
+              class="field h-[34px] w-full pl-8 text-meta"
               placeholder="Chercher dans le modpack…"
               aria-label="Chercher dans le modpack"
               value={query()}

@@ -20,6 +20,9 @@
   /* Type scale: few sizes, hierarchy through weight. */
   --text-xs: 12px;
   --text-xs--line-height: 16px;
+  /* Secondary text: meta lines, help, labels. */
+  --text-meta: 13px;
+  --text-meta--line-height: 18px;
   --text-sm: 14px;
   --text-sm--line-height: 20px;
   --text-base: 15px;
@@ -36,6 +39,11 @@
   --text-4xl--line-height: 42px;
   --text-5xl: 52px;
   --text-5xl--line-height: 52px;
+  /* Display face only: page titles, then the home picture's title. */
+  --text-title: 44px;
+  --text-title--line-height: 40px;
+  --text-hero: 64px;
+  --text-hero--line-height: 58px;
 
   --radius-xs: 2px;
   --radius-sm: 3px;
@@ -149,7 +157,7 @@ button {
 ::-webkit-scrollbar-thumb {
   background: var(--color-slate-600);
   border: 3px solid transparent;
-  border-radius: 6px;
+  border-radius: 4px;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {

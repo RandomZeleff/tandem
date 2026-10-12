@@ -38,8 +38,8 @@ export default function InstanceCard(props: { instance: Instance }) {
       </div>
       <div class="flex flex-col gap-3 px-3.5 pt-3 pb-3.5">
         <div class="flex min-w-0 flex-col gap-0.5">
-          <h3 class="truncate text-[15px] font-semibold">{props.instance.name}</h3>
-          <span class="text-[13px] text-muted">
+          <h3 class="truncate text-base font-semibold">{props.instance.name}</h3>
+          <span class="text-meta text-muted">
             {props.instance.gameVersion} · <LoaderTag loader={props.instance.loader} />
           </span>
         </div>
@@ -48,7 +48,7 @@ export default function InstanceCard(props: { instance: Instance }) {
           fallback={
             <div class="flex items-center justify-between gap-2">
               <span
-                class="text-[13px]"
+                class="text-meta"
                 classList={{ "font-medium text-xp-text": state().status === "running", "text-faint": state().status !== "running" }}
               >
                 {state().status === "running" ? "En cours" : formatRelative(props.instance.lastPlayedAt)}

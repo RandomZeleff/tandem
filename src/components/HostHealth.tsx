@@ -58,10 +58,10 @@ function Gauge(props: { title: string; reading: Reading }) {
         aria-hidden="true"
       />
       <div class="flex min-w-0 flex-col">
-        <span class="text-[13px] text-muted">{props.title}</span>
+        <span class="text-meta text-muted">{props.title}</span>
         <span class="text-sm font-medium">{props.reading.label}</span>
         <Show when={props.reading.detail}>
-          <span class="truncate text-[13px] text-faint">{props.reading.detail}</span>
+          <span class="truncate text-meta text-faint">{props.reading.detail}</span>
         </Show>
       </div>
     </div>

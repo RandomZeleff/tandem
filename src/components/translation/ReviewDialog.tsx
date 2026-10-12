@@ -48,7 +48,7 @@ export default function ReviewDialog(props: { instanceId: string; locale: string
           <input
             type="search"
             autofocus
-            class="field h-9 w-full pl-7 text-[13px]"
+            class="field h-9 w-full pl-7 text-meta"
             placeholder="Chercher un texte, une clé, une traduction…"
             aria-label="Chercher"
             value={query()}
@@ -63,7 +63,7 @@ export default function ReviewDialog(props: { instanceId: string; locale: string
           />
         </div>
         <Select
-          class="h-9 w-48 text-[13px]"
+          class="h-9 w-48 text-meta"
           label="Afficher"
           value={show()}
           options={[
@@ -92,14 +92,14 @@ export default function ReviewDialog(props: { instanceId: string; locale: string
                       <span class="truncate font-mono text-xs text-faint" title={entry.key}>
                         {entry.key}
                       </span>
-                      <span class="text-[13px] break-words whitespace-pre-wrap text-chalk-2 select-text">{entry.english}</span>
+                      <span class="text-meta break-words whitespace-pre-wrap text-chalk-2 select-text">{entry.english}</span>
                     </div>
                     <Show
                       when={!entry.byAuthors}
                       fallback={<span class="self-center text-xs text-diamond">Traduit par les auteurs du mod</span>}
                     >
                       <textarea
-                        class="field min-h-[38px] w-full resize-y py-2 text-[13px] leading-snug"
+                        class="field min-h-[38px] w-full resize-y py-2 text-meta leading-snug"
                         rows={Math.min(5, Math.max(1, Math.ceil(entry.english.length / 60)))}
                         placeholder="Pas encore traduit"
                         aria-label={`Traduction de « ${entry.english.slice(0, 40)} »`}

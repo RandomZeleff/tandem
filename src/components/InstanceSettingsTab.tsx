@@ -28,7 +28,7 @@ const MEMORY_STEPS_GB = [1, 2, 3, 4, 6, 8, 10, 12, 16, 24, 32];
 const longDate = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
 
 /** An instance's own settings: name, icon, Java, JVM arguments, window size, memory. */
-export default function InstanceSettingsTab(props: { instance: Instance; locked: boolean }) {
+export default function InstanceSettingsTab(props: { instance: Instance; locked: boolean; onDelete: () => void }) {
   const [error, setError] = createSignal<string | null>(null);
   const [duplicating, setDuplicating] = createSignal(false);
   const [changingVersion, setChangingVersion] = createSignal(false);
@@ -66,7 +66,7 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
             <NameField instance={props.instance} onSave={(name) => save({ name }, "Instance renommée")} />
             <IconField instance={props.instance} onError={setError} />
             <Row label="Copie" hint="Une nouvelle instance identique : mods, réglages et mondes. Les mods ne prennent pas de place en plus.">
-              <button class="btn px-corners h-9 text-[13px]" disabled={props.locked} onClick={() => setDuplicating(true)}>
+              <button class="btn px-corners h-9 text-meta" disabled={props.locked} onClick={() => setDuplicating(true)}>
                 <Icon name="plus" size={11} />
                 Dupliquer
               </button>
@@ -105,6 +105,15 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
               <dt class="text-muted">Identifiant</dt>
               <dd class="font-mono text-xs">{props.instance.id}</dd>
             </dl>
+          </Section>
+          <Section title="Supprimer l'instance">
+            <div class="flex items-center justify-between gap-4 py-3">
+              <span class="text-meta text-muted">Son dossier entier part avec elle, mondes compris. Une confirmation est demandée.</span>
+              <button class="btn px-corners h-9 shrink-0 text-meta text-redstone-text" disabled={props.locked} onClick={() => props.onDelete()}>
+                <Icon name="trash" size={12} />
+                Supprimer…
+              </button>
+            </div>
           </Section>
         </div>
 
@@ -151,7 +160,7 @@ function Row(props: { label: string; hint?: string; for?: string; children: JSX.
           {props.label}
         </label>
         <Show when={props.hint}>
-          <span class="text-xs text-muted">{props.hint}</span>
+          <span class="text-meta text-muted">{props.hint}</span>
         </Show>
       </div>
       {props.children}
@@ -270,7 +279,7 @@ function JavaField(props: { instance: Instance; onSave: (path: string | null) =>
   const selected = () => java()?.installs.find((j) => j.path === props.instance.javaPath);
   return (
     <Row label="Java" for="instance-java" hint="Automatique convient presque toujours : Tandem télécharge le Java prévu par Mojang.">
-      <Select id="instance-java" class="h-9 w-full text-[13px]" value={props.instance.javaPath ?? ""} options={options()} onChange={(v) => void choose(v)} />
+      <Select id="instance-java" class="h-9 w-full text-meta" value={props.instance.javaPath ?? ""} options={options()} onChange={(v) => void choose(v)} />
       <Show when={selected() && java() && selected()!.major < java()!.required}>
         <Alert tone="warning">
           Minecraft {props.instance.gameVersion} demande Java {java()!.required} : avec Java {selected()!.major}, le jeu risque de ne pas
@@ -292,7 +301,7 @@ function JvmArgsField(props: { instance: Instance; onSave: (args: string | null)
     <Row label="Arguments Java" for="instance-jvm" hint="Pour les joueurs avancés. Tandem ajoute déjà les réglages du ramasse-miettes adaptés.">
       <input
         id="instance-jvm"
-        class="field h-9 w-full font-mono text-[12.5px]"
+        class="field h-9 w-full font-mono text-xs"
         placeholder="ex. -Dfml.readTimeout=180"
         spellcheck={false}
         value={value()}
@@ -329,7 +338,7 @@ function WindowField(props: { instance: Instance; onSave: (size: [number, number
       <div class="flex flex-wrap items-center gap-2">
         <Select
           id="instance-window"
-          class="h-9 w-56 text-[13px]"
+          class="h-9 w-56 text-meta"
           value={preset()}
           options={[
             { value: "", label: "Par défaut" },
@@ -339,11 +348,11 @@ function WindowField(props: { instance: Instance; onSave: (size: [number, number
           onChange={choose}
         />
         <Show when={preset() === "custom"}>
-          <input class="field h-9 w-20 text-center font-mono text-[13px]" inputMode="numeric" aria-label="Largeur" value={width()} onInput={(e) => setWidth(e.currentTarget.value)} />
+          <input class="field h-9 w-20 text-center font-mono text-meta" inputMode="numeric" aria-label="Largeur" value={width()} onInput={(e) => setWidth(e.currentTarget.value)} />
           <span class="text-muted">×</span>
-          <input class="field h-9 w-20 text-center font-mono text-[13px]" inputMode="numeric" aria-label="Hauteur" value={height()} onInput={(e) => setHeight(e.currentTarget.value)} />
+          <input class="field h-9 w-20 text-center font-mono text-meta" inputMode="numeric" aria-label="Hauteur" value={height()} onInput={(e) => setHeight(e.currentTarget.value)} />
           <button
-            class="btn px-corners h-9 text-[13px]"
+            class="btn px-corners h-9 text-meta"
             onClick={async () => {
               if (await props.onSave([Number(width()), Number(height())])) setCustom(false);
             }}
@@ -408,7 +417,7 @@ function MemoryPicker(props: { instance: Instance; onError: (message: string) =>
     <div class="flex flex-col gap-1.5">
       <Select
         label="Mémoire allouée"
-        class="h-9 w-56 text-[13px]"
+        class="h-9 w-56 text-meta"
         value={String(props.instance.memoryMb ?? "auto")}
         options={[
           { value: "auto", label: "Automatique", hint: info() ? formatGigabytes(info()!.autoMb) : undefined },

@@ -51,10 +51,10 @@ export default function VersionsTab(props: {
     <div class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Show when={props.compatibleLabel}>
-          <Checkbox class="mr-2 text-[13px]" checked={onlyCompatible()} label={props.compatibleLabel!} onChange={setOnlyCompatible} />
+          <Checkbox class="mr-2 text-meta" checked={onlyCompatible()} label={props.compatibleLabel!} onChange={setOnlyCompatible} />
         </Show>
         <Select
-          class="w-44 text-[13px]"
+          class="w-44 text-meta"
           label="Type de version"
           value={channel()}
           options={[
@@ -65,7 +65,7 @@ export default function VersionsTab(props: {
           onChange={(v) => setChannel(v as "all" | "beta" | "release")}
         />
         <Select
-          class="w-52 text-[13px]"
+          class="w-52 text-meta"
           label="Version du jeu"
           value={game()}
           options={[
@@ -76,7 +76,7 @@ export default function VersionsTab(props: {
         />
         <Show when={loaders().length > 1}>
           <Select
-            class="w-40 text-[13px]"
+            class="w-40 text-meta"
             label="Loader"
             value={loader()}
             options={[
@@ -185,7 +185,7 @@ function Row(props: {
           <Icon name="caret" size={10} class={`shrink-0 text-muted transition-transform ${props.open ? "" : "-rotate-90"}`} />
           <div class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span class="flex min-w-0 items-center gap-2">
-              <span class="truncate font-mono text-[13px] text-chalk">{v().versionNumber}</span>
+              <span class="truncate font-mono text-meta text-chalk">{v().versionNumber}</span>
               <span class={`shrink-0 text-xs font-semibold ${TYPE_CLASSES[v().versionType] ?? "text-muted"}`}>
                 {versionTypeLabel(v().versionType)}
               </span>
@@ -244,7 +244,7 @@ function Row(props: {
               fallback={<Alert>Impossible de lire le journal : {errorMessage(changelog.error)}</Alert>}
             >
               <Show when={changelog() !== undefined} fallback={<div class="skeleton h-16" />}>
-                <RichText html={changelog()!} instanceId={props.instanceId} class="text-[13px]" />
+                <RichText html={changelog()!} instanceId={props.instanceId} class="text-meta" />
               </Show>
             </Show>
           </Show>

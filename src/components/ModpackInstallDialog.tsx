@@ -39,7 +39,7 @@ export default function ModpackInstallDialog(props: {
       <Show when={!versions.error} fallback={<Alert>Impossible de lire les versions : {errorMessage(versions.error)}</Alert>}>
         <p class="text-chalk-2">Une nouvelle instance est créée avec la bonne version du jeu et du loader.</p>
         <div class="flex flex-col gap-1.5">
-          <label class="text-[13px] font-medium text-muted" for="pack-version">
+          <label class="text-meta font-medium text-muted" for="pack-version">
             Version
           </label>
           <Select
@@ -57,7 +57,7 @@ export default function ModpackInstallDialog(props: {
           />
           <Show when={version()}>
             {(v) => (
-              <span class="text-[13px] text-muted">
+              <span class="text-meta text-muted">
                 {target(v())} · {formatBytes(v().size)} à télécharger, plus ses mods
               </span>
             )}

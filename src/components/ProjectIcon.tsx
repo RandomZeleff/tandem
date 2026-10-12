@@ -7,7 +7,7 @@ export default function ProjectIcon(props: { url: string | null; size: number; s
   const inner = () => props.size - 8;
   return (
     <span class="slot" style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}>
-      <Show when={props.url && !failed()} fallback={<Icon name="grid" size={Math.round(props.size * 0.45)} color="#5A5A5A" />}>
+      <Show when={props.url && !failed()} fallback={<Icon name="grid" size={props.size >= 56 ? 24 : 12} color="var(--color-slate-500)" />}>
         <img
           src={props.url!}
           alt=""

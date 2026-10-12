@@ -192,7 +192,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
   return (
     <div class="flex h-full flex-col gap-4 overflow-y-auto">
       <div class="flex items-center justify-between gap-3">
-        <span class="text-[13px] text-muted">
+        <span class="text-meta text-muted">
           {total() === 0 ? "Aucun contenu installé." : summary()}
           <Show when={props.locked && total() > 0}> · arrête le jeu pour modifier le contenu</Show>
         </span>
@@ -238,7 +238,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
                 const first = () => items().find((i) => i.fileName === c.fileName);
                 const second = () => items().find((i) => i.fileName === c.otherFileName);
                 return (
-                  <li class="flex flex-wrap items-center gap-2 text-[13px] text-chalk-2">
+                  <li class="flex flex-wrap items-center gap-2 text-meta text-chalk-2">
                     <span class="mr-auto">
                       <strong class="text-chalk">{c.name}</strong> et <strong class="text-chalk">{c.otherName}</strong> : le jeu risque de ne pas démarrer.
                     </span>

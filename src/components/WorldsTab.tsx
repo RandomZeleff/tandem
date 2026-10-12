@@ -102,7 +102,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
   return (
     <div class="flex h-full flex-col gap-4 overflow-y-auto">
       <div class="flex items-center justify-between gap-3">
-        <span class="text-[13px] text-muted">
+        <span class="text-meta text-muted">
           {worlds() === undefined
             ? "Chargement…"
             : worlds()!.length === 0
@@ -110,7 +110,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
               : `${worlds()!.length} monde${worlds()!.length > 1 ? "s" : ""}`}
           <Show when={props.locked}> · arrête le jeu pour sauvegarder ou restaurer</Show>
         </span>
-        <label class="flex items-center gap-2.5 text-[13px] text-chalk-2">
+        <label class="flex items-center gap-2.5 text-meta text-chalk-2">
           Sauvegarde automatique après chaque partie
           <Toggle
             checked={auto() ?? true}

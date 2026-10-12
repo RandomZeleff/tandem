@@ -72,7 +72,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
       <section aria-label="En-tête de l'instance" class="relative h-[212px] shrink-0 overflow-hidden bg-[#1E1A33]">
         <InstanceVisual instance={props.instance} fallback="scene" />
         <div class="absolute inset-0 bg-[linear-gradient(0deg,rgb(27_28_31)_0%,rgb(27_28_31/0.75)_35%,transparent_80%)]" />
-        <nav aria-label="Fil d'Ariane" class="absolute top-4 left-7 flex items-center gap-1.5 text-[13px] text-chalk-2 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+        <nav aria-label="Fil d'Ariane" class="absolute top-4 left-7 flex items-center gap-1.5 text-meta text-chalk-2 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
           <button class="font-medium hover:text-chalk focus-visible:text-chalk" onClick={() => navigate({ page: "instances" })}>
             Instances
           </button>
@@ -84,22 +84,13 @@ export default function InstanceDetail(props: { instance: Instance }) {
             <InstanceSlot instance={props.instance} size={84} />
           </span>
           <div class="flex min-w-0 flex-1 flex-col gap-2 pb-0.5">
-            <h1 class="title-display truncate text-[48px] leading-[0.9]">{props.instance.name}</h1>
+            <h1 class="title-display truncate text-title">{props.instance.name}</h1>
             <span class="text-sm text-chalk-2">
               Minecraft {props.instance.gameVersion} · <LoaderTag loader={props.instance.loader} />
               <Show when={props.instance.packVersion}> · version {props.instance.packVersion}</Show>
             </span>
           </div>
           <div class="flex items-center gap-2.5">
-            <button
-              class="btn px-corners-md size-[54px] px-0 text-redstone-text"
-              aria-label="Supprimer l'instance"
-              title="Supprimer l'instance"
-              disabled={state().status !== "idle"}
-              onClick={() => setConfirmDelete(true)}
-            >
-              <Icon name="trash" size={24} />
-            </button>
             <button
               class="btn px-corners-md size-[54px] px-0"
               aria-label="Ouvrir le dossier"
@@ -180,7 +171,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
               <CreatorsTab instance={props.instance} />
             </Match>
             <Match when={tab() === "info"}>
-              <InstanceSettingsTab instance={props.instance} locked={state().status !== "idle"} />
+              <InstanceSettingsTab instance={props.instance} locked={state().status !== "idle"} onDelete={() => setConfirmDelete(true)} />
             </Match>
           </Switch>
         </div>

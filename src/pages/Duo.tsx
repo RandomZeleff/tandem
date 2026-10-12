@@ -38,7 +38,7 @@ import { toast } from "../lib/toast";
 /** Ping and kind of link, as a small chip. */
 function LinkChip(props: { link?: LinkStatus | null }) {
   return (
-    <Show when={props.link} fallback={<span class="chip h-6 px-2 text-[13px] text-muted">connexion…</span>}>
+    <Show when={props.link} fallback={<span class="chip h-6 px-2 text-meta text-muted">connexion…</span>}>
       {(link) => (
         <span
           class="chip h-6 gap-1.5 px-2 font-mono text-xs"
@@ -74,7 +74,7 @@ function DiffNote(props: { diff: InstanceDiff | null | undefined; who: string })
   };
   return (
     <Show when={lines().length > 0}>
-      <p class="text-[13px] text-gold">
+      <p class="text-meta text-gold">
         {props.who} : {lines().join(", ")}. La partie peut refuser la connexion si les mods ne sont pas les mêmes.
       </p>
     </Show>
@@ -225,12 +225,12 @@ function Start() {
             </p>
           </div>
           <label class="flex flex-col gap-1.5">
-            <span class="text-[13px] text-muted">Instance où tu joues</span>
+            <span class="text-meta text-muted">Instance où tu joues</span>
             <Select class="h-10 w-full text-sm" value={hostInstance()} options={instanceOptions()} onChange={setHostInstance} />
           </label>
           <Show when={quickPlay() && !running() && (worlds()?.length ?? 0) > 0}>
             <label class="flex flex-col gap-1.5">
-              <span class="text-[13px] text-muted">Monde</span>
+              <span class="text-meta text-muted">Monde</span>
               <Select class="h-10 w-full text-sm" value={pickedWorld()?.folder ?? "menu"} options={worldOptions()} onChange={setWorld} />
             </label>
           </Show>
@@ -238,7 +238,7 @@ function Start() {
             <div class="flex items-start justify-between gap-4">
               <div class="flex min-w-0 flex-col gap-0.5">
                 <span class="text-sm font-semibold">Monde à part (bêta)</span>
-                <span class="text-[13px] text-muted">
+                <span class="text-meta text-muted">
                   Ton monde tourne dans son propre programme : si ton jeu plante, tes amis continuent, et plus de limite de 8
                   joueurs. Demande 2 à 4 Go de mémoire en plus.
                 </span>
@@ -246,7 +246,7 @@ function Start() {
               <Toggle checked={separate()} label="Monde à part" onChange={setSeparate} />
             </div>
           </Show>
-          <button class="btn btn-light px-corners-md mt-auto h-12 text-[15px]" disabled={busy() !== null || !hostInstance()} onClick={() => void host()}>
+          <button class="btn btn-light px-corners-md mt-auto h-12 text-base" disabled={busy() !== null || !hostInstance()} onClick={() => void host()}>
             <Icon name="invite" size={12} />
             {busy() === "host"
               ? worldServer() === "preparing"
@@ -259,7 +259,7 @@ function Start() {
                 : "Inviter et lancer le jeu"}
           </button>
           <Show when={busy() === "host" && worldServer() === "starting"}>
-            <span class="text-center text-[13px] text-muted">Une à deux minutes la première fois, le temps de charger les mods.</span>
+            <span class="text-center text-meta text-muted">Une à deux minutes la première fois, le temps de charger les mods.</span>
           </Show>
         </section>
 
@@ -293,7 +293,7 @@ function Start() {
             />
             <button
               type="submit"
-              class="btn btn-primary px-corners-md h-12 text-[15px]"
+              class="btn btn-primary px-corners-md h-12 text-base"
               disabled={busy() !== null || code().replace("-", "").length !== 8}
             >
               {busy() === "join" ? "Connexion…" : "Rejoindre"}
@@ -301,7 +301,7 @@ function Start() {
           </form>
         </section>
       </div>
-      <p class="text-[13px] text-muted">
+      <p class="text-meta text-muted">
         Aucun serveur à louer ni à configurer : vos deux PC se parlent directement quand c'est possible, sinon par un
         relais chiffré gratuit. Il faut la même version de Minecraft et les mêmes mods des deux côtés.
       </p>
@@ -327,7 +327,7 @@ function Hosting() {
       <section class="panel flex flex-col items-center gap-4 p-6 text-center">
         <h2 class="text-xl font-semibold">Ton code d'invitation</h2>
         <button
-          class="slot px-7 py-5 font-mono text-[40px] leading-none font-bold tracking-[0.18em] text-chalk select-all hover:text-xp-text focus-visible:text-xp-text"
+          class="slot px-7 py-5 font-mono text-4xl leading-none font-bold tracking-[0.18em] text-chalk select-all hover:text-xp-text focus-visible:text-xp-text"
           title="Copier le code"
           onClick={() => void copy()}
         >
@@ -353,7 +353,7 @@ function Hosting() {
         <Show when={host().separate}>
           <ol class="panel flex flex-col divide-y divide-line">
             <Step done={worldServer() !== "stopped"} current={false} title="Ton monde tourne à part">
-              <span class="text-[13px] text-muted">
+              <span class="text-meta text-muted">
                 {host().world?.motd} : il reste ouvert même si tu fermes ton jeu, tant que l'invitation est active.
               </span>
             </Step>
@@ -369,7 +369,7 @@ function Hosting() {
             </Step>
             <Step done={host().guests.length > 0} current={host().guests.length === 0} title="Tes amis rejoignent avec le code">
               <Show when={host().guests.length === 0}>
-                <span class="text-[13px] text-muted">Leur jeu se lance directement dans ton monde.</span>
+                <span class="text-meta text-muted">Leur jeu se lance directement dans ton monde.</span>
               </Show>
             </Step>
           </ol>
@@ -387,7 +387,7 @@ function Hosting() {
             <Show
               when={host().world}
               fallback={
-                <div class="flex flex-col gap-1.5 text-[13px]">
+                <div class="flex flex-col gap-1.5 text-meta">
                   <Show when={playing()}>
                     <span class="font-semibold text-gold">Tu es dans ton monde : il ne reste que cette étape.</span>
                   </Show>
@@ -406,12 +406,12 @@ function Hosting() {
                 </div>
               }
             >
-              {(world) => <span class="text-[13px] text-xp-text">Monde ouvert : {world().motd}</span>}
+              {(world) => <span class="text-meta text-xp-text">Monde ouvert : {world().motd}</span>}
             </Show>
           </Step>
           <Step done={host().guests.length > 0} current={!!host().world && host().guests.length === 0} title="Tes amis rejoignent avec le code">
             <Show when={host().guests.length === 0}>
-              <span class="text-[13px] text-muted">Leur jeu se lance directement dans ton monde.</span>
+              <span class="text-meta text-muted">Leur jeu se lance directement dans ton monde.</span>
             </Show>
           </Step>
         </ol>
@@ -493,7 +493,7 @@ function CopyOffer(props: { hostPlayer: string }) {
           <div class="flex items-center gap-4">
             <div class="flex min-w-0 flex-1 flex-col gap-0.5">
               <span class="text-sm font-semibold">Jouer avec les mêmes mods que {props.hostPlayer}</span>
-              <span class="text-[13px] text-chalk-2">
+              <span class="text-meta text-chalk-2">
                 Tandem prépare une instance comme la sienne : son modpack, ses mods et ses réglages, depuis Modrinth ou
                 envoyés par {props.hostPlayer}. Tes instances ne changent pas.
               </span>
@@ -517,7 +517,7 @@ function CopyOffer(props: { hostPlayer: string }) {
         </div>
       </Show>
       <Show when={error()}>
-        <p class="text-[13px] text-redstone-text">{error()}</p>
+        <p class="text-meta text-redstone-text">{error()}</p>
       </Show>
     </div>
   );
@@ -534,7 +534,7 @@ function Unavailable(props: { files: string[]; hostPlayer: string }) {
     return more > 0 ? `${shown.join(", ")} et ${more} autre${more > 1 ? "s" : ""}` : shown.join(", ");
   };
   return (
-    <p class="text-[13px] text-gold" title={props.files.join("\n")}>
+    <p class="text-meta text-gold" title={props.files.join("\n")}>
       {props.files.length === 1 ? "Un fichier n'a pas pu être récupéré" : `${props.files.length} fichiers n'ont pas pu être récupérés`} :{" "}
       {names()}. Réessaie « Préparer l'instance », ou demande à {props.hostPlayer} de mettre Tandem à jour.
     </p>
@@ -609,12 +609,12 @@ function Joined() {
               <InstanceSlot instance={i()} size={48} />
               <div class="flex min-w-0 flex-1 flex-col">
                 <span class="truncate font-semibold">{i().name}</span>
-                <span class="flex items-center gap-1.5 text-[13px] text-muted">
+                <span class="flex items-center gap-1.5 text-meta text-muted">
                   Minecraft {i().gameVersion} · <LoaderTag loader={i().loader} />
                 </span>
               </div>
               <button
-                class="btn btn-primary px-corners-md h-12 px-6 text-[15px]"
+                class="btn btn-primary px-corners-md h-12 px-6 text-base"
                 disabled={!open() || state()?.status !== "idle"}
                 onClick={playWithFriend}
                 title={open() ? "Lance le jeu directement dans le monde de ton ami" : "Attends que ton ami ouvre son monde"}
@@ -634,7 +634,7 @@ function Joined() {
         </Show>
         <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
           <label class="flex min-w-[280px] flex-1 items-center gap-3">
-            <span class="shrink-0 text-[13px] text-muted">{instance() ? "Autre instance" : "Instance"}</span>
+            <span class="shrink-0 text-meta text-muted">{instance() ? "Autre instance" : "Instance"}</span>
             <Select
               class="h-9 w-full text-sm"
               value={guest().instanceId ?? ""}
@@ -646,13 +646,13 @@ function Joined() {
             />
           </label>
           <Checkbox
-            class="text-[13px] text-chalk-2"
+            class="text-meta text-chalk-2"
             checked={autoLaunch()}
             label="Lancer le jeu dès que le monde est ouvert"
             onChange={setAutoLaunch}
           />
         </div>
-        <p class="text-[13px] text-muted">
+        <p class="text-meta text-muted">
           Déjà en jeu ? La partie apparaît aussi dans Multijoueur, sous « Parties en réseau local ».
         </p>
       </section>
@@ -673,12 +673,12 @@ export default function Duo() {
     <div class="mx-auto flex max-w-[1400px] flex-col gap-6">
       <header class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div class="flex flex-col gap-1.5">
-          <h1 class="title-display text-[44px] leading-[0.9]">Jouer ensemble</h1>
+          <h1 class="title-display text-title">Jouer ensemble</h1>
           <p class="text-base text-chalk-2">Ton monde, tes potes. Zéro serveur.</p>
         </div>
         <Show when={activeAccount()}>
           {(account) => (
-            <span class="flex items-center gap-2.5 rounded-md bg-slate-750 py-1.5 pr-3.5 pl-1.5 text-[13px] text-chalk-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+            <span class="flex items-center gap-2.5 rounded-md bg-slate-750 py-1.5 pr-3.5 pl-1.5 text-meta text-chalk-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
               <span class="slot size-7">
                 <AccountAvatar account={account()} size={24} />
               </span>
