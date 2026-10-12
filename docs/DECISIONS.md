@@ -59,7 +59,7 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Pixel uniquement pour titres, étiquettes et icônes (Pixelify Sans) ; texte en Geist, données en Geist Mono. Polices embarquées via Fontsource (aucun appel réseau).
 - Rôles des couleurs : Herbe = action principale, XP = progression, Or = social/étiquettes, Améthyste = IA et snapshots, Redstone = danger.
 - Référence : planche « Fondations » du canevas de design ; tokens dans `src/index.css` (`@theme`) et classes `.btn*`, `.panel`, `.slot`, `.field`, `.px-corners*`.
-- Statut : validé
+- Statut : remplacée par D50 (2026-10-12)
 
 ### D12 · 2026-10-08 · Fabric / Quilt : profil fusionné dans le JSON vanilla, version figée
 - Les profils publiés par meta.fabricmc.net / meta.quiltmc.org (`inheritsFrom`) sont appliqués sur le JSON vanilla : `mainClass` remplacée, arguments ajoutés, libraries du loader en tête du classpath et prioritaires sur une library vanilla de même `group:artifact[:classifier]`.
@@ -334,4 +334,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Icônes en pixels affichées à 12 ou 24 px seulement (pixels entiers).
 - Page de démonstration hors app : `pnpm dev` puis `/?fondations`.
 - D11 reste en vigueur pour ce que les étapes suivantes n'ont pas encore refait ; une décision finale la remplacera à l'étape 8 avec `DESIGN.md`.
+- Statut : validé
+
+### D50 · 2026-10-12 · Système visuel « le Minecraft moderne » (remplace D11)
+- La refonte de la Phase 7 est terminée ; le système est décrit dans [`DESIGN.md`](../DESIGN.md), écrit à partir de ce qui est construit (jetons dans `src/index.css`, `.impeccable/design.json` en est la version lisible par l'outil de design).
+- Repris de D49 : surfaces graphite en paliers, boutons pleins qui s'enfoncent, vert pour l'action principale, coins presque carrés, Geist partout et Jersey 10 seulement pour les grands titres.
+- Ajouté pendant la refonte : jetons de texte `meta` (13), `title` (44, titres de page) et `hero` (64, accueil) ; un seul visuel d'instance partout (image mise en avant du modpack, sinon dernière capture, sinon un ciel dessiné de jour, de couchant ou de nuit selon l'instance) ; jamais d'étiquette au-dessus d'un titre ; l'or seulement pour les avertissements ; « Supprimer l'instance » dans l'onglet Réglages, plus dans l'en-tête ; pixel art (icônes, blocs, têtes, loaders) seulement à des tailles entières.
+- Revue indépendante (outil impeccable) : 8 corrections demandées, toutes faites, puis 2 retouches.
+- Page de démonstration des composants : `pnpm dev` puis `/?fondations`.
 - Statut : validé

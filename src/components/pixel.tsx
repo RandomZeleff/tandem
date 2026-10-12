@@ -168,8 +168,8 @@ const LOADER_PATHS = Object.fromEntries(
 export function LoaderIcon(props: { loader: Loader; size?: number; class?: string }) {
   return (
     <svg
-      width={props.size ?? 14}
-      height={props.size ?? 14}
+      width={iconSize(props.size)}
+      height={iconSize(props.size)}
       viewBox="0 0 12 12"
       shape-rendering="crispEdges"
       aria-hidden="true"

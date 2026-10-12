@@ -119,7 +119,7 @@ function AccountCard() {
                       class="row flex w-full items-center gap-2.5 px-2 py-1.5 text-left text-sm"
                       onClick={() => void use(account.id)}
                     >
-                      <AccountAvatar account={account} size={22} />
+                      <AccountAvatar account={account} size={24} />
                       <span class="flex min-w-0 flex-1 flex-col">
                         <span class="truncate">{account.username}</span>
                         <span class="text-xs text-muted">

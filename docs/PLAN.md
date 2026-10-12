@@ -231,7 +231,7 @@ Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne »
 - [x] 5. Instances et fiche d'instance (tous les onglets)
 - [x] 6. Découvrir et fiches de projet
 - [x] 7. Réglages, Comptes, fenêtres, notifications, états vides et d'erreur
-- [ ] 8. Finition : revue complète, `DESIGN.md`, décision qui remplace D11
+- [x] 8. Finition : revue complète, `DESIGN.md`, décision qui remplace D11
 
 Ensuite : retour aux petits ajouts.
 
@@ -523,3 +523,9 @@ Ensuite : retour aux petits ajouts.
 - Les notifications Windows restent celles du système (rien à styler).
 - Vérifié avec le faux backend à 1 280 × 800 : Réglages, fenêtre Nouvelle instance, fenêtre Comptes.
 - Prochaine étape : étape 8 (finition : revue complète, `DESIGN.md`, décision qui remplace D11).
+
+### 2026-10-12 (refonte, étape 8 : finition, Phase 7 terminée)
+- Revue complète par un relecteur indépendant (outil impeccable) sur les captures de toutes les pages : 8 corrections, toutes faites : tailles de texte réduites à des jetons (`meta` 13, `title` 44, `hero` 64), ciel dessiné des cartes refait (puis varié jour / couchant / nuit selon l'instance), plus d'étiquette au-dessus du titre d'une fiche de projet, « Supprimer » sorti de l'en-tête vers l'onglet Réglages, icône de secours visible, point « partie en cours » en vert, résultats de Découvrir en une seule liste. Icônes de loader et têtes de compte ramenées à des tailles entières.
+- `DESIGN.md` écrit à partir du code livré, D50 remplace D11.
+- Vérifié : TypeScript, détecteur sur tout `src`, captures avec le faux backend. Pas encore vu dans la vraie app (`pnpm tauri dev`) ni sur de vrais visuels Modrinth.
+- Prochaine étape : retour aux petits ajouts ; test de la refonte par Zeleff dans la vraie app.
