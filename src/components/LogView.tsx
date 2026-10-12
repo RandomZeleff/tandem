@@ -48,7 +48,7 @@ export default function LogView() {
       </div>
       <div
         ref={scroller}
-        class="min-h-0 flex-1 overflow-y-auto bg-slate-850 px-4 py-3 font-mono text-xs leading-5 select-text shadow-[inset_0_0_0_1px_var(--color-line),inset_0_3px_0_rgb(0_0_0/0.4)]"
+        class="min-h-0 flex-1 overflow-y-auto rounded-md bg-slate-900 px-4 py-3 font-mono text-xs leading-5 select-text shadow-[inset_0_0_0_1px_rgb(0_0_0/0.35),inset_0_2px_0_rgb(0_0_0/0.3)]"
         onScroll={(e) => {
           const el = e.currentTarget;
           stickToBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;

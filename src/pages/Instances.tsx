@@ -39,11 +39,11 @@ export default function Instances() {
     );
 
   return (
-    <div class="flex flex-col gap-5">
+    <div class="mx-auto flex max-w-[1400px] flex-col gap-5">
       <div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div class="flex min-w-0 flex-col gap-1">
-          <h1 class="pixel-shadow font-pixel text-3xl font-bold">Instances</h1>
-          <span class="text-[13px] text-muted">Chaque instance a son propre dossier, ses mondes et ses réglages.</span>
+        <div class="flex min-w-0 flex-col gap-1.5">
+          <h1 class="title-display text-[44px] leading-[0.9]">Instances</h1>
+          <span class="text-base text-chalk-2">Chaque instance a son propre dossier, ses mondes et ses réglages.</span>
         </div>
         <div class="flex gap-2 whitespace-nowrap">
           <button class="btn px-corners h-10 px-4" onClick={() => setLauncherImport(true)} title="Modrinth App, Prism, app CurseForge, launcher officiel… (fichiers déjà sur ce PC)">
@@ -81,13 +81,13 @@ export default function Instances() {
         fallback={
           <div class="flex flex-col items-center gap-3 py-20 text-center">
             <p class="text-chalk-2">Aucune instance ici.</p>
-            <button class="btn px-corners" onClick={() => setNewInstanceDialog({})}>
+            <button class="btn btn-primary px-corners" onClick={() => setNewInstanceDialog({})}>
               Créer une instance
             </button>
           </div>
         }
       >
-        <div {...tabPanel("instances-filter", filter())} class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3.5">
+        <div {...tabPanel("instances-filter", filter())} class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
           <For each={visible()}>{(instance) => <InstanceCard instance={instance} />}</For>
         </div>
       </Show>

@@ -819,7 +819,7 @@ function Person(props: { name: string; avatar: string | null; role: string; onCl
   return (
     <li>
       <button class="group flex w-full items-center gap-2.5 py-1 text-left" onClick={props.onClick} title={`Profil de ${props.name} sur Modrinth`}>
-        <span class="flex size-7 shrink-0 items-center justify-center overflow-hidden bg-slate-900 shadow-[inset_0_0_0_1px_var(--color-line)]">
+        <span class="flex size-7 shrink-0 items-center justify-center overflow-hidden bg-slate-900 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
           <Show when={props.avatar && !failed()} fallback={<Icon name="user" size={12} color="var(--color-faint)" />}>
             <img src={props.avatar!} alt="" loading="lazy" class="size-full object-cover" onError={() => setFailed(true)} />
           </Show>

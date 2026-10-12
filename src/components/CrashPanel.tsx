@@ -43,7 +43,7 @@ export default function CrashPanel(props: {
   }
 
   return (
-    <div class="panel px-corners-md flex flex-col gap-3 p-4 shadow-[inset_0_0_0_1px_var(--color-gold-deep)]">
+    <div class="panel px-corners-md flex flex-col gap-3 p-4 panel-warning">
       <div class="flex items-start justify-between gap-4">
         <div class="flex flex-col gap-1">
           <span class="text-sm font-medium text-gold">Le jeu a planté (code {props.exit.code ?? "?"})</span>

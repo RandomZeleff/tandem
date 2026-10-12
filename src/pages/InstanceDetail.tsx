@@ -13,7 +13,7 @@ import InstanceSettingsTab from "../components/InstanceSettingsTab";
 import PackUpdateBanner from "../components/PackUpdate";
 import PlayButton from "../components/PlayButton";
 import WorldsTab from "../components/WorldsTab";
-import Scene from "../components/Scene";
+import InstanceVisual from "../components/InstanceVisual";
 import ScreenshotsTab from "../components/ScreenshotsTab";
 import SupportReminder from "../components/SupportReminder";
 import Tabs, { tabPanel } from "../components/Tabs";
@@ -69,45 +69,44 @@ export default function InstanceDetail(props: { instance: Instance }) {
 
   return (
     <div class="flex h-full flex-col">
-      <section aria-label="En-tête de l'instance" class="relative h-[196px] shrink-0 bg-[#3E6FB0]">
-        <Scene variant="day" />
-        <div class="absolute inset-0 bg-[linear-gradient(180deg,transparent_30%,rgb(17_19_22/0.9)_100%)]" />
-        <div class="absolute right-7 bottom-5 left-7 flex items-end gap-[18px]">
-          <InstanceSlot
-            instance={props.instance}
-            size={84}
-            style={{ "box-shadow": "inset 3px 3px 0 #373737, inset -3px -3px 0 #fff, 0 0 0 4px var(--color-slate-800)" }}
-          />
-          <div class="flex min-w-0 flex-1 flex-col gap-2">
-            <nav aria-label="Fil d'Ariane" class="text-xs text-chalk-3">
-              <button class="hover:text-chalk" onClick={() => navigate({ page: "instances" })}>
-                Instances
-              </button>
-              <span class="px-1.5 text-faint">/</span>
-              {props.instance.name}
-            </nav>
-            <h1 class="truncate font-pixel text-[38px] leading-none font-bold [text-shadow:3px_3px_0_rgb(0_0_0/0.5)]">
-              {props.instance.name}
-            </h1>
-            <span class="text-[13px] text-chalk-2">
-              Minecraft {props.instance.gameVersion} · <LoaderTag loader={props.instance.loader} size={13} />
+      <section aria-label="En-tête de l'instance" class="relative h-[212px] shrink-0 overflow-hidden bg-[#1E1A33]">
+        <InstanceVisual instance={props.instance} fallback="scene" />
+        <div class="absolute inset-0 bg-[linear-gradient(0deg,rgb(27_28_31)_0%,rgb(27_28_31/0.75)_35%,transparent_80%)]" />
+        <nav aria-label="Fil d'Ariane" class="absolute top-4 left-7 flex items-center gap-1.5 text-[13px] text-chalk-2 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+          <button class="font-medium hover:text-chalk focus-visible:text-chalk" onClick={() => navigate({ page: "instances" })}>
+            Instances
+          </button>
+          <span class="text-chalk-3/70">/</span>
+          <span class="max-w-[40ch] truncate">{props.instance.name}</span>
+        </nav>
+        <div class="absolute right-7 bottom-5 left-7 flex items-end gap-5">
+          <span class="rounded-md shadow-[0_0_0_3px_rgb(27_28_31),0_6px_16px_rgb(0_0_0/0.4)]">
+            <InstanceSlot instance={props.instance} size={84} />
+          </span>
+          <div class="flex min-w-0 flex-1 flex-col gap-2 pb-0.5">
+            <h1 class="title-display truncate text-[48px] leading-[0.9]">{props.instance.name}</h1>
+            <span class="text-sm text-chalk-2">
+              Minecraft {props.instance.gameVersion} · <LoaderTag loader={props.instance.loader} />
+              <Show when={props.instance.packVersion}> · version {props.instance.packVersion}</Show>
             </span>
           </div>
-          <div class="flex items-stretch gap-2">
+          <div class="flex items-center gap-2.5">
             <button
-              class="btn px-corners-md h-[50px] w-12 px-0 text-redstone-text"
+              class="btn px-corners-md size-[54px] px-0 text-redstone-text"
               aria-label="Supprimer l'instance"
+              title="Supprimer l'instance"
               disabled={state().status !== "idle"}
               onClick={() => setConfirmDelete(true)}
             >
-              <Icon name="trash" size={16} />
+              <Icon name="trash" size={24} />
             </button>
             <button
-              class="btn px-corners-md h-[50px] w-12 bg-slate-700/90 px-0"
+              class="btn px-corners-md size-[54px] px-0"
               aria-label="Ouvrir le dossier"
+              title="Ouvrir le dossier"
               onClick={() => api.openInstanceFolder(props.instance.id).catch((err) => setError(errorMessage(err)))}
             >
-              <Icon name="folder" size={16} />
+              <Icon name="folder" size={24} />
             </button>
             <PlayButton id={props.instance.id} size="lg" name={props.instance.name} />
           </div>
@@ -117,7 +116,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
       <Tabs
         label="Sections"
         idPrefix="instance"
-        class="shrink-0 px-6 shadow-[inset_0_-1px_0_var(--color-line)]"
+        class="shrink-0 px-6 shadow-[inset_0_-1px_0_var(--color-divider)]"
         items={tabs}
         value={tab()}
         onChange={setTab}

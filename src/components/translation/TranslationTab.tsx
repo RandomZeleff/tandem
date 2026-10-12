@@ -363,7 +363,7 @@ function CoverageBar(props: { counts: TranslationCounts }) {
   const part = (n: number) => `${props.counts.total ? (n / props.counts.total) * 100 : 0}%`;
   return (
     <div
-      class="flex h-3 w-full overflow-hidden bg-slate-900 shadow-[inset_0_0_0_1px_var(--color-line)]"
+      class="flex h-3 w-full overflow-hidden bg-slate-900 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]"
       role="img"
       aria-label={`${props.counts.existing} traduits par les auteurs, ${props.counts.translated} par Tandem, ${props.counts.missing} à traduire`}
     >

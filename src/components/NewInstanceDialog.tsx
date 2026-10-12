@@ -116,7 +116,7 @@ export default function NewInstanceDialog(props: Props) {
           <div
             role="radiogroup"
             aria-labelledby="instance-loader"
-            class="flex w-fit gap-0.5 bg-slate-900 p-[3px] shadow-[inset_0_0_0_1px_var(--color-line)]"
+            class="flex w-fit gap-0.5 bg-slate-900 p-[3px] rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]"
           >
             <For each={LOADERS}>
               {(l) => (

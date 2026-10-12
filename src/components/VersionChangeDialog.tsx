@@ -142,7 +142,7 @@ export default function VersionChangeDialog(props: { instance: Instance; onClose
         </div>
       </Show>
 
-      <div class="min-h-24 bg-slate-800 p-3.5 text-[13px] shadow-[inset_0_0_0_1px_var(--color-line)]">
+      <div class="min-h-24 bg-slate-800 p-3.5 text-[13px] rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
         <Show
           when={!unchanged()}
           fallback={<p class="text-muted">Choisis une autre version de Minecraft ou un autre loader.</p>}

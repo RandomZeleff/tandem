@@ -58,7 +58,7 @@ export default function MissingDepsPanel(props: { instanceId: string }) {
 
   return (
     <Show when={missing().length > 0}>
-      <div class="panel px-corners-md flex flex-col gap-3 p-4 shadow-[inset_0_0_0_1px_var(--color-gold-deep)]">
+      <div class="panel px-corners-md flex flex-col gap-3 p-4 panel-warning">
         <div class="flex flex-col gap-1">
           <span class="text-sm font-medium text-gold">Le jeu ne peut pas démarrer : il manque des mods</span>
           <span class="text-sm text-chalk-2">

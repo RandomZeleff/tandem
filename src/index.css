@@ -181,6 +181,28 @@ button {
       0 1px 2px rgb(0 0 0 / 0.35);
   }
 
+  /* Panel that needs attention (crash, missing mods, update): a gold edge, no side stripe. */
+  .panel-warning {
+    background: color-mix(in srgb, var(--color-slate-700) 92%, var(--color-gold));
+    box-shadow:
+      inset 0 0 0 1px rgb(242 199 68 / 0.32),
+      0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
+  .panel-danger {
+    background: color-mix(in srgb, var(--color-slate-700) 92%, var(--color-redstone));
+    box-shadow:
+      inset 0 0 0 1px rgb(217 59 46 / 0.4),
+      0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
+  .panel-success {
+    background: color-mix(in srgb, var(--color-slate-700) 93%, var(--color-grass-light));
+    box-shadow:
+      inset 0 0 0 1px rgb(93 187 63 / 0.35),
+      0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
   .panel-title {
     font-size: 16px;
     line-height: 22px;

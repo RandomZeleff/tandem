@@ -99,7 +99,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
             {(shot, index) => (
               <li>
                 <button
-                  class="group relative block aspect-video w-full overflow-hidden bg-slate-700 shadow-[inset_0_0_0_1px_var(--color-line)] focus-visible:brightness-110"
+                  class="group relative block aspect-video w-full overflow-hidden bg-slate-700 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)] focus-visible:brightness-110"
                   aria-label={`Capture du ${dateTime(shot.takenAt)}`}
                   onClick={() => setViewing(index())}
                 >

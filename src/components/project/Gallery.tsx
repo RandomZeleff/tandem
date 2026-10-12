@@ -23,7 +23,7 @@ export default function Gallery(props: { images: GalleryImage[] }) {
                   aria-label={image.title ?? `Image ${index() + 1}`}
                   onClick={() => setViewing(index())}
                 >
-                  <span class="block aspect-video w-full overflow-hidden bg-slate-900 shadow-[inset_0_0_0_1px_var(--color-line)]">
+                  <span class="block aspect-video w-full overflow-hidden bg-slate-900 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
                     <img
                       src={image.thumbUrl}
                       alt=""

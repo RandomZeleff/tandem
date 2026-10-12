@@ -303,7 +303,7 @@ export default function AccountsDialog() {
           <Match when={login().kind === "error" && login()}>
             {(state) => (
               <div class="flex flex-col gap-4">
-                <div class="flex gap-3 bg-danger p-4 text-sm text-redstone-text shadow-[inset_0_0_0_1px_var(--color-danger-line)]">
+                <div class="flex gap-3 bg-danger p-4 text-sm text-redstone-text panel-danger">
                   <Icon name="close" size={14} class="mt-0.5 shrink-0" />
                   <p>
                     <Linked text={(state() as { message: string }).message} />

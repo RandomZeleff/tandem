@@ -1,5 +1,6 @@
 import { lazy, Match, onCleanup, onMount, Show, Switch } from "solid-js";
 import AccountsDialog from "./components/accounts/AccountsDialog";
+import { forgetInstancePictures } from "./components/InstanceVisual";
 import NewInstanceDialog from "./components/NewInstanceDialog";
 import RosettaDialog from "./components/RosettaDialog";
 import Sidebar from "./components/Sidebar";
@@ -55,7 +56,11 @@ function App() {
     void startGameEvents();
     void startTranslationEvents();
     void startDuoEvents();
-    onGamePlayed(() => void refetchInstances());
+    onGamePlayed(() => {
+      // A new screenshot may now be the instance's picture.
+      forgetInstancePictures();
+      void refetchInstances();
+    });
 
     // Back / Forward: mouse side buttons, Alt+arrows, and Cmd+[ / Cmd+] on macOS.
     const onMouse = (e: MouseEvent) => {

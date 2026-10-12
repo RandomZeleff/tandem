@@ -24,7 +24,7 @@ export default function PackUpdateBanner(props: { instance: Instance; locked: bo
   return (
     <>
       <Show when={latest() && !dismissed()}>
-        <div class="panel px-corners-md flex items-center gap-4 p-3.5 shadow-[inset_0_0_0_1px_var(--color-gold-deep)]">
+        <div class="panel px-corners-md flex items-center gap-4 p-3.5 panel-warning">
           <Icon name="sparkle" size={14} color="var(--color-gold)" />
           <div class="flex min-w-0 flex-1 flex-col">
             <span class="text-sm">
@@ -115,7 +115,7 @@ function UpdateDialog(props: { instance: Instance; versions: PackVersion[]; onCl
         />
       </div>
 
-      <div class="max-h-56 overflow-y-auto bg-slate-800 p-3.5 shadow-[inset_0_0_0_1px_var(--color-line)]">
+      <div class="max-h-56 overflow-y-auto bg-slate-800 p-3.5 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
         <Show when={changelog() !== undefined} fallback={<div class="skeleton h-16" />}>
           <Show when={changelog()} fallback={<p class="text-sm text-muted">Pas de journal des changements pour cette version.</p>}>
             <RichText html={changelog()!} class="text-[13px]" />

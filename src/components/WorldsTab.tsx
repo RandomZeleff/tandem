@@ -247,7 +247,7 @@ function WorldCard(props: {
   return (
     <li class="panel px-corners-md flex flex-col">
       <div class="flex items-center gap-3.5 p-3.5">
-        <Show when={props.world.icon} fallback={<div class="size-12 shrink-0 bg-slate-700 shadow-[inset_0_0_0_1px_var(--color-line)]" />}>
+        <Show when={props.world.icon} fallback={<div class="size-12 shrink-0 bg-slate-700 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]" />}>
           {(icon) => <img src={icon()} alt="" class="size-12 shrink-0 [image-rendering:pixelated]" />}
         </Show>
         <div class="flex min-w-0 flex-1 flex-col gap-0.5">

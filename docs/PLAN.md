@@ -228,7 +228,7 @@ Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne »
 - [x] 2. Cadre de l'app (barre de titre, navigation, compte)
 - [x] 3. Accueil (reprendre sa partie en un clic, inviter, rejoindre, grand visuel)
 - [x] 4. Jouer ensemble
-- [ ] 5. Instances et fiche d'instance (tous les onglets)
+- [x] 5. Instances et fiche d'instance (tous les onglets)
 - [ ] 6. Découvrir et fiches de projet
 - [ ] 7. Réglages, Comptes, fenêtres, notifications, états vides et d'erreur
 - [ ] 8. Finition : revue complète, `DESIGN.md`, décision qui remplace D11
@@ -503,3 +503,11 @@ Ensuite : retour aux petits ajouts.
 - Plus de textes explicatifs en 12 px : 13 px partout sur la page.
 - Vérifié avec le faux backend à 1 280 × 800 : compte Microsoft simulé, invitation, arrivée d'un ami (pastille sur « Jouer ensemble » depuis l'accueil, effacée à l'ouverture de la page, « 2 amis connectés » sur l'accueil), puis côté invité avec un code.
 - Prochaine étape : étape 5 (Instances et fiche d'instance).
+
+### 2026-10-12 (refonte, étape 5 : Instances et fiche d'instance)
+- Fait : un seul visuel d'instance partout (`InstanceVisual`) : image mise en avant du modpack, sinon dernière capture, sinon dessin ; toujours recadré au même format, en fondu, une recherche par instance et par session (effacée quand une partie se termine).
+- Cartes d'instance avec ce visuel (vignette), icône en bas à gauche, nom, version, date ; plus de biseau blanc d'inventaire. Page Instances : titre en Jersey 10, grille plus aérée.
+- Fiche : en-tête avec le visuel, fil d'Ariane en haut, nom en Jersey 10, version du pack s'il y en a une, boutons carrés (supprimer en rouge discret, dossier) et Jouer.
+- Onglets : panneaux d'alerte, de conflit et de mises à jour au même style (bord doré, rouge ou vert, sans liseré latéral), console et journaux dans un creux arrondi, petits cadres aux coins presque carrés. Icônes de blocs à un nombre entier de pixels.
+- Vérifié avec le faux backend à 1 280 × 800 : page Instances, fiche et ses sept onglets.
+- Prochaine étape : étape 6 (Découvrir et fiches de projet).

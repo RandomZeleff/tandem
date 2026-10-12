@@ -1,37 +1,21 @@
 import { createResource, createSignal, For, Show } from "solid-js";
 import Alert from "../components/Alert";
 import InstanceCard from "../components/InstanceCard";
+import InstanceVisual from "../components/InstanceVisual";
 import { Icon, LoaderTag } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
 import { openAccounts } from "../lib/accounts";
-import { api, errorMessage, type Instance, screenshotUrl } from "../lib/api";
+import { api, errorMessage, type Instance } from "../lib/api";
 import { duo, formatCode, joinFriend } from "../lib/duo";
 import { formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { activeAccount, instances, navigate, setNewInstanceDialog } from "../lib/store";
 
-/**
- * The big picture behind the instance: the modpack's featured gallery image, otherwise the
- * player's latest screenshot in it; null leaves the drawn sky.
- */
-async function heroImage(instance: Instance): Promise<string | null> {
-  if (instance.packProjectId) {
-    const project = await api.projectDetails(instance.packProjectId).catch(() => null);
-    // The backend sorts the gallery with the featured image first.
-    if (project?.gallery[0]) return project.gallery[0].url;
-  }
-  const shots = await api.listScreenshots(instance.id).catch(() => []);
-  const latest = shots.reduce<(typeof shots)[number] | null>((a, b) => (!a || b.takenAt > a.takenAt ? b : a), null);
-  return latest ? screenshotUrl(instance.id, latest) : null;
-}
-
 function Hero(props: { instance: Instance }) {
   const state = () => gameState(props.instance.id);
   const exit = () => state().lastExit;
   const [error, setError] = createSignal<string | null>(null);
-  const [image] = createResource(() => props.instance, heroImage);
-  const [shown, setShown] = createSignal(false);
   const guests = () => duo.host?.guests.length ?? 0;
 
   return (
@@ -39,19 +23,7 @@ function Hero(props: { instance: Instance }) {
       aria-label="Reprendre la dernière partie"
       class="px-corners-lg relative flex h-[clamp(340px,48vh,460px)] shrink-0 overflow-hidden bg-[#1E1A33]"
     >
-      <Scene variant="sunset" />
-      <Show when={image()} keyed>
-        {(url) => (
-          <img
-            src={url}
-            alt=""
-            class="absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-out motion-reduce:transition-none"
-            classList={{ "opacity-0": !shown() }}
-            onLoad={() => setShown(true)}
-            onError={(e) => e.currentTarget.remove()}
-          />
-        )}
-      </Show>
+      <InstanceVisual instance={props.instance} fallback="scene" />
       {/* Scrim under the text only: the picture stays bright on the right. */}
       <div class="absolute inset-0 bg-[linear-gradient(0deg,rgb(16_17_19/0.94)_0%,rgb(16_17_19/0.55)_42%,transparent_72%),linear-gradient(90deg,rgb(16_17_19/0.6)_0%,transparent_60%)]" />
 
@@ -309,7 +281,7 @@ export default function Home() {
               </p>
             }
           >
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3.5">
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
               <For each={others()}>{(instance) => <InstanceCard instance={instance} />}</For>
             </div>
           </Show>

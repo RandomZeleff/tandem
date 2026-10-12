@@ -265,7 +265,8 @@ export function BlockIcon(props: { look: BlockLook; size?: number }) {
 export function BlockSlot(props: { look: BlockLook; size: number; style?: JSX.CSSProperties }) {
   return (
     <span class="slot" style={{ width: `${props.size}px`, height: `${props.size}px`, ...props.style }}>
-      <BlockIcon look={props.look} size={Math.round(props.size * 0.66)} />
+      {/* A whole number of pixels per block pixel, about two thirds of the slot. */}
+      <BlockIcon look={props.look} size={Math.max(8, Math.round((props.size * 0.66) / 8) * 8)} />
     </span>
   );
 }

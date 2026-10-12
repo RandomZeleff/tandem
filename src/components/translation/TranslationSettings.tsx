@@ -145,7 +145,7 @@ export default function TranslationSettings() {
               </div>
               <Show when={presetInfo()}>
                 {(info) => (
-                  <div class="flex flex-col gap-2 bg-slate-750 p-3.5 text-xs text-chalk-2 shadow-[inset_0_0_0_1px_var(--color-line)]">
+                  <div class="flex flex-col gap-2 bg-slate-750 p-3.5 text-xs text-chalk-2 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
                     <Show
                       when={info().local}
                       fallback={

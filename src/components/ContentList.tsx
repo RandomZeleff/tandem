@@ -227,7 +227,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
       <PerfSuggestions instance={props.instance} locked={props.locked} onError={setError} />
 
       <Show when={(conflicts() ?? []).length > 0}>
-        <div class="panel px-corners-md flex flex-col gap-2 p-3.5 shadow-[inset_0_0_0_1px_var(--color-danger-line)]">
+        <div class="panel px-corners-md flex flex-col gap-2 p-3.5 panel-danger">
           <span class="flex items-center gap-2 text-sm">
             <span class="size-2 bg-redstone" />
             {conflicts()!.length === 1 ? "Deux mods ne peuvent pas tourner ensemble" : `${conflicts()!.length} paires de mods incompatibles`}
@@ -265,7 +265,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
       </Show>
 
       <Show when={updates().length > 0}>
-        <div class="panel px-corners-md flex items-center justify-between gap-4 p-3.5 shadow-[inset_0_0_0_1px_var(--color-xp-deep)]">
+        <div class="panel px-corners-md flex items-center justify-between gap-4 p-3.5 panel-success">
           <div class="flex items-center gap-2.5">
             <span class="size-2 bg-xp shadow-[0_0_0_2px_rgb(139_224_78/0.25)]" />
             <span class="text-sm">

@@ -94,7 +94,7 @@ function CreatorCard(props: { creator: Creator }) {
   return (
     <li class="panel px-corners flex flex-col gap-2 p-3">
       <button class="group flex items-center gap-2.5 text-left" title={`${c().name} sur Modrinth`} onClick={() => openExternal(c().url)}>
-        <span class="flex size-8 shrink-0 items-center justify-center overflow-hidden bg-slate-900 shadow-[inset_0_0_0_1px_var(--color-line)]">
+        <span class="flex size-8 shrink-0 items-center justify-center overflow-hidden bg-slate-900 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
           <Show when={c().avatarUrl && !failed()} fallback={<Icon name="user" size={12} color="var(--color-faint)" />}>
             <img src={c().avatarUrl!} alt="" loading="lazy" class="size-full object-cover" onError={() => setFailed(true)} />
           </Show>
