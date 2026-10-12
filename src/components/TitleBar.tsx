@@ -39,12 +39,14 @@ export default function TitleBar() {
   });
 
   const control =
-    "flex h-full w-[46px] items-center justify-center text-muted hover:bg-slate-600 hover:text-chalk";
+    "flex h-full w-[46px] items-center justify-center text-muted hover:bg-white/[0.08] hover:text-chalk";
+  const navButton =
+    "flex size-7 items-center justify-center rounded-sm text-muted hover:bg-white/[0.08] hover:text-chalk focus-visible:bg-white/[0.08] focus-visible:text-chalk disabled:pointer-events-none disabled:opacity-30";
 
   return (
     <header
       data-tauri-drag-region
-      class="flex h-10 shrink-0 items-center bg-slate-900 shadow-[inset_0_-1px_0_var(--color-divider)]"
+      class="flex h-10 shrink-0 items-center bg-slate-900"
     >
       <Show when={!isMac}>
         <div
@@ -52,22 +54,21 @@ export default function TitleBar() {
           class="flex h-full w-60 shrink-0 items-center gap-2.5 px-[22px] shadow-[inset_-1px_0_0_var(--color-divider)]"
         >
           <Logo />
-          <span
-            data-tauri-drag-region
-            class="font-pixel text-lg font-bold tracking-[0.5px] [text-shadow:2px_2px_0_rgb(0_0_0/0.5)]"
-          >
+          <span data-tauri-drag-region class="title-display text-[20px] leading-none">
             Tandem
           </span>
         </div>
       </Show>
 
+      {/* Everything right of the brand column sits on the content side of the frame. */}
+      <div data-tauri-drag-region class="flex h-full min-w-0 flex-1 items-center shadow-[inset_0_-1px_0_var(--color-divider)]">
       <div
         data-tauri-drag-region
         class="flex h-full items-center gap-0.5 px-2"
         classList={{ "pl-[84px]": isMac }}
       >
         <button
-          class="flex size-7 items-center justify-center text-muted hover:bg-slate-700 hover:text-chalk focus-visible:bg-slate-700 focus-visible:text-chalk disabled:pointer-events-none disabled:opacity-30"
+          class={navButton}
           aria-label="Page précédente"
           title={isMac ? "Page précédente (⌘[)" : "Page précédente (Alt+←)"}
           disabled={!canGoBack()}
@@ -76,7 +77,7 @@ export default function TitleBar() {
           <Icon name="arrow" size={12} class="-scale-x-100" />
         </button>
         <button
-          class="flex size-7 items-center justify-center text-muted hover:bg-slate-700 hover:text-chalk focus-visible:bg-slate-700 focus-visible:text-chalk disabled:pointer-events-none disabled:opacity-30"
+          class={navButton}
           aria-label="Page suivante"
           title={isMac ? "Page suivante (⌘])" : "Page suivante (Alt+→)"}
           disabled={!canGoForward()}
@@ -90,7 +91,7 @@ export default function TitleBar() {
         <Show when={installing()}>
           {(job) => (
             <button
-              class="flex h-7 items-center gap-2.5 bg-slate-750 px-2.5 text-xs shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-slate-700"
+              class="flex h-7 items-center gap-2.5 rounded-sm bg-slate-750 px-2.5 text-xs shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-slate-700 focus-visible:bg-slate-700"
               onClick={() => navigate({ page: "instance", id: job().id })}
             >
               <Icon name="download" size={12} color="var(--color-xp)" />
@@ -125,6 +126,7 @@ export default function TitleBar() {
           </button>
         </div>
       </Show>
+      </div>
     </header>
   );
 }

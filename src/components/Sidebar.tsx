@@ -1,7 +1,7 @@
-import { createResource, createSignal, For, type JSX, Show } from "solid-js";
+import { createEffect, createResource, createSignal, For, type JSX, Show } from "solid-js";
 import { api, errorMessage } from "../lib/api";
 import { gameState } from "../lib/games";
-import { duoActive } from "../lib/duo";
+import { duoActive, markArrivalsSeen, unseenArrivals } from "../lib/duo";
 import { toast } from "../lib/toast";
 import { openAccounts, signInWithMicrosoft } from "../lib/accounts";
 import { AccountAvatar, AccountKindLabel, MicrosoftLogo } from "./accounts/AccountVisuals";
@@ -40,7 +40,7 @@ function AccountMenu(props: { anchor: () => HTMLElement | undefined; onClose: ()
   let menu: HTMLDivElement | undefined;
   onDismiss(() => [menu, props.anchor()], props.onClose);
   return (
-    <div ref={menu} class="panel px-corners-md absolute top-full right-0 left-0 z-20 mt-1 bg-slate-750 p-3 shadow-2xl">
+    <div ref={menu} class="panel px-corners-md absolute top-full right-0 left-0 z-20 mt-1 bg-slate-750 p-1.5 shadow-[0_12px_32px_rgb(0_0_0/0.55)]">
       {props.children}
     </div>
   );
@@ -72,14 +72,14 @@ function AccountCard() {
         when={activeAccount()}
         fallback={
           <button
-            class="panel px-corners-md flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-600 focus-visible:bg-slate-600"
+            class="px-corners-md flex w-full items-center gap-3 bg-slate-800 p-2 text-left shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] transition-colors duration-100 hover:bg-slate-750 focus-visible:bg-slate-750"
             onClick={() => openAccounts()}
           >
-            <span class="slot h-11 w-11 bg-white!">
+            <span class="slot size-10 bg-white!">
               <MicrosoftLogo size={20} />
             </span>
             <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span class="text-[15px] font-semibold">Se connecter</span>
+              <span class="text-sm font-semibold">Se connecter</span>
               <span class="text-xs text-muted">Compte Microsoft</span>
             </span>
           </button>
@@ -88,21 +88,21 @@ function AccountCard() {
         {(account) => (
           <button
             ref={anchor}
-            class="panel px-corners-md flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-600 focus-visible:bg-slate-600"
+            class="px-corners-md flex w-full items-center gap-3 bg-slate-800 p-2 text-left shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] transition-colors duration-100 hover:bg-slate-750 focus-visible:bg-slate-750"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open()}
             aria-label={`Compte : ${account().username}`}
           >
-            <span class="slot h-11 w-11">
+            <span class="slot size-10">
               <AccountAvatar account={account()} size={32} />
             </span>
             <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span class="truncate text-[15px] font-semibold">{account().username}</span>
+              <span class="truncate text-sm font-semibold">{account().username}</span>
               <span class="text-xs text-muted">
                 <AccountKindLabel account={account()} />
               </span>
             </span>
-            <Icon name="caret" size={12} color="#7D828A" />
+            <Icon name="caret" size={12} class={`mr-1 text-faint transition-transform duration-100 ${open() ? "rotate-180" : ""}`} />
           </button>
         )}
       </Show>
@@ -110,13 +110,13 @@ function AccountCard() {
       <Show when={open()}>
         <AccountMenu anchor={() => anchor} onClose={() => setOpen(false)}>
           <Show when={others().length > 0}>
-            <p class="mb-1.5 px-1.5 text-xs font-semibold tracking-wide text-faint uppercase">Changer de compte</p>
-            <ul class="mb-2 space-y-0.5">
+            <p class="px-2 pt-1 pb-1.5 text-xs font-semibold text-faint">Changer de compte</p>
+            <ul class="space-y-0.5">
               <For each={others()}>
                 {(account) => (
                   <li>
                     <button
-                      class="flex w-full items-center gap-2.5 px-1.5 py-1.5 text-left text-sm hover:bg-slate-600 focus-visible:bg-slate-600"
+                      class="row flex w-full items-center gap-2.5 px-2 py-1.5 text-left text-sm"
                       onClick={() => void use(account.id)}
                     >
                       <AccountAvatar account={account} size={22} />
@@ -131,17 +131,17 @@ function AccountCard() {
                 )}
               </For>
             </ul>
-            <div class="mb-2 h-px bg-line" />
+            <div class="mx-1 my-1.5 h-px bg-line" />
           </Show>
           <button
-            class="flex w-full items-center gap-2.5 px-1.5 py-1.5 text-left text-sm hover:bg-slate-600 focus-visible:bg-slate-600"
+            class="row flex w-full items-center gap-2.5 px-2 py-1.5 text-left text-sm"
             onClick={manage}
           >
             <Icon name="gear" size={14} />
             Gérer les comptes
           </button>
           <button
-            class="flex w-full items-center gap-2.5 px-1.5 py-1.5 text-left text-sm hover:bg-slate-600 focus-visible:bg-slate-600"
+            class="row flex w-full items-center gap-2.5 px-2 py-1.5 text-left text-sm"
             onClick={() => {
               setOpen(false);
               openAccounts();
@@ -160,43 +160,57 @@ function AccountCard() {
 export default function Sidebar() {
   const [info] = createResource(api.appInfo);
   const recents = () => instances().slice(0, 4);
+  // Opening "Jouer ensemble" is what makes a friend's arrival seen.
+  createEffect(() => route().page === "multi" && markArrivalsSeen());
 
   return (
     <nav
       aria-label="Navigation principale"
-      class="flex w-60 shrink-0 flex-col bg-slate-850 shadow-[inset_-1px_0_0_var(--color-divider)]"
+      class="flex w-60 shrink-0 flex-col bg-slate-900 shadow-[inset_-1px_0_0_var(--color-divider)]"
     >
       <AccountCard />
 
-      <div class="flex flex-col gap-0.5 px-3 py-2.5">
+      <div class="flex flex-col gap-0.5 px-3 py-2">
         <For each={NAV}>
           {(item) => (
             <button
-              class="flex h-[42px] items-center gap-3 px-3 text-left font-medium"
+              class="flex h-11 items-center gap-3 rounded-sm px-2.5 text-left transition-colors duration-100"
               classList={{
-                "px-corners bg-slate-600 font-semibold text-chalk shadow-[inset_0_1px_0_rgb(255_255_255/0.05),inset_0_-2px_0_rgb(0_0_0/0.3)]":
-                  isActive(item),
-                "text-muted hover:bg-slate-750 hover:text-chalk focus-visible:bg-slate-750 focus-visible:text-chalk": !isActive(item),
+                "bg-white/[0.08] font-semibold text-chalk": isActive(item),
+                "font-medium text-muted hover:bg-white/[0.04] hover:text-chalk focus-visible:bg-white/[0.04] focus-visible:text-chalk":
+                  !isActive(item),
               }}
               aria-current={isActive(item) ? "page" : undefined}
               title={item.shortcut ? `${item.label} (${MOD}${item.shortcut})` : undefined}
               onClick={() => navigate(item.to)}
             >
-              <Icon name={item.icon} size={18} color={isActive(item) ? "var(--color-xp)" : undefined} />
+              <Icon name={item.icon} size={24} color={isActive(item) ? "var(--color-grass-light)" : undefined} />
               <span class="flex-1">{item.label}</span>
-              <Show when={item.to.page === "multi" && duoActive()}>
-                <span class="step-pulse size-2 bg-gold" title="Partie à plusieurs en cours" />
+              <Show when={item.to.page === "multi"}>
+                <Show
+                  when={unseenArrivals() > 0}
+                  fallback={
+                    <Show when={duoActive()}>
+                      <span class="step-pulse mr-1 size-2 rounded-[1px] bg-gold" title="Partie à plusieurs en cours" />
+                    </Show>
+                  }
+                >
+                  <span
+                    class="flex h-5 min-w-5 items-center justify-center rounded-sm bg-grass px-1.5 text-xs font-bold text-white shadow-[inset_0_-2px_0_var(--color-grass-edge)]"
+                    title={unseenArrivals() > 1 ? `${unseenArrivals()} amis sont arrivés` : "Un ami est arrivé"}
+                  >
+                    {unseenArrivals()}
+                  </span>
+                </Show>
               </Show>
             </button>
           )}
         </For>
       </div>
 
-      <div class="mx-6 my-1 h-px bg-[var(--color-divider)]" />
-
-      <div class="flex min-h-0 flex-col gap-0.5 px-3 pt-3">
-        <span class="px-3 pb-2 font-pixel text-xs font-medium tracking-[2px] text-faint">RÉCENTES</span>
-        <Show when={recents().length > 0} fallback={<p class="px-3 text-xs text-faint">Aucune instance.</p>}>
+      <div class="flex min-h-0 flex-col gap-0.5 px-3 pt-4">
+        <span class="px-2.5 pb-1.5 text-xs font-semibold text-faint">Récentes</span>
+        <Show when={recents().length > 0} fallback={<p class="px-2.5 text-[13px] text-faint">Aucune instance pour l'instant.</p>}>
           <For each={recents()}>
             {(instance) => {
               const state = () => gameState(instance.id);
@@ -206,25 +220,24 @@ export default function Sidebar() {
               };
               return (
                 <button
-                  class="flex h-[46px] items-center gap-2.5 px-2.5 text-left hover:bg-slate-750 focus-visible:bg-slate-750"
+                  class="row flex h-12 items-center gap-2.5 px-2 text-left"
                   classList={{
-                    "bg-slate-750":
-                      route().page === "instance" && (route() as { id: string }).id === instance.id,
+                    "is-selected": route().page === "instance" && (route() as { id: string }).id === instance.id,
                   }}
                   onClick={() => navigate({ page: "instance", id: instance.id })}
                 >
-                  <InstanceSlot instance={instance} size={30} />
+                  <InstanceSlot instance={instance} size={32} />
                   <span class="flex min-w-0 flex-1 flex-col">
-                    <span class="truncate text-[13px] font-medium">{instance.name}</span>
+                    <span class="truncate text-[13px] font-semibold">{instance.name}</span>
                     <span class="text-xs text-faint">
-                      {instance.gameVersion} · <LoaderTag loader={instance.loader} size={10} />
+                      {instance.gameVersion} · <LoaderTag loader={instance.loader} size={12} />
                     </span>
                   </span>
                   <Show when={state().status === "preparing"}>
                     <span class="font-mono text-xs text-xp-text">{Math.round(ratio() * 100)} %</span>
                   </Show>
                   <Show when={state().status === "running"}>
-                    <span class="size-2 bg-xp shadow-[0_0_0_2px_rgb(139_224_78/0.25)]" title="En cours" />
+                    <span class="mr-1 size-2 rounded-[1px] bg-xp shadow-[0_0_0_2px_rgb(127_209_79/0.25)]" title="En cours" />
                   </Show>
                 </button>
               );
@@ -235,19 +248,23 @@ export default function Sidebar() {
 
       <div class="flex-1" />
 
-      <button
-        class="flex h-[46px] items-center gap-3 px-6 text-left shadow-[inset_0_1px_0_var(--color-divider)]"
-        classList={{
-          "text-chalk": route().page === "settings",
-          "text-muted hover:text-chalk focus-visible:text-chalk": route().page !== "settings",
-        }}
-        title={`Réglages (${MOD},)`}
-        onClick={() => navigate({ page: "settings" })}
-      >
-        <Icon name="gear" size={18} color={route().page === "settings" ? "var(--color-xp)" : undefined} />
-        <span class="flex-1 font-medium">Réglages</span>
-        <span class="font-mono text-xs text-faint">v{info()?.version ?? "…"}</span>
-      </button>
+      <div class="p-3 shadow-[inset_0_1px_0_var(--color-divider)]">
+        <button
+          class="flex h-10 w-full items-center gap-3 rounded-sm px-2.5 text-left transition-colors duration-100"
+          classList={{
+            "bg-white/[0.08] font-semibold text-chalk": route().page === "settings",
+            "font-medium text-muted hover:bg-white/[0.04] hover:text-chalk focus-visible:bg-white/[0.04] focus-visible:text-chalk":
+              route().page !== "settings",
+          }}
+          aria-current={route().page === "settings" ? "page" : undefined}
+          title={`Réglages (${MOD},)`}
+          onClick={() => navigate({ page: "settings" })}
+        >
+          <Icon name="gear" size={24} color={route().page === "settings" ? "var(--color-grass-light)" : undefined} />
+          <span class="flex-1">Réglages</span>
+          <span class="font-mono text-xs font-normal text-faint">v{info()?.version ?? "…"}</span>
+        </button>
+      </div>
     </nav>
   );
 }

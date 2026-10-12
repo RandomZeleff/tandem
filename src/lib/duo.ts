@@ -18,6 +18,7 @@ import {
 } from "./api";
 import { gameState, launch } from "./games";
 import { notifyInGame } from "./notify";
+import { route } from "./store";
 import { toast } from "./toast";
 
 export interface HostingState extends DuoHostView {
@@ -34,6 +35,11 @@ export { duo };
 
 /** A session is running (for the sidebar's live dot). */
 export const duoActive = () => !!duo.host || !!duo.guest;
+
+/** Friends who arrived while "Jouer ensemble" was not open: signalled until the page is seen. */
+const [unseenArrivals, setUnseenArrivals] = createSignal(0);
+export { unseenArrivals };
+export const markArrivalsSeen = () => setUnseenArrivals(0);
 
 export const diffMatches = (d: InstanceDiff) => d.sameGame && d.sameLoader && d.missing.length === 0 && d.extra.length === 0;
 
@@ -88,6 +94,7 @@ export async function startDuoEvents() {
       case "guestJoined":
         setDuo("host", "guests", (list) => [...list.filter((g) => g.id !== payload.guest.id), payload.guest]);
         toast(`${payload.guest.player} a rejoint ta partie`);
+        if (route().page !== "multi") setUnseenArrivals((n) => n + 1);
         void notifyInGame(`${payload.guest.player} a rejoint ta partie`, "Son jeu se connecte à ton monde.");
         break;
       case "guestInstance":
@@ -197,6 +204,7 @@ export function joinOwnWorld() {
 export async function stopHosting() {
   await api.duoStopHost();
   setDuo("host", null);
+  markArrivalsSeen();
   setWorldServer(null);
 }
 

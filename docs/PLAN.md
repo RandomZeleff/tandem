@@ -225,7 +225,7 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne » (menus récents de Mojang), sombre, animations sobres. Une étape finie avant la suivante.
 
 - [x] 1. Fondations (couleurs, texte, espacements, boutons, champs, panneaux, onglets, listes, icônes, états) et choix de la police des titres (D49)
-- [ ] 2. Cadre de l'app (barre de titre, navigation, compte)
+- [x] 2. Cadre de l'app (barre de titre, navigation, compte)
 - [ ] 3. Accueil (reprendre sa partie en un clic, inviter, rejoindre, grand visuel)
 - [ ] 4. Jouer ensemble
 - [ ] 5. Instances et fiche d'instance (tous les onglets)
@@ -483,3 +483,10 @@ Ensuite : retour aux petits ajouts.
 - Vérifié : TypeScript, page `/?fondations` et pages Accueil, Instances, fiche d'instance avec le faux backend.
 - Reste visible jusqu'aux étapes suivantes : mises en page de chaque page (titres dorés en capitales, cartes d'instance serrées), à refaire page par page.
 - Prochaine étape : étape 2 (cadre de l'app : barre de titre, navigation, compte).
+
+### 2026-10-12 (refonte, étape 2 : cadre de l'app)
+- Fait : barre de titre et barre latérale d'un seul tenant (même gris, la ligne de séparation ne court que côté contenu), titre « Tandem » en Jersey 10, navigation à grandes icônes (24 px) avec page active surlignée, compte en carte claire, « Récentes » sans capitales espacées, Réglages au même style.
+- Arrivée d'un ami : pastille verte avec le nombre sur « Jouer ensemble » tant que la page n'a pas été ouverte (sinon le point doré de partie en cours).
+- Icône « Jouer ensemble » redessinée en deux personnages (on la confondait avec celle d'Instances).
+- Vérifié : TypeScript, aperçu avec le faux backend (navigation, menu du compte). Pas vérifié : la pastille d'arrivée en vrai (il faut une vraie partie).
+- Prochaine étape : étape 3 (Accueil).
