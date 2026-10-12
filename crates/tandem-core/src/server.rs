@@ -3,9 +3,10 @@
 //! friends do. The game crashing no longer ends the session, there is no 8-player LAN
 //! limit and no "Open to LAN" step.
 //!
-//! Nothing is copied: `<data>/servers/<instance>/` holds links to the instance's mods
-//! (client-only ones left out) and folders, and the world is read in place from the
-//! instance's `saves/`. Fabric and Quilt for now: their loader runs Mojang's server jar
+//! `<data>/servers/<instance>/` holds links to the instance's mods (client-only ones
+//! left out), a mirror of its folders (configs, scripts…: refreshed at each start, so
+//! the server and the host's game never write the same file), and the world is read in
+//! place from the instance's `saves/`. Fabric and Quilt for now: their loader runs Mojang's server jar
 //! directly (`<loader>.gameJarPath`).
 
 use std::collections::{BTreeSet, HashMap};
@@ -29,7 +30,11 @@ use crate::{jvm, optimizations, Context};
 
 pub mod host_player;
 
-/// Instance folders never linked into the server: the world comes through `--universe`,
+/// Files from this size on are hard-linked into the mirror instead of copied: big data
+/// files (a mod's template dimensions, textures) are read, not rewritten.
+const MIRROR_LINK_BYTES: u64 = 1 << 20;
+
+/// Instance folders never mirrored into the server: the world comes through `--universe`,
 /// the rest is the game's own (logs, screenshots, packs, caches).
 const NOT_LINKED: &[&str] = &[
     "mods",
@@ -189,7 +194,7 @@ pub async fn prepare(ctx: &Context, instance: &Instance) -> Result<PreparedServe
         &dir.join("versions"),
     )
     .await?;
-    link_instance_folders(&game_dir, &dir).await?;
+    mirror_instance_folders(&game_dir, &dir).await?;
     tokio::fs::write(dir.join("eula.txt"), "eula=true\n").await?;
 
     Ok(PreparedServer {
@@ -696,15 +701,70 @@ fn mod_meta(jar: &Path) -> ModMeta {
     ModMeta::default()
 }
 
-/// Links the instance's folders (configs, scripts, global datapacks…) into the server's.
-async fn link_instance_folders(game_dir: &Path, dir: &Path) -> Result<()> {
-    let mut entries = tokio::fs::read_dir(game_dir).await?;
-    while let Some(entry) = entries.next_entry().await? {
-        let name = entry.file_name().to_string_lossy().into_owned();
-        if NOT_LINKED.contains(&name.as_str()) || !entry.file_type().await?.is_dir() {
+/// Mirrors the instance's folders (configs, scripts, global datapacks…) into the
+/// server's. A link would let both processes write the same file at once (a config the
+/// game holds open could not be saved by the server, or the reverse).
+async fn mirror_instance_folders(game_dir: &Path, dir: &Path) -> Result<()> {
+    let (game_dir, dir) = (game_dir.to_owned(), dir.to_owned());
+    tokio::task::spawn_blocking(move || -> std::io::Result<()> {
+        for entry in std::fs::read_dir(&game_dir)? {
+            let entry = entry?;
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if NOT_LINKED.contains(&name.as_str()) || !entry.file_type()?.is_dir() {
+                continue;
+            }
+            let dest = dir.join(&name);
+            // A link left by an older Tandem: removed without touching its target.
+            if std::fs::read_link(&dest).is_ok() {
+                std::fs::remove_dir(&dest)?;
+            }
+            mirror_dir(&entry.path(), &dest)?;
+        }
+        Ok(())
+    })
+    .await
+    .map_err(|e| Error::Io(std::io::Error::other(e)))??;
+    Ok(())
+}
+
+/// Copies the files of `from` that are new or differ (size or modification time) into
+/// `to`: the instance's files win over the server's changes to them. Files only in
+/// `to` (written by the server) are kept.
+fn mirror_dir(from: &Path, to: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let (src, dest) = (entry.path(), to.join(entry.file_name()));
+        let kind = entry.file_type()?;
+        if kind.is_dir() {
+            mirror_dir(&src, &dest)?;
             continue;
         }
-        link_dir(&entry.path(), &dir.join(&name)).await?;
+        if !kind.is_file() {
+            continue;
+        }
+        let meta = entry.metadata()?;
+        if let Ok(current) = std::fs::metadata(&dest) {
+            let same_time = matches!(
+                (meta.modified(), current.modified()),
+                (Ok(a), Ok(b)) if a == b
+            );
+            if current.len() == meta.len() && same_time {
+                continue;
+            }
+            std::fs::remove_file(&dest)?;
+        }
+        if meta.len() < MIRROR_LINK_BYTES || std::fs::hard_link(&src, &dest).is_err() {
+            std::fs::copy(&src, &dest)?;
+            // Kept so the next mirror sees the file unchanged (not every platform's
+            // copy does it).
+            if let Ok(time) = meta.modified() {
+                std::fs::File::options()
+                    .write(true)
+                    .open(&dest)?
+                    .set_modified(time)?;
+            }
+        }
     }
     Ok(())
 }
@@ -828,6 +888,52 @@ mod tests {
                 client_only: true
             }
         );
+    }
+
+    #[tokio::test]
+    async fn mirrors_instance_folders_into_real_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let (game, server) = (dir.path().join("game"), dir.path().join("server"));
+        std::fs::create_dir_all(game.join("config/sub")).unwrap();
+        std::fs::create_dir_all(game.join("logs")).unwrap();
+        std::fs::create_dir_all(&server).unwrap();
+        std::fs::write(game.join("config/a.toml"), "a=1").unwrap();
+        std::fs::write(game.join("config/sub/b.json"), "{}").unwrap();
+        std::fs::write(game.join("logs/latest.log"), "log").unwrap();
+        // A link from an older Tandem is replaced, its target left alone.
+        link_dir(&game.join("config"), &server.join("config"))
+            .await
+            .unwrap();
+
+        mirror_instance_folders(&game, &server).await.unwrap();
+        let mirrored = server.join("config");
+        assert!(std::fs::read_link(&mirrored).is_err());
+        assert_eq!(
+            std::fs::read_to_string(mirrored.join("a.toml")).unwrap(),
+            "a=1"
+        );
+        assert!(mirrored.join("sub/b.json").exists());
+        assert!(!server.join("logs").exists());
+
+        // The server writes only its copy; the instance's files win at the next start,
+        // the server's own files stay.
+        std::fs::write(mirrored.join("server-only.toml"), "s").unwrap();
+        std::fs::write(mirrored.join("sub/b.json"), "{\"server\":1}").unwrap();
+        assert_eq!(
+            std::fs::read_to_string(game.join("config/sub/b.json")).unwrap(),
+            "{}"
+        );
+        std::fs::write(game.join("config/a.toml"), "a=22").unwrap();
+        mirror_instance_folders(&game, &server).await.unwrap();
+        assert_eq!(
+            std::fs::read_to_string(mirrored.join("sub/b.json")).unwrap(),
+            "{}"
+        );
+        assert_eq!(
+            std::fs::read_to_string(mirrored.join("a.toml")).unwrap(),
+            "a=22"
+        );
+        assert!(mirrored.join("server-only.toml").exists());
     }
 
     #[tokio::test]
