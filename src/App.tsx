@@ -124,7 +124,19 @@ function App() {
               <Instances />
             </Match>
             <Match when={route().page === "instance"}>
-              <Show when={detail()} keyed fallback={<p class="p-6 text-faint">Instance introuvable.</p>}>
+              <Show
+                when={detail()}
+                keyed
+                fallback={
+                  <div class="flex h-full flex-col items-center justify-center gap-3 text-center">
+                    <p class="text-lg font-semibold">Cette instance n'existe plus</p>
+                    <p class="text-sm text-muted">Elle a peut-être été supprimée ou déplacée.</p>
+                    <button class="btn px-corners mt-1" onClick={() => navigate({ page: "instances" })}>
+                      Voir mes instances
+                    </button>
+                  </div>
+                }
+              >
                 {(instance) => <InstanceDetail instance={instance} />}
               </Show>
             </Match>

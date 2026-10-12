@@ -19,7 +19,7 @@ function Row(props: { title: string; description: string; control: JSX.Element; 
         <label class="text-sm font-medium" for={props.for}>
           {props.title}
         </label>
-        <p class="text-xs text-muted">{props.description}</p>
+        <p class="text-[13px] text-muted">{props.description}</p>
       </div>
       <div class="shrink-0">{props.control}</div>
     </div>
@@ -62,8 +62,8 @@ export default function Settings() {
   }
 
   return (
-    <div class="flex h-full flex-col gap-5">
-      <h1 class="pixel-shadow font-pixel text-3xl font-bold">Réglages</h1>
+    <div class="mx-auto flex h-full w-full max-w-[1400px] flex-col gap-5">
+      <h1 class="title-display text-[44px] leading-[0.9]">Réglages</h1>
 
       <Show when={error()}>
         <Alert onClose={() => setError(null)}>{error()}</Alert>

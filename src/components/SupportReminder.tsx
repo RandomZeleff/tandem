@@ -36,7 +36,7 @@ export default function SupportReminder(props: { instance: Instance; onShow: () 
         <Icon name="heart" size={14} class="shrink-0 text-redstone-text" />
         <div class="flex min-w-0 flex-1 flex-col">
           <span class="text-sm">Plus de 10 heures sur {props.instance.name} !</span>
-          <span class="text-xs text-muted">
+          <span class="text-[13px] text-muted">
             {creators.latest} de ses créateurs acceptent les soutiens, directement chez eux. Si le pack te plaît, c'est le bon endroit
             pour leur dire merci.
           </span>

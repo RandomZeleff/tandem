@@ -73,7 +73,7 @@ export default function NewInstanceDialog(props: Props) {
     <Dialog title="Nouvelle instance" onClose={props.onClose}>
       <form onSubmit={submit} class="flex flex-col gap-4">
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs text-muted" for="instance-name">
+          <label class="text-[13px] font-medium text-muted" for="instance-name">
             Nom
           </label>
           <input
@@ -89,7 +89,7 @@ export default function NewInstanceDialog(props: Props) {
 
         <div class="flex flex-col gap-1.5">
           <div class="flex items-center justify-between">
-            <label class="text-xs text-muted" for="instance-version">
+            <label class="text-[13px] font-medium text-muted" for="instance-version">
               Version
             </label>
             <Checkbox checked={showSnapshots()} label="Snapshots" onChange={setShowSnapshots} />
@@ -110,7 +110,7 @@ export default function NewInstanceDialog(props: Props) {
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <span class="text-xs text-muted" id="instance-loader">
+          <span class="text-[13px] font-medium text-muted" id="instance-loader">
             Loader
           </span>
           <div
@@ -141,7 +141,7 @@ export default function NewInstanceDialog(props: Props) {
 
         <Show when={loader() !== "vanilla"}>
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs text-muted" for="instance-loader-version">
+            <label class="text-[13px] font-medium text-muted" for="instance-loader-version">
               Version de {loaderLabel(loader())}
             </label>
             <Show

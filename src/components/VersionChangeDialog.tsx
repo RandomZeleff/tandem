@@ -99,7 +99,7 @@ export default function VersionChangeDialog(props: { instance: Instance; onClose
       <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
         <div class="flex flex-col gap-1.5">
           <div class="flex items-center justify-between">
-            <label class="text-xs text-muted" for="retarget-version">
+            <label class="text-[13px] font-medium text-muted" for="retarget-version">
               Minecraft
             </label>
             <Checkbox checked={snapshots()} label="Snapshots" onChange={setSnapshots} />
@@ -114,7 +114,7 @@ export default function VersionChangeDialog(props: { instance: Instance; onClose
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs text-muted" for="retarget-loader">
+          <label class="text-[13px] font-medium text-muted" for="retarget-loader">
             Loader
           </label>
           <Select
@@ -128,7 +128,7 @@ export default function VersionChangeDialog(props: { instance: Instance; onClose
       </div>
       <Show when={loader() !== "vanilla"}>
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs text-muted" for="retarget-loader-version">
+          <label class="text-[13px] font-medium text-muted" for="retarget-loader-version">
             Version de {loaderLabel(loader())}
           </label>
           <Select
@@ -162,13 +162,13 @@ export default function VersionChangeDialog(props: { instance: Instance; onClose
                   <Show when={p().kept + p().updated.length + p().unavailable.length === 0}>Aucun contenu Modrinth à adapter.</Show>
                 </p>
                 <Show when={p().unavailable.length > 0}>
-                  <p class="text-xs text-muted">
+                  <p class="text-[13px] text-muted">
                     {p().unavailable.slice(0, 8).join(", ")}
                     {p().unavailable.length > 8 ? ` et ${p().unavailable.length - 8} autres` : ""}
                   </p>
                 </Show>
                 <Show when={p().unknown.length > 0}>
-                  <p class="text-xs text-muted">
+                  <p class="text-[13px] text-muted">
                     {integer.format(p().unknown.length)} fichier{p().unknown.length > 1 ? "s" : ""} ajouté{p().unknown.length > 1 ? "s" : ""} à la main, laissé
                     {p().unknown.length > 1 ? "s" : ""} tel{p().unknown.length > 1 ? "s" : ""} quel{p().unknown.length > 1 ? "s" : ""} : {p().unknown.slice(0, 4).join(", ")}
                     {p().unknown.length > 4 ? "…" : ""}

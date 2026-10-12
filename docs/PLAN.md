@@ -230,7 +230,7 @@ Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne »
 - [x] 4. Jouer ensemble
 - [x] 5. Instances et fiche d'instance (tous les onglets)
 - [x] 6. Découvrir et fiches de projet
-- [ ] 7. Réglages, Comptes, fenêtres, notifications, états vides et d'erreur
+- [x] 7. Réglages, Comptes, fenêtres, notifications, états vides et d'erreur
 - [ ] 8. Finition : revue complète, `DESIGN.md`, décision qui remplace D11
 
 Ensuite : retour aux petits ajouts.
@@ -516,3 +516,10 @@ Ensuite : retour aux petits ajouts.
 - Fait : titre en Jersey 10 et phrase lisible pour Découvrir ; résultats qui s'éclairent au survol, infos en 13 px ; fiche de projet avec l'image mise en avant de la galerie derrière l'en-tête (assombrie pour lire), titre en Jersey 10, plus de dégradé à la couleur du projet ; types de version sans capitales.
 - Vérifié avec le faux backend à 1 280 × 800 : recherche de mods, onglet Modpacks, fiche d'un modpack.
 - Prochaine étape : étape 7 (Réglages, Comptes, fenêtres, notifications, états vides et d'erreur).
+
+### 2026-10-12 (refonte, étape 7 : Réglages, Comptes, fenêtres, états)
+- Fait : titre des Réglages en Jersey 10 ; libellés des champs des fenêtres (nouvelle instance, modpack, changement de version, import) en 13 px demi-gras ; textes d'aide en 13 px ; accueil d'un compte (« Bienvenue, … ») en Jersey 10 ; avertissement des comptes aux coins presque carrés ; « Cette instance n'existe plus » avec un bouton vers les instances au lieu d'une ligne grise.
+- Plus aucun titre en police pixel, capitales espacées ou ombre décalée hors des codes d'invitation et du gros bouton Jouer.
+- Les notifications Windows restent celles du système (rien à styler).
+- Vérifié avec le faux backend à 1 280 × 800 : Réglages, fenêtre Nouvelle instance, fenêtre Comptes.
+- Prochaine étape : étape 8 (finition : revue complète, `DESIGN.md`, décision qui remplace D11).
