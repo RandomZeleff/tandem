@@ -226,7 +226,7 @@ Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne »
 
 - [x] 1. Fondations (couleurs, texte, espacements, boutons, champs, panneaux, onglets, listes, icônes, états) et choix de la police des titres (D49)
 - [x] 2. Cadre de l'app (barre de titre, navigation, compte)
-- [ ] 3. Accueil (reprendre sa partie en un clic, inviter, rejoindre, grand visuel)
+- [x] 3. Accueil (reprendre sa partie en un clic, inviter, rejoindre, grand visuel)
 - [ ] 4. Jouer ensemble
 - [ ] 5. Instances et fiche d'instance (tous les onglets)
 - [ ] 6. Découvrir et fiches de projet
@@ -490,3 +490,10 @@ Ensuite : retour aux petits ajouts.
 - Icône « Jouer ensemble » redessinée en deux personnages (on la confondait avec celle d'Instances).
 - Vérifié : TypeScript, aperçu avec le faux backend (navigation, menu du compte). Pas vérifié : la pastille d'arrivée en vrai (il faut une vraie partie).
 - Prochaine étape : étape 3 (Accueil).
+
+### 2026-10-12 (refonte, étape 3 : Accueil)
+- Fait : la dernière instance possède l'écran : grand visuel (image mise en avant de la galerie du modpack Modrinth, sinon dernière capture du joueur, sinon le ciel dessiné), nom en Jersey 10, « Joué il y a… » dans la ligne d'infos (plus d'étiquette dorée au-dessus), Jouer puis « Inviter des amis » (devient « Partie ouverte » / « N amis connectés » pendant une session), détails et dossier en boutons carrés.
+- « Rejoindre un ami » directement sur l'accueil : code, puis la page « Jouer ensemble » prend le relais ; sans compte Microsoft, un bouton pour l'ajouter.
+- « Tes autres instances » (trois au plus) et Nouveautés à droite, en colonne sous 1 100 px.
+- Vérifié : TypeScript, détecteur, aperçu à 1 280 × 800 avec le faux backend (capture comme visuel, connexion Microsoft simulée puis code rejoint depuis l'accueil). Pas vérifié : une vraie image de galerie Modrinth dans l'app.
+- Prochaine étape : étape 4 (Jouer ensemble).
