@@ -212,8 +212,7 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
    - [x] Mémoire libre et santé du monde visibles pendant une session, avec un conseil simple quand ça sature
    - Terminé quand : l'hôte voit d'un coup d'œil si son PC suit.
 
-5. **Le monde appartient au groupe (6f)**, seulement après les quatre premiers chantiers
-   - Copie du monde chez les amis pendant la partie, reprise si l'hôte part, ouverture sans l'hôte, puis choix du meilleur PC pour héberger. Pistes notées dans D43 ; à recadrer avec Zeleff avant de commencer.
+5. ~~**Le monde appartient au groupe (6f)**~~ : abandonné (D48). Un groupe laisse naturellement héberger celui qui a le meilleur PC ; copier le monde chez les amis coûterait beaucoup (risque de monde abîmé, connexion, disque) pour un besoin rare.
 
 **Arrêté ou mis de côté** (D44) :
 - Repousser le nombre de joueurs au-delà d'un PC : monde réparti entre plusieurs PC, un PC par dimension, génération du terrain par les amis, simulation partagée.

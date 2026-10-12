@@ -319,3 +319,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Mesure : Tandem Optimizations 1.1 chronomètre chaque tick du serveur et écrit une ligne toutes les 100 ticks, seulement quand le monde est partagé (serveur dédié ou monde ouvert en LAN) pour ne pas remplir les journaux en solo. Tandem lit la console du monde à part et la sortie du jeu. Sans le mod (Forge, NeoForge, mod coupé) : le message « Can't keep up! » de Minecraft, qui n'arrive qu'une fois le retard pris.
 - Écarté : `tick query` (seulement depuis 1.20.3, et pas dans un monde LAN), profiler le serveur (trop lourd pour un indicateur).
 - Statut : validé
+
+### D48 · 2026-10-12 · Pas de monde partagé par le groupe (6f abandonné)
+- Le chantier 5 (copie du monde chez les amis, reprise si l'hôte part, ouverture sans l'hôte) est abandonné, pas seulement repoussé.
+- Raison (Zeleff) : un groupe laisse héberger celui qui a le meilleur PC, c'est le fonctionnement naturel. Le gain (jouer sans l'hôte, sauvegarde chez les amis) est rare ; le coût est le plus élevé de la feuille de route : synchroniser un monde de plusieurs Go pendant la partie, verrou pour éviter deux versions du monde, risque de monde abîmé, connexion de l'hôte et disque des amis.
+- La feuille de route « Jouer ensemble » (D44) est donc terminée. Reste possible, si le besoin revient : un simple « Envoyer mon monde à un ami » (copie manuelle).
+- Statut : validé
+
