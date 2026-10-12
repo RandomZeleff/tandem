@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "tandem_optimizations",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Tandem Optimizations",
   "description": "Server-side optimizations added by the Tandem launcher at launch: skips work that has no effect in game. Never installed in the instance.",
   "license": "MIT",

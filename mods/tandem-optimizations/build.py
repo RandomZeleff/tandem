@@ -38,6 +38,7 @@ STAMP = (2026, 1, 1, 0, 0, 0)
 # Mixin targets are strings javac cannot check: (class, method, text its body or
 # signature must contain). Keep in sync with the mixins.
 TARGETS = [
+    ("net.minecraft.server.MinecraftServer", "method_3748(", "(Ljava/util/function/BooleanSupplier;)V"),
     ("net.minecraft.class_3218", "method_18762(", "net/minecraft/class_1297.method_5773:()V"),
     ("net.minecraft.class_1948", "method_8663(",
      "(Lnet/minecraft/class_1311;Lnet/minecraft/class_3218;Lnet/minecraft/class_2818;"

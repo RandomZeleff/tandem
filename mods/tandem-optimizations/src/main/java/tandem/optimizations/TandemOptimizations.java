@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
  *       spawn. Default true.
  *   <li>{@code tandem.optimizations.libraries}: faster Architectury and Balm calls.
  *       Default true.
+ *   <li>{@code tandem.optimizations.health}: tick times in the log while the world is
+ *       shared, for Tandem's load indicator. Default true.
  * </ul>
  */
 public final class TandemOptimizations implements ModInitializer {
@@ -30,9 +32,9 @@ public final class TandemOptimizations implements ModInitializer {
     public void onInitialize() {
         String version = FabricLoader.getInstance().getModContainer("tandem_optimizations")
                 .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-        LOG.info("Tandem Optimizations {} active: activation range {}, spawn groups {}, libraries {}",
+        LOG.info("Tandem Optimizations {} active: activation range {}, spawn groups {}, libraries {}, world health {}",
                 version, ACTIVATION_RANGE > 0 ? ACTIVATION_RANGE + " blocks" : "off",
-                SPAWN_GROUPS ? "on" : "off", LIBRARIES ? "on" : "off");
+                SPAWN_GROUPS ? "on" : "off", LIBRARIES ? "on" : "off", WorldHealth.ENABLED ? "on" : "off");
     }
 
     private static boolean boolProperty(String key) {

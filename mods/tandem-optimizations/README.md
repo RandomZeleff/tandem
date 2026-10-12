@@ -10,8 +10,9 @@ Petit mod côté serveur que Tandem ajoute au lancement des instances **Fabric e
 | **Catégories d'apparition mortes** : saute la recherche d'apparition naturelle d'une catégorie où rien ne peut apparaître (listes vides, ou toutes les créatures bloquées par MobsBeGone) | Aucun | `-Dtandem.optimizations.spawnGroups=false` |
 | **Architectury** : appel direct des écouteurs d'événements (au lieu d'un `MethodHandle` recréé à chaque appel) | Aucun | `-Dtandem.optimizations.libraries=false` |
 | **Balm** : cache de l'identifiant de configuration (lu par annotation à chaque accès) | Aucun | idem |
+| **Santé du monde** : durée moyenne et maximale des ticks, une ligne `[Tandem] world health: mspt=… max=… players=…` toutes les 100 ticks, seulement quand le monde est partagé (serveur dédié ou monde ouvert en LAN) ; Tandem la lit pour l'indicateur de charge de « Jouer ensemble » | Aucun | `-Dtandem.optimizations.health=false` |
 
-Le journal du jeu le dit au démarrage : `Tandem Optimizations 1.0.0 active: activation range 32 blocks, ...`. Avec `-Dtandem.optimizations.debug=true`, il compte toutes les 10 s les ticks sautés.
+Le journal du jeu le dit au démarrage : `Tandem Optimizations 1.1.0 active: activation range 32 blocks, ...`. Avec `-Dtandem.optimizations.debug=true`, il compte toutes les 10 s les ticks sautés.
 
 Les arguments JVM de l'instance passent après ceux de Tandem : un joueur peut changer un réglage (par exemple `-Dtandem.optimizations.activationRange=48`).
 

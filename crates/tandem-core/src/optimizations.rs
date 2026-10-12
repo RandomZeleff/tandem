@@ -15,7 +15,7 @@ use crate::Context;
 /// Built by `mods/tandem-optimizations/build.py`, checked against 1.20 to 1.21.11.
 const FABRIC_JAR: &[u8] =
     include_bytes!("../../../mods/tandem-optimizations/dist/tandem-optimizations-fabric.jar");
-const FABRIC_JAR_NAME: &str = "tandem-optimizations-fabric-1.0.0.jar";
+const FABRIC_JAR_NAME: &str = "tandem-optimizations-fabric-1.1.0.jar";
 
 /// On for every instance unless turned off in the Settings.
 pub const SETTING: &str = "tandem_optimizations";

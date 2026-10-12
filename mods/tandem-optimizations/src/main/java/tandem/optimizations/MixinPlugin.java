@@ -36,6 +36,11 @@ public final class MixinPlugin implements IMixinConfigPlugin {
         FabricLoader loader = FabricLoader.getInstance();
         if (loader.isModLoaded("architectury")) mixins.add("ArchitecturyEventFactoryMixin");
         if (loader.isModLoaded("balm")) mixins.add("BalmConfigReflectionMixin");
+        // Read here, not through WorldHealth: loading that class now would load
+        // MinecraftServer before its Mixins are applied.
+        if (!"false".equalsIgnoreCase(System.getProperty("tandem.optimizations.health"))) {
+            mixins.add("MinecraftServerMixin");
+        }
         return mixins;
     }
 
