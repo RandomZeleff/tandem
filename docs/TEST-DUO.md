@@ -262,3 +262,20 @@ Plafond : 12 à 30 % du tick. Le reste (décider, bouger, collisions) modifie le
   - Reste à faire : faire tourner le générateur chez l'ami (un serveur sans joueurs du même modpack, 2 à 3 Go de RAM), décider où générer (devant chaque joueur), envoyer par le tunnel, entités nées à la génération, autres dimensions, NeoForge.
 
 **Niveau 3 : déléguer la simulation des mobs à l'ami le plus proche.** Plafond théorique élevé (les entités font 40 à 60 % du tick), mais l'ami aurait besoin d'une copie vivante du monde côté serveur autour de lui, synchronisée dans les deux sens, et les mobs moddés touchent des données globales du serveur (combats et équipes Cobblemon, inventaires, progrès). C'est exactement le genre de piste qui casse les mods : **écartée**. Ses équivalents locaux (distance d'activation, IA allégée loin des joueurs) donnent une partie du gain sans ce risque.
+
+## Monde à part : scénario complet (12 octobre 2026)
+
+Sur un seul PC, avec le vrai tunnel (session iroh, relais publics de n0) : monde à part de Fabulously Optimized, `duo host` sur son port, `duo join <code>` pour l'ami, puis les vrais jeux (comptes hors ligne, serveur en mode hors ligne pour le test).
+
+| Étape | Résultat |
+|---|---|
+| L'ami entre avec le code | connecté en 26 s après le code (liaison directe, 0 à 5 ms) |
+| L'hôte rejoint son monde à part | OK |
+| L'hôte ferme son jeu | l'ami reste connecté (vérifié 60 s après) |
+| L'hôte revient | OK, sans toucher à l'invitation |
+
+Script : notes locales (`apart_scenario.py`). Reste possible : le même test sur deux PC et deux réseaux.
+
+## Indicateur de charge : relevés du mod (12 octobre 2026)
+
+Tandem Optimizations 1.1, une ligne toutes les 100 ticks sur un serveur dédié : Fabulously Optimized 1.21.4 au repos 0,4 à 1 ms par tick ; Prominence II 1.20.1 au repos 2,4 à 2,8 ms (18 ms et un pic d'une seconde au tout premier relevé, pendant la fin du chargement). Aucune ligne en solo.

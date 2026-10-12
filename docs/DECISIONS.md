@@ -313,3 +313,9 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Annuler met la tâche en pause et arrête proprement le serveur ; une nouvelle préparation repasse vite sur ce qui existe déjà.
 - Écarté : écrire notre propre générateur dans Tandem Optimizations (Chunky est la référence, stable sur toutes les versions), et Forge/NeoForge pour l'instant (pas de serveur à part pour eux).
 - Statut : validé
+
+### D47 · 2026-10-12 · Indicateur de charge : relevé du mod, repli sur Minecraft
+- L'hôte voit pendant une session si son PC suit : santé du monde (fluide sous 30 ms par tick, chargé jusqu'à 45, en retard au-delà ou dès que Minecraft signale du retard) et mémoire libre du PC (juste sous 2 Go, presque pleine sous 1 Go), avec un seul conseil à la fois (fermer des programmes, rester moins éloignés, préparer le monde).
+- Mesure : Tandem Optimizations 1.1 chronomètre chaque tick du serveur et écrit une ligne toutes les 100 ticks, seulement quand le monde est partagé (serveur dédié ou monde ouvert en LAN) pour ne pas remplir les journaux en solo. Tandem lit la console du monde à part et la sortie du jeu. Sans le mod (Forge, NeoForge, mod coupé) : le message « Can't keep up! » de Minecraft, qui n'arrive qu'une fois le retard pris.
+- Écarté : `tick query` (seulement depuis 1.20.3, et pas dans un monde LAN), profiler le serveur (trop lourd pour un indicateur).
+- Statut : validé

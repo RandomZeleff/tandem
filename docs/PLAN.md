@@ -196,8 +196,8 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
    - [x] Une instance Quilt réelle lancée avec le mod (a révélé un bug d'installation Quilt, corrigé)
    - Terminé quand : les trois packs tournent sans souci avec le mod actif par défaut, et le gain réel est écrit dans TEST-DUO.
 
-2. **Terminer le monde à part (6e)**
-   - [ ] Test à deux PC avec la vraie app (Zeleff + un ami, nouvel installeur des deux côtés, à compiler avec l'accord de Zeleff) : l'ami rejoint, l'hôte ferme son jeu sans couper l'ami, l'hôte revient
+2. **Terminer le monde à part (6e)** ✅ (12 octobre 2026)
+   - [x] Test du scénario : l'ami rejoint, l'hôte ferme son jeu sans couper l'ami, l'hôte revient. Simulé sur un PC avec le vrai tunnel (relais publics, liaison directe), accord de Zeleff ; un test à deux PC reste bienvenu quand un ami est disponible ([TEST-DUO](TEST-DUO.md#monde-à-part--scénario-complet-12-octobre-2026))
    - [x] Moins de mémoire pour le jeu de l'hôte quand le monde est à part, mesuré une fois (1 Go de moins, D45)
    - [x] Une instance Quilt réelle hébergée à part
    - [x] Décider avec Zeleff : reste en bêta facultative, ou proposé par défaut au-delà de quelques amis → **reste en bêta** (12 octobre 2026)
@@ -208,8 +208,8 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
    - [x] « Préparer le monde pour jouer à plusieurs » : génération autour du point d'apparition avant de jouer (le plus gros coût quand tout le monde explore), progression et annulation
    - Terminé quand : le coût du terrain neuf disparaît sur la zone préparée, mesuré une fois. Mesure existante faite avec le même outil (Chunky) : à 6 joueurs, tick 37 → 18 ms et CPU 82 → 32 % ([TEST-DUO](TEST-DUO.md#comparaison--monde-déjà-généré-11-octobre-2026)).
 
-4. **Indicateur de charge pour l'hôte** (D40, priorité 4)
-   - [ ] Mémoire libre et santé du monde visibles pendant une session, avec un conseil simple quand ça sature
+4. **Indicateur de charge pour l'hôte** (D40, priorité 4) ✅ (12 octobre 2026, D47)
+   - [x] Mémoire libre et santé du monde visibles pendant une session, avec un conseil simple quand ça sature
    - Terminé quand : l'hôte voit d'un coup d'œil si son PC suit.
 
 5. **Le monde appartient au groupe (6f)**, seulement après les quatre premiers chantiers
@@ -450,3 +450,10 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Vérifié : exemple `pregen` sur Fabulously Optimized (1 521 chunks en 16 s) et Prominence II (annulation puis reprise rapide), puis dans la vraie app sur l'instance Quilt de test (monde de 14 à 62 Mo) ; interface aussi testée avec le faux backend.
 - Pas remesuré : l'effet sur le tick est déjà mesuré avec le même outil (TEST-DUO).
 - Prochaine étape : chantier 4 (indicateur de charge pour l'hôte), et toujours le test à deux PC du chantier 2.
+
+### 2026-10-12 (chantiers 2 et 4)
+- Chantier 2 terminé : scénario complet simulé sur un PC avec le vrai tunnel (Fabulously Optimized) : l'ami entre par le code, l'hôte ferme son jeu, l'ami reste connecté, l'hôte revient. Outil : `duo host` avec `TANDEM_WORLD_PORT`.
+- Chantier 4 fait (D47) : carte « Santé de la partie » dans « Jouer ensemble » (monde : fluide / chargé / en retard ; mémoire du PC ; un conseil quand ça sature). Tandem Optimizations 1.1 écrit la durée des ticks toutes les 100 ticks quand le monde est partagé ; sinon Tandem se rabat sur le « Can't keep up! » de Minecraft.
+- Vérifié : relevés sur de vrais serveurs 1.21.4 (FO) et 1.20.1 (Prominence), silence en solo, mod vérifié contre les 20 versions, carte testée avec le faux backend.
+- Pas vérifié en vrai : le relevé dans un monde ouvert en LAN depuis le jeu (impossible à ouvrir sans écran) ; même code, condition « monde publié » de Minecraft.
+- Prochaine étape : chantier 5 (monde du groupe, 6f) à recadrer avec Zeleff, ou passer au peaufinage complet de l'app.
