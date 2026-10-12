@@ -2,6 +2,7 @@
 //!
 //! cargo run -p tandem-core --example duo -- selftest      # host + guest in one process
 //! cargo run -p tandem-core --example duo -- host [name]   # host the world opened to LAN
+//!   (`TANDEM_WORLD_PORT=<port>`: host that server instead, as a world apart is)
 //! cargo run -p tandem-core --example duo -- join <code> [name]
 //! cargo run -p tandem-core --example duo -- stand-in       # fake world, logs who connects
 //! cargo run -p tandem-core --example duo -- copytest <instance-id>
@@ -475,7 +476,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let host = Host::start(
                 http,
                 HostConfig {
-                    world: None,
+                    world: std::env::var("TANDEM_WORLD_PORT")
+                        .ok()
+                        .and_then(|p| p.parse().ok())
+                        .map(|port| LanWorld {
+                            motd: "Monde à part".into(),
+                            port,
+                        }),
                     player: name,
                     instance: None,
                     game_dir: None,
