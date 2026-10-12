@@ -198,9 +198,10 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 
 2. **Terminer le monde à part (6e)**
    - [ ] Test à deux PC avec la vraie app (Raphaël + un ami, nouvel installeur des deux côtés, à compiler avec l'accord de Raphaël) : l'ami rejoint, l'hôte ferme son jeu sans couper l'ami, l'hôte revient
-   - [ ] Moins de mémoire pour le jeu de l'hôte quand le monde est à part, mesuré une fois
-   - [ ] Une instance Quilt réelle hébergée à part
+   - [x] Moins de mémoire pour le jeu de l'hôte quand le monde est à part, mesuré une fois (1 Go de moins, D45)
+   - [x] Une instance Quilt réelle hébergée à part
    - [ ] Décider avec Raphaël : reste en bêta facultative, ou proposé par défaut au-delà de quelques amis
+   - [x] (trouvé en route) Le serveur et le jeu de l'hôte écrivaient les mêmes fichiers de config : dossiers de l'instance recopiés au lieu d'être liés (D45)
    - Terminé quand : le test à deux PC est concluant et la décision prise.
 
 3. **Pré-générer le monde en un clic** (D40, priorité 3)
@@ -437,3 +438,9 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Corrigé : sur Quilt, Tandem installait Fabric API à côté de QFAPI et le jeu ne démarrait plus.
 - Noté : course dans Essential à l'ouverture directe du monde (1 essai sur 2, compte hors ligne), conflit d'écriture d'une config TreeChop en monde à part (chantier 2).
 - Prochaine étape : chantier 2 (terminer le monde à part), qui commence par un test à deux PC : nouvel installeur à compiler avec l'accord de Raphaël.
+
+### 2026-10-12 (chantier 2 : monde à part, partie sans ami)
+- Corrigé : le serveur du monde à part et le jeu de l'hôte écrivaient les mêmes fichiers (dossier `config` lié) ; les dossiers de l'instance sont maintenant recopiés à chaque démarrage (D45). Première copie de Prominence 4,6 s, ensuite rien à refaire.
+- Fait : 1 Go de moins pour un jeu lancé directement sur un serveur (hôte en monde à part, invités), le serveur récupère la place (D45). Mesuré une fois sur Cobbleverse et Prominence.
+- Vérifié : instance Quilt réelle hébergée à part, invité connecté.
+- Reste : test à deux PC (Raphaël + un ami, nouvel installeur) et décision bêta / par défaut.

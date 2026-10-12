@@ -301,3 +301,7 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Mis de côté : monde réparti entre plusieurs PC, un PC par dimension, génération coopérative, cache de chunks chez les amis, NeoForge et 26.x (après la feuille de route).
 - Statut : validé
 
+### D45 · 2026-10-12 · Monde à part : dossiers recopiés, moins de mémoire pour le jeu
+- Les dossiers de l'instance (configs, scripts, données de mods) étaient liés dans le serveur : le serveur et le jeu de l'hôte écrivaient alors les mêmes fichiers en même temps (TreeChop ne pouvait plus enregistrer sa config sur Prominence II, risque de fichier abîmé). Ils sont maintenant recopiés à chaque démarrage du serveur : petits fichiers copiés, fichiers de 1 Mo et plus en lien physique (gratuits en disque). L'instance fait foi : un fichier qui diffère est recopié, ceux que le serveur crée lui-même restent. Les mods restent liés comme avant.
+- Un jeu lancé directement sur un serveur (hôte qui rejoint son monde à part, invités) n'a pas de serveur intégré : 1 Go de moins que la mémoire automatique (pas si le joueur a choisi la sienne). Mesuré avec un joueur : le serveur intégré occupe 0,5 Go réellement utilisés sur Cobbleverse, 0,35 sur Prominence II ; le jeu garde au moins deux fois ce qu'il utilise. Sur 16 Go, le serveur reçoit ainsi ses 4 Go au lieu de 3,5.
+- Statut : validé

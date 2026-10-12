@@ -233,7 +233,9 @@ Le mod s'annonce partout (`Tandem Optimizations 1.0.0 active`), aucune erreur ni
 Trouvé au passage (pas dans le mod) :
 - **Quilt** : Tandem installait Fabric API en dépendance à côté de QFAPI, qui le contient déjà, et le jeu refusait de démarrer (« Duplicate mandatory mod ids »). Corrigé : sur Quilt, l'un des deux suffit.
 - **Essential** (Prominence II) : un plantage sur deux essais à l'ouverture directe du monde (`gg.essential.sps.WorldsManager`, état pas encore prêt), notre mod absent de la pile ; pas reproduit au second essai ni sans le mod. Course dans Essential avec le compte hors ligne, à surveiller avec un vrai compte (l'hôte arrive aussi directement dans son monde avec « Jouer ensemble »).
-- **Monde à part** : le serveur de Prominence n'a pas pu écrire `config/treechop-common.toml` (fichier utilisé par un autre processus), à regarder dans le chantier 2.
+- **Monde à part** : le serveur de Prominence n'a pas pu écrire `config/treechop-common.toml` (fichier utilisé par un autre processus) : le dossier était lié à celui de l'instance, que le jeu tenait ouvert. Corrigé par une copie (D45), revérifié sans erreur.
+
+**Mémoire du jeu de l'hôte en monde à part** (une mesure par pack, mémoire réellement utilisée après un nettoyage forcé, `jcmd GC.run`) : Cobbleverse 3,1 Go en solo contre 2,6 Go en rejoignant le monde à part, Prominence II 2,7 contre 2,4 Go. D'où 1 Go de moins pour le jeu dans ce cas (D45) ; vérifié sur Prominence (7 Go au lieu de 8) : même mémoire utilisée, aucune erreur. Le pic vu par Windows varie surtout avec le ramasse-miettes d'un essai à l'autre : le gain sûr est le plafond.
 
 ## Repousser les limites : pistes de niveau 1 à 3 (11 octobre 2026)
 
