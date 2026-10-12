@@ -275,7 +275,8 @@ async fn start_world_server(
     let game_dir = ctx.data.instance_dir(instance_id);
     let game_mb = instance
         .memory_mb
-        .unwrap_or_else(|| jvm::auto_memory_mb(total, jvm::count_mods(&game_dir)));
+        // The host's game joins the server: no integrated server (see `game::start`).
+        .unwrap_or_else(|| jvm::client_only_memory_mb(total, jvm::count_mods(&game_dir)));
     let options = ServerOptions {
         world: world.to_owned(),
         port: server::free_port()?,

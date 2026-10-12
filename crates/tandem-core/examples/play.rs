@@ -97,7 +97,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .ok()
             .and_then(|mb| mb.parse().ok())
             .unwrap_or_else(|| {
-                jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir))
+                let (total, mods) = (jvm::total_memory_mb(), jvm::count_mods(&game_dir));
+                // As the launcher: less when going straight to a server.
+                if std::env::var("TANDEM_JOIN").is_ok() {
+                    jvm::client_only_memory_mb(total, mods)
+                } else {
+                    jvm::auto_memory_mb(total, mods)
+                }
             }),
         // Tandem Optimizations, as the launcher adds them (`instance:<id>` only).
         extra_jvm_args: match &existing {

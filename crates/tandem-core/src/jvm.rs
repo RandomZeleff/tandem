@@ -29,6 +29,16 @@ pub fn auto_memory_mb(total_mb: u64, mod_count: usize) -> u32 {
     mb.max(MIN_MEMORY_MB) as u32
 }
 
+/// Memory for a game that goes straight to a server (the host's world running apart, a
+/// friend's world): no integrated server to hold. Measured with one player, the
+/// integrated server's live heap is 0.35 to 0.5 GiB (Prominence II, Cobbleverse); 1 GiB
+/// less keeps the game at twice what it really uses.
+pub fn client_only_memory_mb(total_mb: u64, mod_count: usize) -> u32 {
+    let auto = u64::from(auto_memory_mb(total_mb, mod_count));
+    let mb = if auto > 2048 { auto - 1024 } else { auto };
+    mb.max(MIN_MEMORY_MB) as u32
+}
+
 /// Mod jars in an instance (enabled ones only: disabled mods end in `.disabled`).
 pub fn count_mods(game_dir: &Path) -> usize {
     let Ok(entries) = std::fs::read_dir(game_dir.join("mods")) else {
@@ -87,6 +97,16 @@ mod tests {
         assert_eq!(auto_memory_mb(16 * gib, 300), 8192);
         // Tiny machines never go below 1 GiB.
         assert_eq!(auto_memory_mb(1536, 10), 1024);
+    }
+
+    #[test]
+    fn a_game_without_its_world_needs_less() {
+        let gib = 1024;
+        assert_eq!(client_only_memory_mb(16 * gib, 300), 7168);
+        assert_eq!(client_only_memory_mb(16 * gib, 120), 5120);
+        // Small heaps are left alone.
+        assert_eq!(client_only_memory_mb(16 * gib, 0), 2048);
+        assert_eq!(client_only_memory_mb(1536, 10), 1024);
     }
 
     #[test]

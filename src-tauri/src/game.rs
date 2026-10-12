@@ -234,7 +234,13 @@ async fn start(
         account: &account,
         access_token: &access_token,
         memory_mb: instance.memory_mb.unwrap_or_else(|| {
-            jvm::auto_memory_mb(jvm::total_memory_mb(), jvm::count_mods(&game_dir))
+            let (total, mods) = (jvm::total_memory_mb(), jvm::count_mods(&game_dir));
+            // Straight to a server: no integrated server in this game.
+            if matches!(quick_play, Some(QuickPlay::Server(..))) {
+                jvm::client_only_memory_mb(total, mods)
+            } else {
+                jvm::auto_memory_mb(total, mods)
+            }
         }),
         // The player's arguments come last: they can override Tandem's `-D` options.
         extra_jvm_args: optimizations::jvm_args(ctx, &instance)
