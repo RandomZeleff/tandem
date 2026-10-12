@@ -200,9 +200,9 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
    - [ ] Test à deux PC avec la vraie app (Raphaël + un ami, nouvel installeur des deux côtés, à compiler avec l'accord de Raphaël) : l'ami rejoint, l'hôte ferme son jeu sans couper l'ami, l'hôte revient
    - [x] Moins de mémoire pour le jeu de l'hôte quand le monde est à part, mesuré une fois (1 Go de moins, D45)
    - [x] Une instance Quilt réelle hébergée à part
-   - [ ] Décider avec Raphaël : reste en bêta facultative, ou proposé par défaut au-delà de quelques amis
+   - [x] Décider avec Raphaël : reste en bêta facultative, ou proposé par défaut au-delà de quelques amis → **reste en bêta** (12 octobre 2026)
    - [x] (trouvé en route) Le serveur et le jeu de l'hôte écrivaient les mêmes fichiers de config : dossiers de l'instance recopiés au lieu d'être liés (D45)
-   - Terminé quand : le test à deux PC est concluant et la décision prise.
+   - Terminé quand : le test à deux PC est concluant (décision prise : bêta).
 
 3. **Pré-générer le monde en un clic** (D40, priorité 3)
    - [ ] « Préparer le monde pour jouer à plusieurs » : génération autour du point d'apparition avant de jouer (le plus gros coût quand tout le monde explore), progression et annulation
