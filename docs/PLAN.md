@@ -229,7 +229,7 @@ Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne »
 - [x] 3. Accueil (reprendre sa partie en un clic, inviter, rejoindre, grand visuel)
 - [x] 4. Jouer ensemble
 - [x] 5. Instances et fiche d'instance (tous les onglets)
-- [ ] 6. Découvrir et fiches de projet
+- [x] 6. Découvrir et fiches de projet
 - [ ] 7. Réglages, Comptes, fenêtres, notifications, états vides et d'erreur
 - [ ] 8. Finition : revue complète, `DESIGN.md`, décision qui remplace D11
 
@@ -511,3 +511,8 @@ Ensuite : retour aux petits ajouts.
 - Onglets : panneaux d'alerte, de conflit et de mises à jour au même style (bord doré, rouge ou vert, sans liseré latéral), console et journaux dans un creux arrondi, petits cadres aux coins presque carrés. Icônes de blocs à un nombre entier de pixels.
 - Vérifié avec le faux backend à 1 280 × 800 : page Instances, fiche et ses sept onglets.
 - Prochaine étape : étape 6 (Découvrir et fiches de projet).
+
+### 2026-10-12 (refonte, étape 6 : Découvrir et fiches de projet)
+- Fait : titre en Jersey 10 et phrase lisible pour Découvrir ; résultats qui s'éclairent au survol, infos en 13 px ; fiche de projet avec l'image mise en avant de la galerie derrière l'en-tête (assombrie pour lire), titre en Jersey 10, plus de dégradé à la couleur du projet ; types de version sans capitales.
+- Vérifié avec le faux backend à 1 280 × 800 : recherche de mods, onglet Modpacks, fiche d'un modpack.
+- Prochaine étape : étape 7 (Réglages, Comptes, fenêtres, notifications, états vides et d'erreur).

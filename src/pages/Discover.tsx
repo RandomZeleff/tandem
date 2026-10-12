@@ -218,10 +218,10 @@ export default function Discover(props: { instanceId?: string; query?: string; k
   }
 
   return (
-    <div class="flex flex-col gap-5">
-      <div class="flex flex-col gap-1">
-        <h1 class="pixel-shadow font-pixel text-3xl font-bold">Découvrir</h1>
-        <span class="text-[13px] text-muted">
+    <div class="mx-auto flex max-w-[1400px] flex-col gap-5">
+      <div class="flex flex-col gap-1.5">
+        <h1 class="title-display text-[44px] leading-[0.9]">Découvrir</h1>
+        <span class="text-base text-chalk-2">
           Mods, packs de textures, shaders, datapacks et modpacks de Modrinth, filtrés sur la version et le loader de ton instance.
         </span>
       </div>
@@ -351,7 +351,7 @@ export default function Discover(props: { instanceId?: string; query?: string; k
       </Show>
 
       <Show when={searchable()}>
-        <span class="font-mono text-xs text-muted">
+        <span class="text-[13px] text-muted">
           {loading() && hits().length === 0 ? "Recherche…" : `${formatCount(total())} résultats`}
         </span>
         <Show when={!loading() && hits().length === 0 && !error()}>
@@ -363,7 +363,7 @@ export default function Discover(props: { instanceId?: string; query?: string; k
         <ul {...tabPanel("discover-kind", kind())} class="flex flex-col gap-2">
           <For each={hits()}>
             {(hit) => (
-              <li class="panel px-corners-md flex items-start gap-4 p-3.5">
+              <li class="panel flex items-start gap-4 p-3.5 transition-colors duration-100 hover:bg-slate-650 has-[button:focus-visible]:bg-slate-650">
                 <button
                   class="group/card flex min-w-0 flex-1 items-start gap-4 text-left"
                   aria-label={`Voir la fiche de ${hit.title}`}
@@ -375,12 +375,12 @@ export default function Discover(props: { instanceId?: string; query?: string; k
                       <h2 class="truncate text-[15px] font-semibold group-hover/card:text-xp-text group-focus-visible/card:text-xp-text">
                         {hit.title}
                       </h2>
-                      <span class="shrink-0 text-xs text-muted">par {hit.author}</span>
+                      <span class="shrink-0 text-[13px] text-muted">par {hit.author}</span>
                     </div>
                     <p class="line-clamp-2 text-[13px] text-chalk-2">{hit.description}</p>
-                    <div class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                    <div class="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
                       <span class="flex items-center gap-1">
-                        <Icon name="download" size={10} />
+                        <Icon name="download" size={12} />
                         {formatCount(hit.downloads)}
                       </span>
                       <For each={hit.displayCategories.slice(0, 3)}>

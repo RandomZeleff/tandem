@@ -186,7 +186,7 @@ function Row(props: {
           <div class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span class="flex min-w-0 items-center gap-2">
               <span class="truncate font-mono text-[13px] text-chalk">{v().versionNumber}</span>
-              <span class={`shrink-0 text-xs font-semibold uppercase tracking-wide ${TYPE_CLASSES[v().versionType] ?? "text-muted"}`}>
+              <span class={`shrink-0 text-xs font-semibold ${TYPE_CLASSES[v().versionType] ?? "text-muted"}`}>
                 {versionTypeLabel(v().versionType)}
               </span>
               <Show when={props.recommended}>

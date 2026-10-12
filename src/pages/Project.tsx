@@ -167,16 +167,30 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
   return (
     <>
       <header class="panel px-corners-lg relative flex gap-5 overflow-hidden p-5">
-        <Show when={d().color !== null}>
-          <span
-            aria-hidden="true"
-            class="pointer-events-none absolute inset-0 opacity-[0.07]"
-            style={{ background: `linear-gradient(110deg, #${d().color!.toString(16).padStart(6, "0")}, transparent 55%)` }}
-          />
+        {/* The featured gallery image behind the header, kept dim enough to read over. */}
+        <Show when={d().gallery[0]}>
+          {(image) => (
+            <>
+              <img
+                src={image().url}
+                alt=""
+                draggable={false}
+                class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 ease-out motion-reduce:transition-none"
+                onLoad={(e) => e.currentTarget.classList.remove("opacity-0")}
+                onError={(e) => e.currentTarget.remove()}
+              />
+              <span
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgb(38_39_43/0.97)_0%,rgb(38_39_43/0.9)_55%,rgb(38_39_43/0.6)_100%)]"
+              />
+            </>
+          )}
         </Show>
-        <ProjectIcon url={d().iconUrl} size={96} />
+        <span class="relative">
+          <ProjectIcon url={d().iconUrl} size={96} />
+        </span>
         <div class="relative flex min-w-0 flex-1 flex-col gap-2">
-          <div class="flex items-center gap-2 text-xs text-muted">
+          <div class="flex items-center gap-2 text-[13px] text-muted">
             <span class="chip h-5 px-1.5 text-xs text-chalk-3">{projectTypeLabel(d().projectType)}</span>
             <Show when={d().organization ?? d().authors[0]}>
               <span>
@@ -193,9 +207,9 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
               </span>
             </Show>
           </div>
-          <h1 class="pixel-shadow font-pixel text-3xl leading-tight font-bold">{d().title}</h1>
+          <h1 class="title-display text-[40px] leading-[0.95]">{d().title}</h1>
           <p class="text-[14px] text-chalk-2 select-text">{d().summary}</p>
-          <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted">
+          <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-muted">
             <span class="flex items-center gap-1.5" title={`${d().downloads.toLocaleString("fr-FR")} téléchargements`}>
               <Icon name="download" size={10} />
               {formatCount(d().downloads)}
