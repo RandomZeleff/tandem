@@ -48,6 +48,7 @@ Racine surchargeable avec la variable d'environnement `TANDEM_DATA_DIR` (utile e
 
 - **Lancement** : résoudre version + loader → lister fichiers requis → télécharger ce qui manque dans `store` → hardlink → construire la commande → spawn → streamer les logs via events.
 - **Optimisations** : pour Fabric et Quilt 1.20 à 1.21.11, le lancement ajoute `-Dfabric.addMods=<données>/mods/tandem-optimizations-fabric-<v>.jar` (jar embarqué dans l'app, sources dans `mods/tandem-optimizations/`), rien n'est écrit dans l'instance.
+- **Préparer un monde** (D46) : le serveur du monde à part démarre avec Chunky ajouté par `addMods` (`<données>/mods/chunky/`, téléchargé depuis Modrinth), Tandem envoie `chunky radius/start` sur la console et lit la progression ; annuler = `chunky pause` puis arrêt du serveur.
 - **Multi P2P** : hôte détecte l'annonce LAN → ouvre un endpoint iroh → code d'invitation ; invité résout le code → connexion QUIC → proxy TCP local ↔ flux QUIC.
 - **Traduction** : scan des jars → extraction des chaînes → masquage des codes de format → LLM par lots → validation → resource pack → cache par hash.
 

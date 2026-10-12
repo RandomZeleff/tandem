@@ -306,3 +306,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Un jeu lancé directement sur un serveur (hôte qui rejoint son monde à part, invités) n'a pas de serveur intégré : 1 Go de moins que la mémoire automatique (pas si le joueur a choisi la sienne). Mesuré avec un joueur : le serveur intégré occupe 0,5 Go réellement utilisés sur Cobbleverse, 0,35 sur Prominence II ; le jeu garde au moins deux fois ce qu'il utilise. Sur 16 Go, le serveur reçoit ainsi ses 4 Go au lieu de 3,5.
 - Choix de Zeleff : le monde à part reste une bêta facultative (désactivée par défaut), même au-delà de quelques amis.
 - Statut : validé
+
+### D46 · 2026-10-12 · Préparer le monde : Chunky dans le serveur du monde à part
+- La génération du terrain neuf est le plus gros coût quand plusieurs joueurs explorent (TEST-DUO : à 6 joueurs, 37 ms de tick sur terrain neuf contre 18 sur une zone générée à l'avance). « Préparer » génère un carré de 1 000, 2 000 ou 4 000 blocs de côté autour du point d'apparition, jeu fermé.
+- Moteur : le serveur du monde à part (D43, Fabric et Quilt), avec Chunky ajouté au lancement par `addMods` comme Tandem Optimizations. Chunky (GPL-3.0) est téléchargé depuis Modrinth à la première utilisation, pas embarqué dans Tandem ; il n'est pas ajouté si l'instance l'a déjà. Il faut Fabric API dans l'instance (dépendance de Chunky), sinon un message clair. Tandem pilote Chunky par la console et lit ses lignes de progression.
+- Annuler met la tâche en pause et arrête proprement le serveur ; une nouvelle préparation repasse vite sur ce qui existe déjà.
+- Écarté : écrire notre propre générateur dans Tandem Optimizations (Chunky est la référence, stable sur toutes les versions), et Forge/NeoForge pour l'instant (pas de serveur à part pour eux).
+- Statut : validé

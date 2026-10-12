@@ -204,9 +204,9 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
    - [x] (trouvé en route) Le serveur et le jeu de l'hôte écrivaient les mêmes fichiers de config : dossiers de l'instance recopiés au lieu d'être liés (D45)
    - Terminé quand : le test à deux PC est concluant (décision prise : bêta).
 
-3. **Pré-générer le monde en un clic** (D40, priorité 3)
-   - [ ] « Préparer le monde pour jouer à plusieurs » : génération autour du point d'apparition avant de jouer (le plus gros coût quand tout le monde explore), progression et annulation
-   - Terminé quand : le coût du terrain neuf disparaît sur la zone préparée, mesuré une fois.
+3. **Pré-générer le monde en un clic** (D40, priorité 3) ✅ (12 octobre 2026, D46)
+   - [x] « Préparer le monde pour jouer à plusieurs » : génération autour du point d'apparition avant de jouer (le plus gros coût quand tout le monde explore), progression et annulation
+   - Terminé quand : le coût du terrain neuf disparaît sur la zone préparée, mesuré une fois. Mesure existante faite avec le même outil (Chunky) : à 6 joueurs, tick 37 → 18 ms et CPU 82 → 32 % ([TEST-DUO](TEST-DUO.md#comparaison--monde-déjà-généré-11-octobre-2026)).
 
 4. **Indicateur de charge pour l'hôte** (D40, priorité 4)
    - [ ] Mémoire libre et santé du monde visibles pendant une session, avec un conseil simple quand ça sature
@@ -444,3 +444,9 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Fait : 1 Go de moins pour un jeu lancé directement sur un serveur (hôte en monde à part, invités), le serveur récupère la place (D45). Mesuré une fois sur Cobbleverse et Prominence.
 - Vérifié : instance Quilt réelle hébergée à part, invité connecté.
 - Reste : test à deux PC (Zeleff + un ami, nouvel installeur) et décision bêta / par défaut.
+
+### 2026-10-12 (chantier 3 : préparer le monde en un clic)
+- Fait (D46) : bouton « Préparer » dans l'onglet Mondes (Fabric et Quilt) : trois tailles de zone avec temps et place estimés, progression en direct (pourcentage, chunks, vitesse, temps restant), annulation qui garde le travail fait. Le monde tourne dans le serveur du monde à part avec Chunky ajouté au lancement (téléchargé depuis Modrinth, jamais copié dans l'instance).
+- Vérifié : exemple `pregen` sur Fabulously Optimized (1 521 chunks en 16 s) et Prominence II (annulation puis reprise rapide), puis dans la vraie app sur l'instance Quilt de test (monde de 14 à 62 Mo) ; interface aussi testée avec le faux backend.
+- Pas remesuré : l'effet sur le tick est déjà mesuré avec le même outil (TEST-DUO).
+- Prochaine étape : chantier 4 (indicateur de charge pour l'hôte), et toujours le test à deux PC du chantier 2.
