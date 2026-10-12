@@ -244,11 +244,11 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Le code suffit pour entrer ; l'hôte voit les arrivées et peut exclure. Relais et mise en relation : serveurs publics et gratuits de n0, pas de serveur Tandem.
 - Comptes Microsoft obligatoires des deux côtés (le monde LAN vérifie les comptes auprès de Mojang) ; pas de contournement.
 - Mesuré (preuve de concept, iroh 1.3, deux points sur un même PC) : code résolu en 0,2 s, connexion en 0,7 s, chemin direct choisi automatiquement.
-- Statut : validé (périmètre 6a avec Raphaël)
+- Statut : validé (périmètre 6a avec Zeleff)
 
 
 ### D38 · 2026-10-10 · Jeu à deux : moins de clics, protocole compatible
-- Retours du premier test réel (Raphaël) : ce qui gêne, c'est d'avoir le même modpack, le nombre de clics et l'étape « Ouvrir au réseau local ».
+- Retours du premier test réel (Zeleff) : ce qui gêne, c'est d'avoir le même modpack, le nombre de clics et l'étape « Ouvrir au réseau local ».
 - L'invité ne choisit plus d'instance avant de rejoindre : après l'accueil, Tandem prend celle qui a la version et le loader de l'hôte, en préférant le même modpack Modrinth (même version d'abord), puis le moins de mods différents. Elle reste modifiable. Le jeu se lance tout seul dès que le monde est ouvert, seulement si les instances correspondent (réglage `duo_auto_launch`, activé par défaut).
 - Protocole : nouveau message `instance` (invité → hôte) et champ facultatif `pack` dans le résumé d'instance. `VERSION` reste à 1 : un hôte plus ancien ignore le message, un résumé sans `pack` se lit toujours (testé).
 - Hôte : un seul bouton crée l'invitation et lance le jeu directement dans le monde choisi (`--quickPlaySingleplayer`, 1.20+ et versions numérotées par année ; avant, menu du jeu). On ne peut pas ouvrir le monde en LAN à la place du joueur sans mod (`/publish` exige les cheats) : Tandem repère l'entrée dans le monde dans le journal du jeu (`Starting integrated minecraft server`) et envoie une notification système de rappel ; arrivées et départs aussi notifiés, seulement quand le launcher n'est pas au premier plan (`tauri-plugin-notification`).
@@ -275,7 +275,7 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Considérations aussi pesées : leurs conditions d'API (pas de cache des données, clé non partageable, pas de produit concurrent, accès révocable sans motif) et l'approbation demandée, mal adaptées à un lanceur public.
 - Modrinth suffit comme source : très bien fournie en Fabric, Quilt et NeoForge récent (le choix par défaut à partir de 1.21) ; le manque se limite aux vieux modpacks Forge exclusifs à CurseForge. FTB écarté aussi (son app passe par Overwolf, ses packs récupèrent leurs mods sur CurseForge).
 - Gardé : l'import depuis les autres launchers (D35), y compris l'app CurseForge. Tandem copie des fichiers déjà présents sur le PC du joueur, sans contacter CurseForge. Un `.zip` CurseForge choisi dans « Importer un modpack » est refusé avec un message qui oriente vers cet import.
-- Principe (tranché par Raphaël) : **Tandem ne récupère jamais rien lui-même depuis CurseForge, mais les joueurs restent libres** d'importer ce qu'ils ont, d'où que ça vienne. Restreindre ce que le joueur fait de ses propres fichiers rendrait le launcher frustrant. Donc, dans « Jouer ensemble », l'hôte continue d'envoyer à ses amis les fichiers de son instance que Modrinth ne connaît pas (D39), même s'ils viennent à l'origine de CurseForge : ce sont ses fichiers, Tandem ne fait que les transmettre entre amis.
+- Principe (tranché par Zeleff) : **Tandem ne récupère jamais rien lui-même depuis CurseForge, mais les joueurs restent libres** d'importer ce qu'ils ont, d'où que ça vienne. Restreindre ce que le joueur fait de ses propres fichiers rendrait le launcher frustrant. Donc, dans « Jouer ensemble », l'hôte continue d'envoyer à ses amis les fichiers de son instance que Modrinth ne connaît pas (D39), même s'ils viennent à l'origine de CurseForge : ce sont ses fichiers, Tandem ne fait que les transmettre entre amis.
 - Statut : validé
 
 
@@ -286,7 +286,7 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Contenu de la v1 : catégories d'apparition mortes, correctifs Architectury et Balm, **distance d'activation limitée aux créatures vanilla**. Les créatures des mods tickent toujours normalement : un mod peut compter le temps dans le tick de sa créature (mesuré : Cobblemon fait vieillir ses Pokémon ainsi, ralentis ils restaient quatre fois plus longtemps, +75 % de Pokémon). Exclues aussi les créatures vanilla dont un minuteur se voit en jeu (poules, zombies-villageois, piglins, hoglins, tatous) et tout ce qui est occupé (combat, eau, monture, apprivoisé…). Seul effet visible : les créatures inactives au loin bougent plus lentement, d'où un réglage à part.
 - Écarté : cache de la recherche d'apparition (le profil montre des lectures à des positions aléatoires, un cache exact ne retire que 1 à 2 %).
 - 26.1 et plus : Minecraft n'est plus obfusqué, Fabric n'a plus de noms intermédiaires. Il faudra un second jar aux noms de Mojang, qui servira aussi pour NeoForge (mêmes noms depuis 1.20.5). Forge 1.20.1 (noms SRG) seulement si le besoin existe.
-- Statut : validé (feu vert de Raphaël pour la session, 2026-10-11)
+- Statut : validé (feu vert de Zeleff pour la session, 2026-10-11)
 
 ### D43 · 2026-10-11 · Héberger le monde à part, puis un monde qui appartient au groupe
 - Après le mini-mod, les gains restants de « Jouer ensemble » ne sont plus dans le temps de tick mais dans la fiabilité : la partie s'arrête si l'hôte part ou si son jeu plante, l'hôte doit ouvrir le monde en LAN, 8 joueurs au plus.
@@ -297,12 +297,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 
 ### D44 · 2026-10-11 · Fin de l'exploration : une feuille de route, un chantier à la fois
 - L'exploration voulue « jusqu'à l'excès » a ouvert plusieurs chantiers en parallèle (mini-mod, monde à part, monde du groupe) et cherché à repousser le nombre de joueurs. Bilan : les gains de vitesse sont acquis (mini-mod) ; le monde à part apporte surtout du confort ; au-delà de 20 à 30 joueurs sur un pack moyen, il faudrait répartir le monde entre plusieurs PC, ce que les modpacks ne supportent pas.
-- Décision de Raphaël : plus de nouvel angle d'optimisation ni de course au nombre de joueurs. On termine dans l'ordre : Tandem Optimizations v1, monde à part, pré-génération en un clic, indicateur de charge, puis éventuellement le monde du groupe (6f). Chaque chantier est testé en vrai et documenté avant le suivant, pour éviter le surdimensionnement.
+- Décision de Zeleff : plus de nouvel angle d'optimisation ni de course au nombre de joueurs. On termine dans l'ordre : Tandem Optimizations v1, monde à part, pré-génération en un clic, indicateur de charge, puis éventuellement le monde du groupe (6f). Chaque chantier est testé en vrai et documenté avant le suivant, pour éviter le surdimensionnement.
 - Mis de côté : monde réparti entre plusieurs PC, un PC par dimension, génération coopérative, cache de chunks chez les amis, NeoForge et 26.x (après la feuille de route).
 - Statut : validé
 
 ### D45 · 2026-10-12 · Monde à part : dossiers recopiés, moins de mémoire pour le jeu
 - Les dossiers de l'instance (configs, scripts, données de mods) étaient liés dans le serveur : le serveur et le jeu de l'hôte écrivaient alors les mêmes fichiers en même temps (TreeChop ne pouvait plus enregistrer sa config sur Prominence II, risque de fichier abîmé). Ils sont maintenant recopiés à chaque démarrage du serveur : petits fichiers copiés, fichiers de 1 Mo et plus en lien physique (gratuits en disque). L'instance fait foi : un fichier qui diffère est recopié, ceux que le serveur crée lui-même restent. Les mods restent liés comme avant.
 - Un jeu lancé directement sur un serveur (hôte qui rejoint son monde à part, invités) n'a pas de serveur intégré : 1 Go de moins que la mémoire automatique (pas si le joueur a choisi la sienne). Mesuré avec un joueur : le serveur intégré occupe 0,5 Go réellement utilisés sur Cobbleverse, 0,35 sur Prominence II ; le jeu garde au moins deux fois ce qu'il utilise. Sur 16 Go, le serveur reçoit ainsi ses 4 Go au lieu de 3,5.
-- Choix de Raphaël : le monde à part reste une bêta facultative (désactivée par défaut), même au-delà de quelques amis.
+- Choix de Zeleff : le monde à part reste une bêta facultative (désactivée par défaut), même au-delà de quelques amis.
 - Statut : validé

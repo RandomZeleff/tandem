@@ -30,7 +30,7 @@ Légende : `[ ]` à faire · `[~]` en cours · `[x]` fait
 
 ## Phase 2 — Comptes
 
-> App ID approuvé par Mojang le 2026-10-10 ; connexion vérifiée par Raphaël avec son compte (jeu lancé). Décision D36.
+> App ID approuvé par Mojang le 2026-10-10 ; connexion vérifiée par Zeleff avec son compte (jeu lancé). Décision D36.
 
 - [x] OAuth Microsoft (auth code + PKCE, retour sur `http://localhost:<port>`)
 - [x] Chaîne Xbox Live → XSTS → Minecraft Services → profil (+ vérification de possession)
@@ -135,7 +135,7 @@ Objectif : tout ce qu'un joueur solo attend d'un launcher avant le jeu à deux.
 - [x] Import d'instances d'autres launchers (Modrinth App, Prism / MultiMC, CurseForge, launcher officiel, ou dossier choisi) — D35
 - [x] Passe finale : audit de l'UI, mesures de performance (démarrage, mémoire, gros packs), hors ligne — [AUDIT-UI.md](AUDIT-UI.md#passe-finale--2026-10-10-fin-de-la-phase-47)
 
-## Phase 4.8 — Soutenir les créateurs (idée de Raphaël, faite le 2026-10-11)
+## Phase 4.8 — Soutenir les créateurs (idée de Zeleff, faite le 2026-10-11)
 Tandem n'affiche pas de publicité (celle qui paie les auteurs sur Modrinth) : le mettre en valeur auprès des créateurs. Modrinth donne les liens de soutien de chaque projet (`donation_urls` : Ko-fi, Patreon, PayPal, GitHub Sponsors, Buy Me a Coffee, autre) ; aujourd'hui ils sont discrets, une ligne « Don » dans la colonne Liens de la fiche.
 - [x] Bouton « Soutenir l'auteur » bien visible dans la fiche, à côté d'« Installer » ; seulement si l'auteur a mis un lien (plusieurs liens : menu)
 - [x] Onglet « Créateurs » dans chaque instance : auteurs regroupés par organisation ou propriétaire d'équipe, avec leurs liens (trois requêtes groupées vers Modrinth)
@@ -145,14 +145,14 @@ Tandem n'affiche pas de publicité (celle qui paie les auteurs sur Modrinth) : l
 
 ## Phase 6 — Multijoueur P2P sans serveur
 
-Cadrage (2026-10-10, avec Raphaël, D37) : on livre d'abord **le tunnel seul** (6a), puis la synchronisation des mods (6b). L'hôte ouvre son monde au réseau local dans le jeu, comme d'habitude ; Tandem le transporte chez l'invité, dont le jeu le voit comme une partie du réseau local. Aucun mod, toutes versions et loaders.
+Cadrage (2026-10-10, avec Zeleff, D37) : on livre d'abord **le tunnel seul** (6a), puis la synchronisation des mods (6b). L'hôte ouvre son monde au réseau local dans le jeu, comme d'habitude ; Tandem le transporte chez l'invité, dont le jeu le voit comme une partie du réseau local. Aucun mod, toutes versions et loaders.
 
 Choix tranchés :
 - Le code suffit pour entrer ; l'hôte est prévenu de chaque arrivée et peut exclure un invité.
 - Mise en relation et relais de secours : serveurs publics et gratuits de n0 (auteurs d'iroh). Pas de serveur Tandem. Un relais à nous reste possible plus tard.
 - Les deux joueurs ont besoin d'un compte Microsoft (le monde LAN vérifie les comptes auprès de Mojang) : expliqué dans l'interface, aucun contournement.
 - Quand l'hôte quitte, la partie s'arrête pour tous. Pas de transfert du monde en 6a.
-- Tests réels : deux PC sur deux réseaux, deux comptes (Raphaël et un ami). Claude teste seul en simulation et sur un vrai serveur Minecraft local.
+- Tests réels : deux PC sur deux réseaux, deux comptes (Zeleff et un ami). Claude teste seul en simulation et sur un vrai serveur Minecraft local.
 
 ### 6a — Le tunnel
 - [x] Détection d'un monde ouvert en LAN (écoute multicast `224.0.2.60:4445`)
@@ -164,7 +164,7 @@ Choix tranchés :
 - [x] Avertissement si les instances diffèrent (version, loader, mods)
 - [x] Page « Jouer à deux » (inviter / rejoindre), messages clairs (compte Microsoft requis, monde pas encore ouvert, code inconnu)
 
-- [x] **Test réel à deux** (deux PC, deux comptes Microsoft) : Raphaël + un ami, invité en 4G (≈ 30 ms) et en Wi-Fi (≈ 3 ms), exclusion et inversion des rôles OK — [TEST-DUO.md](TEST-DUO.md#résultats-du-premier-test-réel-10-octobre-2026)
+- [x] **Test réel à deux** (deux PC, deux comptes Microsoft) : Zeleff + un ami, invité en 4G (≈ 30 ms) et en Wi-Fi (≈ 3 ms), exclusion et inversion des rôles OK — [TEST-DUO.md](TEST-DUO.md#résultats-du-premier-test-réel-10-octobre-2026)
 
 ### 6b — Ensuite
 - [x] Synchroniser l'invité sur l'hôte (D39) : « Préparer l'instance » crée une copie (modpack Modrinth de l'hôte s'il en a un), puis mêmes mods (Modrinth par SHA-1, sinon envoyés par l'hôte) et mêmes fichiers de pack (configs, scripts, datapacks globaux)
@@ -197,10 +197,10 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
    - Terminé quand : les trois packs tournent sans souci avec le mod actif par défaut, et le gain réel est écrit dans TEST-DUO.
 
 2. **Terminer le monde à part (6e)**
-   - [ ] Test à deux PC avec la vraie app (Raphaël + un ami, nouvel installeur des deux côtés, à compiler avec l'accord de Raphaël) : l'ami rejoint, l'hôte ferme son jeu sans couper l'ami, l'hôte revient
+   - [ ] Test à deux PC avec la vraie app (Zeleff + un ami, nouvel installeur des deux côtés, à compiler avec l'accord de Zeleff) : l'ami rejoint, l'hôte ferme son jeu sans couper l'ami, l'hôte revient
    - [x] Moins de mémoire pour le jeu de l'hôte quand le monde est à part, mesuré une fois (1 Go de moins, D45)
    - [x] Une instance Quilt réelle hébergée à part
-   - [x] Décider avec Raphaël : reste en bêta facultative, ou proposé par défaut au-delà de quelques amis → **reste en bêta** (12 octobre 2026)
+   - [x] Décider avec Zeleff : reste en bêta facultative, ou proposé par défaut au-delà de quelques amis → **reste en bêta** (12 octobre 2026)
    - [x] (trouvé en route) Le serveur et le jeu de l'hôte écrivaient les mêmes fichiers de config : dossiers de l'instance recopiés au lieu d'être liés (D45)
    - Terminé quand : le test à deux PC est concluant (décision prise : bêta).
 
@@ -213,7 +213,7 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
    - Terminé quand : l'hôte voit d'un coup d'œil si son PC suit.
 
 5. **Le monde appartient au groupe (6f)**, seulement après les quatre premiers chantiers
-   - Copie du monde chez les amis pendant la partie, reprise si l'hôte part, ouverture sans l'hôte, puis choix du meilleur PC pour héberger. Pistes notées dans D43 ; à recadrer avec Raphaël avant de commencer.
+   - Copie du monde chez les amis pendant la partie, reprise si l'hôte part, ouverture sans l'hôte, puis choix du meilleur PC pour héberger. Pistes notées dans D43 ; à recadrer avec Zeleff avant de commencer.
 
 **Arrêté ou mis de côté** (D44) :
 - Repousser le nombre de joueurs au-delà d'un PC : monde réparti entre plusieurs PC, un PC par dimension, génération du terrain par les amis, simulation partagée.
@@ -335,14 +335,14 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Pas vérifié : le groupe de processus sous macOS (la CI compile la variante Unix) ; la partie interface de la fiche de test.
 - Dépendances entre mods (D30) : `content::deps` lit ce que chaque jar fournit et exige (Fabric, Quilt, Forge, NeoForge, jars imbriqués), en parallèle et avec un cache par jar (`cache/deps/<instance>.json`, préchauffé à l'ouverture de l'onglet Contenu). Désactiver ou retirer une bibliothèque nécessaire demande confirmation en listant les mods concernés. Panneau « il manque des mods » quand Forge/NeoForge refuse de démarrer, avec « Réactiver et relancer » ou « Chercher sur Modrinth ». Vérifié sur les vrais packs : Create+ sans Architectury → les 5 mods cités par Forge (scan à froid 1 s, depuis le cache 8 ms ; Prominence 2,6 s puis 11 ms) ; l'analyseur retrouve le rapport du vrai log Forge ; parcours UI testés dans le navigateur (backend simulé).
 - Choix de la version d'un modpack : « Installer » dans Découvrir ouvre une boîte qui montre la version recommandée (dernière stable, comme avant) avec son loader, sa version du jeu et sa taille, et permet d'en choisir une autre (bêta/alpha avec avertissement). Commande `modpack_versions`, `install_modpack` prend un `versionId` optionnel. Testé dans le navigateur (backend simulé).
-- Prochaine étape : partie interface des tests sous charge (Raphaël), puis build installable de la v0.1.
+- Prochaine étape : partie interface des tests sous charge (Zeleff), puis build installable de la v0.1.
 - Publication v0.1 préparée : métadonnées de l'installeur, workflow `release.yml` (tag `v*` → installeurs Windows + `.dmg` → brouillon de Release marqué pré-version, notes `docs/releases/v<version>.md`, vérifie que le tag correspond à la version de l'app), notes de la v0.1.0, README à jour. Aucun tag poussé.
 - Décision (D31) : pas de build ni de Release tant que Mojang n'a pas répondu à la demande d'App ID et que la connexion Microsoft (Phase 2) n'est pas faite. Jobs de build de la CI désactivés (lint et tests gardés). Section « Comptes » des notes de la v0.1.0 à écrire à ce moment-là.
 - Anciens installeurs produits par la CI supprimés (41 artefacts). Phase 2 mise en pause en attendant Mojang : on continue le développement sur les autres phases.
-- Prochaine étape : choisir avec Raphaël entre la Phase 5 (traduction IA : discussion de conception d'abord, pistes réunies) et la Phase 6 (jeu à deux sans serveur, le différenciateur).
+- Prochaine étape : choisir avec Zeleff entre la Phase 5 (traduction IA : discussion de conception d'abord, pistes réunies) et la Phase 6 (jeu à deux sans serveur, le différenciateur).
 
 ### 2026-10-09 (Windows, suite)
-- Choix avec Raphaël : peaufiner l'existant avant la traduction, en finissant un chantier complet. Cadrage de la Phase 4.6 (fiches de contenu) puis réalisation.
+- Choix avec Zeleff : peaufiner l'existant avant la traduction, en finissant un chantier complet. Cadrage de la Phase 4.6 (fiches de contenu) puis réalisation.
 - Moteur (D32) : `content::project` (détails, auteurs équipe + organisation via l'API v3, versions marquées compatibles avec l'instance ou lançables par Tandem pour un modpack, journaux, dépendances et contenu d'un modpack résolus par lots de 100 en parallèle, cache 10 min dans `AppState`), `content::markdown` (pulldown-cmark + ammonia, vidéos YouTube en vignettes, liens relatifs vers modrinth.com). `install_content` accepte une version précise. Exemple `project <slug> [description.html]`. Mesuré sur Prominence II : page 0,45 s, 102 versions 0,9-1,5 s (réponse de 5 Mo), 563 mods inclus 1,1 s (4,6 s avant la parallélisation), 3 ms depuis le cache.
 - Interface : page `project` dans l'historique (chargée à la demande : +36 Ko hors du démarrage), en-tête avec action selon le contexte, onglets Description / Galerie / Versions / Contenu ou Dépendances, colonne Compatibilité / Créateurs / Liens / Détails, catégories traduites (aussi dans Découvrir). Points d'entrée : cartes de Découvrir, titres de l'onglet Contenu, modpack d'origine (Informations), dépendances, liens Modrinth dans les descriptions.
 - Vérifié dans le navigateur (backend simulé) : tous les onglets, visionneuse, liens internes, installation, mise à jour, instance Vanilla, aucune version compatible, projet inexistant, retour arrière, largeur 1100 px ; vraie description de Prominence II rendue dans l'aperçu. Vu dans la vraie fenêtre (`tauri dev`) : fiche de Prominence II avec le vrai backend.
@@ -350,7 +350,7 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Prochaine étape : discussion de conception de la traduction (Phase 5), avec la description d'une fiche comme premier usage.
 
 ### 2026-10-10 (Windows)
-- Mandat de Raphaël : tout faire jusqu'au multijoueur exclu, en autonomie, sans publier de build. Feuille de route ajoutée au plan (Phase 4.7).
+- Mandat de Zeleff : tout faire jusqu'au multijoueur exclu, en autonomie, sans publier de build. Feuille de route ajoutée au plan (Phase 4.7).
 - Phase 5 terminée (D33) : moteur `translate` (sources, masquage des codes, glossaire vanilla + termes des auteurs + joueur, lots par mod avec clé comme indice, cache SQLite par texte, pack généré + quêtes FTB en place avec originaux, manifeste réversible, langue du jeu restaurée), services compatibles OpenAI, clé dans le coffre (`keyring`), onglet Traduction, réglages, traduction des descriptions. Testé avec Ollama qwen2.5:7b sur RTX 4060 (~45 tokens/s) : 400 textes de Cobblemon traduits et chargés en jeu (pack reconnu compatible).
 - Phase 4.7 : erreurs en français ; mise à jour de modpack avec retour arrière (testé sur Fabulously Optimized 6.3.0 → 6.5.0 → retour → 6.5.0, jeu lancé) ; onglet Réglages d'instance (nom, icône, duplication, Java détectés, arguments JVM, fenêtre) ; changement de version d'instance (testé FO 1.21.1 → 1.21.4 : 44 mods mis à jour, 2 désactivés ; le jeu plante ensuite à cause de la config de Controlify, d'où l'option « garder une copie ») ; datapacks par monde ; incompatibilités entre mods (aucune fausse alerte sur 3 gros packs) ; moteur d'import CurseForge.
 - Pas vérifié dans la vraie fenêtre Tauri : la plupart des écrans ajoutés (testés dans l'aperçu navigateur avec le backend simulé) ; liens externes (opener).
@@ -363,19 +363,19 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Passe finale de la Phase 4.7 : voir [AUDIT-UI.md](AUDIT-UI.md#passe-finale--2026-10-10-fin-de-la-phase-47). Corrigé : fichiers non suivis invisibles dans Contenu (154 mods cachés sur DawnCraft), filtre du contenu, attente de 30 s au lancement sur un réseau sans Internet (→ 5,7 s), messages d'erreur réseau, mise en page à 1100 px.
 - Phase 4.7 terminée.
 - Prochaine étape : Phase 2, connexion Microsoft (OAuth, Xbox Live → XSTS → Minecraft, jetons dans le coffre, plusieurs comptes).
-- Phase 2 (connexion Microsoft, D36) : navigateur + PKCE avec retour sur `localhost`, Xbox Live → XSTS → Minecraft, vérification de possession, jetons dans le coffre (découpés en morceaux, Windows limite un secret à 2,5 Ko), renouvellement avant le lancement, tête du vrai skin, fenêtre « Comptes » et carte de la barre latérale refaites, comptes hors ligne seulement après un compte Microsoft. **Testé par Raphaël avec son vrai compte : connexion OK, jeu lancé.**
-- Notes de la v0.1 complétées (section Comptes, traduction, imports). Rien de publié (D31 : la Phase 2 était la condition, la publication attend le feu vert de Raphaël).
-- Prochaine étape : au choix de Raphaël, publier la v0.1 (tag `v0.1.0` → brouillon de Release) ou commencer la Phase 6 (jeu à deux sans serveur).
-- Phase 6 commencée puis **mise en pause à la demande de Raphaël pour un cadrage dédié** (ampleur de la feature). Fait : preuve de concept iroh 1.3 (code court publié sur le relais pkarr public d'iroh, résolu en 0,2 s, connexion en 0,7 s, chemin direct choisi), briques du moteur `duo` compilées et testées mais pas encore branchées : codes d'invitation (`XXXX-XXXX`, 40 bits, Crockford), détection et annonce des mondes LAN (224.0.2.60:4445), protocole hôte/invité, comparaison des instances. Pas encore écrit : sessions hôte et invité, interface, rejoindre automatiquement au lancement.
-- Prochaine étape : discussion de cadrage de la Phase 6 avec Raphaël avant de continuer.
+- Phase 2 (connexion Microsoft, D36) : navigateur + PKCE avec retour sur `localhost`, Xbox Live → XSTS → Minecraft, vérification de possession, jetons dans le coffre (découpés en morceaux, Windows limite un secret à 2,5 Ko), renouvellement avant le lancement, tête du vrai skin, fenêtre « Comptes » et carte de la barre latérale refaites, comptes hors ligne seulement après un compte Microsoft. **Testé par Zeleff avec son vrai compte : connexion OK, jeu lancé.**
+- Notes de la v0.1 complétées (section Comptes, traduction, imports). Rien de publié (D31 : la Phase 2 était la condition, la publication attend le feu vert de Zeleff).
+- Prochaine étape : au choix de Zeleff, publier la v0.1 (tag `v0.1.0` → brouillon de Release) ou commencer la Phase 6 (jeu à deux sans serveur).
+- Phase 6 commencée puis **mise en pause à la demande de Zeleff pour un cadrage dédié** (ampleur de la feature). Fait : preuve de concept iroh 1.3 (code court publié sur le relais pkarr public d'iroh, résolu en 0,2 s, connexion en 0,7 s, chemin direct choisi), briques du moteur `duo` compilées et testées mais pas encore branchées : codes d'invitation (`XXXX-XXXX`, 40 bits, Crockford), détection et annonce des mondes LAN (224.0.2.60:4445), protocole hôte/invité, comparaison des instances. Pas encore écrit : sessions hôte et invité, interface, rejoindre automatiquement au lancement.
+- Prochaine étape : discussion de cadrage de la Phase 6 avec Zeleff avant de continuer.
 - Phase 6a (tunnel) faite : sessions hôte et invité (`duo::host`, `duo::guest`), page « Jouer à deux » (inviter / rejoindre, code `XXXX-XXXX`, étapes de l'hôte cochées en direct, invités avec ping et liaison directe ou relais, exclure, écart d'instances signalé, compte Microsoft exigé), point doré dans la barre latérale pendant une session, et lancement qui rejoint directement la partie (`--quickPlayMultiplayer` en 1.20+, `--server`/`--port` avant).
 - Vérifié sur ce PC : exemple `duo selftest` (vrai multicast LAN, code résolu sur le relais pkarr, ping de la liste des serveurs à travers le tunnel en 0,15 ms, refus d'un code inconnu, fin de session signalée) ; vrais jeux lancés sur un faux monde : Fabulously Optimized 1.21.4 (quickPlay) et Create Forge 1.19.2 (`--server`) se connectent tout seuls. Page testée dans l'aperçu (backend simulé).
 - Pas vérifié : une vraie partie entre deux PC sur deux réseaux (hole punching réel, relais, connexion authentifiée au monde LAN).
-- Prochaine étape : test réel par Raphaël et un ami, puis 6b (synchroniser les mods).
+- Prochaine étape : test réel par Zeleff et un ami, puis 6b (synchroniser les mods).
 
 
 ### 2026-10-10 (reprise Codex : livraison pour test duo)
-- À la demande explicite de Raphaël : compilation locale des installateurs Windows x64 EXE et MSI 0.1.0 pour partage privé avec un ami.
+- À la demande explicite de Zeleff : compilation locale des installateurs Windows x64 EXE et MSI 0.1.0 pour partage privé avec un ami.
 - `docs/TEST-DUO.md` complété : prérequis, grille des scénarios, diagnostic et fiche de retour.
 - Vérifié : TypeScript, fmt, Clippy, 134 tests Rust, `duo selftest` via le réseau et démarrage de la release sur des données isolées (UI 490 ms).
 - Emballage final réussi via `pnpm tauri bundle --bundles nsis,msi`, après un verrou temporaire de l'exécutable lors du premier essai. Avertissement Tauri sur le marqueur de type de bundle déjà patché ; aucun plugin updater dans ce projet.
@@ -383,27 +383,27 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Prochaine étape : vraie partie entre les deux PC ; la case du test réel de la Phase 6a reste ouverte.
 
 ### 2026-10-10 (Windows, suite : test réel du jeu à deux)
-- Premier vrai test par Raphaël et un ami : inviter, rejoindre et jouer marchent, l'invité en 4G (≈ 30 ms, autre réseau) comme en Wi-Fi (≈ 3 ms) ; exclusion et inversion des rôles OK ; longue partie fluide. Phase 6a validée.
+- Premier vrai test par Zeleff et un ami : inviter, rejoindre et jouer marchent, l'invité en 4G (≈ 30 ms, autre réseau) comme en Wi-Fi (≈ 3 ms) ; exclusion et inversion des rôles OK ; longue partie fluide. Phase 6a validée.
 - Second essai : liaison affichée « direct » ; avertissement des mods manquants vérifié (jaune avec une instance différente, rien avec la bonne).
-- Prochaine étape : 6b (synchroniser les mods) et peaufinage de l'expérience (accessibilité, moins de frictions), au choix de Raphaël.
+- Prochaine étape : 6b (synchroniser les mods) et peaufinage de l'expérience (accessibilité, moins de frictions), au choix de Zeleff.
 
 ### 2026-10-10 (Windows, suite : moins de frictions pour jouer à deux)
-- Retours de Raphaël sur le test : gênes = avoir le même modpack, trop de clics, ouvrir le monde en LAN. Ordre choisi : d'abord les améliorations rapides, puis la synchro des mods (6b).
+- Retours de Zeleff sur le test : gênes = avoir le même modpack, trop de clics, ouvrir le monde en LAN. Ordre choisi : d'abord les améliorations rapides, puis la synchro des mods (6b).
 - Fait (D38) : l'invité entre seulement le code (instance choisie par Tandem : même modpack, puis mêmes mods ; modifiable), jeu lancé tout seul quand le monde s'ouvre et que tout correspond ; l'hôte a un bouton « Inviter et lancer le jeu » avec choix du monde, ouvert directement (Quick Play) ; étape LAN détaillée et « tu es dans ton monde » repéré dans le journal ; notifications système (rappel LAN, arrivées, départs, fin de partie) quand le launcher est en arrière-plan. Protocole compatible avec les installeurs déjà donnés.
 - Vérifié : vrai jeu NeoForge 1.21.1 (Cobblemon) ouvert directement dans « Tutorial World v4 » (en jeu en 61 s, ligne de journal repérée) ; parcours hôte et invité dans l'aperçu (backend simulé) : lancement automatique, aucune instance correspondante, changement d'instance (pas de lancement automatique si les mods diffèrent) ; app Tauri démarrée avec le plugin de notification ; fmt, Clippy, 135 tests.
 - Pas vérifié : les notifications dans la vraie fenêtre et par-dessus le jeu, le choix automatique sur deux vrais PC.
 - Prochaine étape : 6b, synchroniser les mods de l'invité (le champ `pack` permet déjà d'installer le même modpack Modrinth chez l'invité).
 
 ### 2026-10-10 (Windows, suite : 6b, synchroniser l'invité)
-- Choix de Raphaël : la 6b avant l'agent Java d'ouverture LAN automatique (gardé pour une session dédiée, voir les notes).
+- Choix de Zeleff : la 6b avant l'agent Java d'ouverture LAN automatique (gardé pour une session dédiée, voir les notes).
 - Fait (D39) : bouton « Préparer l'instance » chez l'invité quand rien ne correspond. Copie = modpack Modrinth de l'hôte (même version) s'il en a un, sinon instance vide de même version et loader ; puis mods identiques (Modrinth par SHA-1, sinon envoyés par l'hôte, 4 à la fois), mods en trop désactivés, et fichiers de pack (`config`, `defaultconfigs`, `kubejs`, `scripts`, `global_packs`, `datapacks`) recopiés quand ils diffèrent. Copie réutilisée et mise à jour pour le même hôte. Progression et fichiers non récupérés affichés.
 - Vérifié à travers une vraie session iroh (exemple `duo copytest`) : Fabulously Optimized 49 mods en 4,6 s ; DawnCraft 299 mods (143 envoyés par l'hôte) + 3 809 fichiers de pack, identiques, en 37 s. Corrigé en route : fichiers identiques reçus en parallèle sous le même nom temporaire. Vraie copie de DawnCraft (`duo copyinto`) lancée jusqu'au menu en 42 s, puis supprimée. Parcours dans l'aperçu (backend simulé). fmt, Clippy, 136 tests, `duo selftest`.
 - Pas vérifié : la commande dans la vraie fenêtre entre deux PC (création depuis un modpack Modrinth, puis connexion au monde de l'hôte).
 - Prochaine étape : test réel à deux PC (nouvel installeur des deux côtés), puis la session « agent Java » pour ouvrir le monde en LAN automatiquement.
 
 ### 2026-10-11 (Windows : jouer à plusieurs, tests de charge)
-- Page renommée « Jouer ensemble » à la demande de Raphaël, textes de l'hôte au pluriel.
-- Tests de charge (résultats dans [TEST-DUO.md](TEST-DUO.md)) : serveur Cobbleverse (136 mods) sur le PC de Raphaël, un vrai jeu par un vrai tunnel Tandem, faux joueurs Carpet qui sprintent. Terrain neuf : hôte + 4 amis confortable, saturation CPU vers 8 joueurs, RAM serrée dès 2. Monde pré-généré : environ 20 joueurs tiennent, limite = fil principal du serveur. Génération pure 77 chunks/s, environ 11 Ko par chunk. Tunnel : 0,3 à 1 Mbit/s par joueur, jamais la limite.
+- Page renommée « Jouer ensemble » à la demande de Zeleff, textes de l'hôte au pluriel.
+- Tests de charge (résultats dans [TEST-DUO.md](TEST-DUO.md)) : serveur Cobbleverse (136 mods) sur le PC de Zeleff, un vrai jeu par un vrai tunnel Tandem, faux joueurs Carpet qui sprintent. Terrain neuf : hôte + 4 amis confortable, saturation CPU vers 8 joueurs, RAM serrée dès 2. Monde pré-généré : environ 20 joueurs tiennent, limite = fil principal du serveur. Génération pure 77 chunks/s, environ 11 Ko par chunk. Tunnel : 0,3 à 1 Mbit/s par joueur, jamais la limite.
 - Outils : exemple `duo tunnel <port>` (serveur vu à travers une vraie session, débit mesuré), `TANDEM_MEMORY_MB` pour `play`, scripts locaux de montage et de pilotage du test.
 - Prochaine étape : session dédiée à l'optimisation (6c ci-dessus), et le test réel à deux PC des nouveautés (nouvel installeur des deux côtés).
 
@@ -411,12 +411,12 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Profilage du serveur avec Java Flight Recorder (spark écarté : biaisé et coûteux sous Windows). Deux packs : Cobbleverse (Fabric 1.21.1) et Prominence II (Fabric 1.20.1), mondes pré-générés, 2 à 18 joueurs. Résultats dans [TEST-DUO.md](TEST-DUO.md#optimisation--où-part-le-temps-du-serveur-11-octobre-2026).
 - Trouvé : apparitions vanilla calculées puis jetées quand un pack bloque les mobs (40 % du tick sur Cobbleverse) ; IA des entités ensuite (distance d'activation : −15 à 20 % sur Prominence) ; Architectury et Balm qui passent par la réflexion à chaque appel. Distance de simulation et VMP : peu d'effet.
 - Prototype de mini-mod Fabric (local, `.claude/notes/tandem-host`) : 47 → 28 ms par tick à 18 joueurs sur Cobbleverse, −8 à 13 % sur Prominence, même jar pour 1.20.1 et 1.21.1.
-- Prochaine étape : décider avec Raphaël du mini-mod (ajouté par Tandem pendant une session d'hôte), y ajouter la distance d'activation, puis NeoForge.
+- Prochaine étape : décider avec Zeleff du mini-mod (ajouté par Tandem pendant une session d'hôte), y ajouter la distance d'activation, puis NeoForge.
 - Suite : pistes de niveau 1 à 3 étudiées. Niveau 1 (cœurs inutilisés) : plafond 12 à 30 %, surtout un cache de la recherche d'apparition. Niveau 2 : réseau sans intérêt CPU ; génération du terrain par les amis faisable (génération non reproductible de toute façon, injection de chunks dans l'hôte en marche prouvée). Niveau 3 écarté (casse les mods).
-- Décision avec Raphaël (D40) : priorités notées dans la 6c (mini-mod branché, vrai jeu de l'hôte mesuré, pré-génération en un clic), génération coopérative mise de côté ; rien de commencé.
+- Décision avec Zeleff (D40) : priorités notées dans la 6c (mini-mod branché, vrai jeu de l'hôte mesuré, pré-génération en un clic), génération coopérative mise de côté ; rien de commencé.
 
 ### 2026-10-11 (Windows : plus de CurseForge)
-- Choix de Raphaël (D41) : Tandem n'utilise plus CurseForge. Retiré : module `content::curseforge`, commandes de la clé et des téléchargements à la main, dialogue de clé, réglage, panneau de l'instance. Un `.zip` CurseForge est refusé avec un message qui oriente vers « Depuis un autre launcher ». Gardé : l'import d'instances déjà installées (dont l'app CurseForge), qui ne fait que copier des fichiers locaux.
+- Choix de Zeleff (D41) : Tandem n'utilise plus CurseForge. Retiré : module `content::curseforge`, commandes de la clé et des téléchargements à la main, dialogue de clé, réglage, panneau de l'instance. Un `.zip` CurseForge est refusé avec un message qui oriente vers « Depuis un autre launcher ». Gardé : l'import d'instances déjà installées (dont l'app CurseForge), qui ne fait que copier des fichiers locaux.
 - Vérifié : fmt, Clippy, 134 tests (dont le refus d'un pack CurseForge), TypeScript, import `.mrpack` et Réglages dans l'aperçu (backend simulé).
 - Cadrage de la session « mini-mod hôte » écrit (6d ci-dessus) : décisions à prendre, travail de la v1 Fabric, critères de fin.
 - Ajouté au plan : Phase 4.8 « Soutenir les créateurs » (liens de soutien Modrinth mis en valeur), pour plus tard.
@@ -429,18 +429,18 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Prochaine étape : cadrage et début des idées « monde dans un processus à part » et « monde qui appartient au groupe » (6e, 6f).
 
 ### 2026-10-11 (recadrage de « Jouer ensemble »)
-- Exploration poussée à la demande de Raphaël : mini-mod (fait), soutien aux créateurs (fait), monde à part (base faite et branchée, bêta), cadrage d'un monde partagé par le groupe. Bilan honnête : le monde à part apporte du confort, pas de vitesse ; le plafond de joueurs est le PC de l'hôte.
-- Décision de Raphaël (D44) : on arrête de chercher de nouveaux angles et de repousser la limite de joueurs. Les sections 6c à 6f sont regroupées en une feuille de route de cinq chantiers, à finir un par un.
+- Exploration poussée à la demande de Zeleff : mini-mod (fait), soutien aux créateurs (fait), monde à part (base faite et branchée, bêta), cadrage d'un monde partagé par le groupe. Bilan honnête : le monde à part apporte du confort, pas de vitesse ; le plafond de joueurs est le PC de l'hôte.
+- Décision de Zeleff (D44) : on arrête de chercher de nouveaux angles et de repousser la limite de joueurs. Les sections 6c à 6f sont regroupées en une feuille de route de cinq chantiers, à finir un par un.
 - Prochaine session : chantier 1 (terminer Tandem Optimizations v1), dans une nouvelle conversation.
 
 ### 2026-10-12 (chantier 1 : Tandem Optimizations v1 terminé)
 - Fait : tests en vrai du mod tel que Tandem l'ajoute, en solo et en monde à part avec un invité, sur Cobbleverse, Prominence II et Fabulously Optimized, plus une instance Quilt réelle. Aucun plantage dû au mod. Mesure Prominence « créatures vanilla seulement » : ≈ −25 % de temps de tick, même niveau que la version complète.
 - Corrigé : sur Quilt, Tandem installait Fabric API à côté de QFAPI et le jeu ne démarrait plus.
 - Noté : course dans Essential à l'ouverture directe du monde (1 essai sur 2, compte hors ligne), conflit d'écriture d'une config TreeChop en monde à part (chantier 2).
-- Prochaine étape : chantier 2 (terminer le monde à part), qui commence par un test à deux PC : nouvel installeur à compiler avec l'accord de Raphaël.
+- Prochaine étape : chantier 2 (terminer le monde à part), qui commence par un test à deux PC : nouvel installeur à compiler avec l'accord de Zeleff.
 
 ### 2026-10-12 (chantier 2 : monde à part, partie sans ami)
 - Corrigé : le serveur du monde à part et le jeu de l'hôte écrivaient les mêmes fichiers (dossier `config` lié) ; les dossiers de l'instance sont maintenant recopiés à chaque démarrage (D45). Première copie de Prominence 4,6 s, ensuite rien à refaire.
 - Fait : 1 Go de moins pour un jeu lancé directement sur un serveur (hôte en monde à part, invités), le serveur récupère la place (D45). Mesuré une fois sur Cobbleverse et Prominence.
 - Vérifié : instance Quilt réelle hébergée à part, invité connecté.
-- Reste : test à deux PC (Raphaël + un ami, nouvel installeur) et décision bêta / par défaut.
+- Reste : test à deux PC (Zeleff + un ami, nouvel installeur) et décision bêta / par défaut.

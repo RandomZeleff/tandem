@@ -84,22 +84,22 @@ Les vérifications automatiques sur un seul PC ne remplacent pas ce test réel �
 
 ## Résultats du premier test réel (10 octobre 2026)
 
-Raphaël et un ami, deux PC, deux comptes Microsoft, installeurs de la livraison ci-dessus.
+Zeleff et un ami, deux PC, deux comptes Microsoft, installeurs de la livraison ci-dessus.
 
 - Inviter → rejoindre → jouer : **marche**, l'invité étant en **4G** (autre réseau, derrière l'opérateur mobile) comme en Wi-Fi.
 - Ping affiché : **≈ 30 ms en 4G**, **≈ 3 ms en Wi-Fi** (même Wi-Fi : équivalent d'un LAN classique).
 - Exclure l'invité : marche.
 - Inversion des rôles (chacun héberge à son tour) : marche.
 - Longue partie en cours au moment du retour, fluide.
-- Liaison : affichée **« direct »** (relevé par Raphaël lors du second essai).
+- Liaison : affichée **« direct »** (relevé par Zeleff lors du second essai).
 - Instances différentes : les mods manquants s'affichent en jaune ; avec la bonne instance, plus aucun avertissement. Comportement attendu.
 - Pas relevé : durée exacte avant l'arrivée dans le monde.
-- Retour de Raphaël : rien à corriger côté fonctionnement ; à peaufiner plus tard pour l'accessibilité et réduire les frictions.
+- Retour de Zeleff : rien à corriger côté fonctionnement ; à peaufiner plus tard pour l'accessibilité et réduire les frictions.
 
 
 ## Test de charge : combien d'amis sur un PC moyen (11 octobre 2026)
 
-**Montage.** PC de Raphaël : Ryzen 5 8400F (6 cœurs, 12 threads), 15,5 Go de RAM, avec Chrome, Discord et Claude ouverts (environ 3 Go). Modpack **Cobbleverse 1.7.42** (Fabric 1.21.1, 136 mods, le pack Cobblemon le plus joué ; aucun pack Cobblemon populaire n'atteint 200 mods en 1.21.1). Serveur Fabric dédié à 3 Go de mémoire pour le monde de l'hôte, plus le vrai jeu (3 Go) qui le rejoint **par un vrai tunnel Tandem** : 6 Go au total, comme Tandem en donnerait au jeu de l'hôte. Toutes les 2 minutes, un invité de plus (faux joueur Carpet, côté serveur). **Tous les joueurs explorent en ligne droite à la vitesse d'un sprint**, le cas le plus lourd : chunks neufs en permanence, apparitions de Pokémon autour de chacun. Distance de vue 12. Outils : `.claude/notes/scripts/loadtest_setup.py` et `loadtest_run.py`.
+**Montage.** PC de Zeleff : Ryzen 5 8400F (6 cœurs, 12 threads), 15,5 Go de RAM, avec Chrome, Discord et Claude ouverts (environ 3 Go). Modpack **Cobbleverse 1.7.42** (Fabric 1.21.1, 136 mods, le pack Cobblemon le plus joué ; aucun pack Cobblemon populaire n'atteint 200 mods en 1.21.1). Serveur Fabric dédié à 3 Go de mémoire pour le monde de l'hôte, plus le vrai jeu (3 Go) qui le rejoint **par un vrai tunnel Tandem** : 6 Go au total, comme Tandem en donnerait au jeu de l'hôte. Toutes les 2 minutes, un invité de plus (faux joueur Carpet, côté serveur). **Tous les joueurs explorent en ligne droite à la vitesse d'un sprint**, le cas le plus lourd : chunks neufs en permanence, apparitions de Pokémon autour de chacun. Distance de vue 12. Outils : `.claude/notes/scripts/loadtest_setup.py` et `loadtest_run.py`.
 
 | Joueurs | Temps par tick (moy. / pic P95) | CPU du PC | RAM libre min. | Échanges disque (pages/s) | Débit vers un invité |
 |---|---|---|---|---|---|

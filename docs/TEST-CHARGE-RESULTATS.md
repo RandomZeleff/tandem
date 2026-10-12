@@ -1,6 +1,6 @@
 # Test sous charge — résultats du 2026-10-09
 
-Fait par Claude sur le PC de Raphaël (Windows 11, Ryzen 5 8400F, 16 Go), avec les outils `modpack` et `play` de `tandem-core` en release, dans un dossier de données séparé (`C:\Users\rapha\TandemLoadTest`, partant de zéro : Java, Minecraft et assets téléchargés aussi). L'interface n'a pas été pilotée : les points UI de la [fiche](TEST-CHARGE.md) restent à faire par un humain.
+Fait par Claude sur le PC de Zeleff (Windows 11, Ryzen 5 8400F, 16 Go), avec les outils `modpack` et `play` de `tandem-core` en release, dans un dossier de données séparé (`C:\Users\rapha\TandemLoadTest`, partant de zéro : Java, Minecraft et assets téléchargés aussi). L'interface n'a pas été pilotée : les points UI de la [fiche](TEST-CHARGE.md) restent à faire par un humain.
 
 ## Mesures
 
