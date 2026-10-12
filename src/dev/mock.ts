@@ -399,6 +399,8 @@ export function installMocks() {
             .filter((h) => ["AANobbMI", "gvQqBUqZ", "uXXizFIs", "LQ3K71Q1"].includes(h.projectId) && !installed.has(h.projectId))
             .map((h) => ({ projectId: h.projectId, title: h.title, iconUrl: h.iconUrl }));
         }
+        case "system_free_memory":
+          return 3.4 * 1024 ** 3 - Math.random() * 0.6 * 1024 ** 3;
         case "pregen_supported": {
           const instance = instances.find((i) => i.id === args.instanceId);
           return instance?.loader === "fabric" || instance?.loader === "quilt";
@@ -733,6 +735,16 @@ export function installMocks() {
           const instanceId = args.instanceId as string | null;
           const link = (pingMs: number, direct: boolean) => ({ pingMs, direct });
           if (!separate) setTimeout(() => void emit("duo://host", { type: "world", world: { motd: "Zeleff - Survie", port: 51234 } }), 4000);
+          // Load indicator: a world that gets busier as friends explore.
+          if (instanceId) {
+            let mspt = 9;
+            const timer = setInterval(() => {
+              mspt = Math.min(62, mspt + 4 + Math.random() * 3);
+              void emit("world://health", { instanceId, signal: { type: "report", mspt, max: mspt * 2, players: 2 } });
+              if (mspt > 50) void emit("world://health", { instanceId, signal: { type: "behind", behindMs: 2100 } });
+            }, 5000);
+            setTimeout(() => clearInterval(timer), 120_000);
+          }
           setTimeout(
             () =>
               void emit("duo://host", {

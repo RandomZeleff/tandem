@@ -208,8 +208,8 @@ pub async fn duo_host(
         motd: separate_world.clone().unwrap_or_default(),
         port: server.port,
     });
-    if let Some(server) = world_server.as_mut() {
-        watch_world_server(app.clone(), server);
+    if let (Some(server), Some(id)) = (world_server.as_mut(), &instance_id) {
+        watch_world_server(app.clone(), id.clone(), server);
     }
     let emitter = app.clone();
     let host = Host::start(
@@ -312,10 +312,11 @@ async fn start_world_server(
 
 /// Keeps the server's console flowing (to the launcher's log) and tells the page when the
 /// world stops on its own.
-fn watch_world_server(app: AppHandle, server: &mut RunningServer) {
+fn watch_world_server(app: AppHandle, instance_id: String, server: &mut RunningServer) {
     let mut lines = server.take_lines();
     tauri::async_runtime::spawn(async move {
         while let Some(line) = lines.recv().await {
+            game::emit_health(&app, &instance_id, &line);
             tracing::debug!(target: "world_server", "{line}");
         }
         tracing::info!("world server stopped");

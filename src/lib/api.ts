@@ -500,6 +500,11 @@ export interface PregenProgress {
   done: boolean;
 }
 
+/** Mirrors `tandem_core::health::Signal`. */
+export type HealthSignal =
+  | { type: "report"; mspt: number; max: number; players: number }
+  | { type: "behind"; behindMs: number };
+
 export type PregenStatus = "starting" | "running" | "stopping" | "done" | "cancelled" | "failed";
 
 /** A world being prepared for playing with friends (chantier 3). */
@@ -572,6 +577,7 @@ export const EVENTS = {
   installFinished: "install://finished",
   translateProgress: "translate://progress",
   pregenProgress: "pregen://progress",
+  health: "world://health",
   instancesChanged: "instances://changed",
 } as const;
 
@@ -744,6 +750,7 @@ export const api = {
   pregenCancel: (instanceId: string) => invoke<void>("pregen_cancel", { instanceId }),
   pregenStatus: (instanceId: string) => invoke<PregenView | null>("pregen_status", { instanceId }),
   pregenSupported: (instanceId: string) => invoke<boolean>("pregen_supported", { instanceId }),
+  systemFreeMemory: () => invoke<number>("system_free_memory"),
   listScreenshots: (instanceId: string) => invoke<Screenshot[]>("list_screenshots", { instanceId }),
   deleteScreenshot: (instanceId: string, fileName: string) => invoke<void>("delete_screenshot", { instanceId, fileName }),
   openScreenshotsFolder: (instanceId: string) => invoke<void>("open_screenshots_folder", { instanceId }),

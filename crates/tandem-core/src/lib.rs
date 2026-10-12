@@ -10,6 +10,7 @@ pub mod db;
 pub mod download;
 pub mod duo;
 pub mod error;
+pub mod health;
 pub mod install;
 pub mod instance;
 pub mod java;

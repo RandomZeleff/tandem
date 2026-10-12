@@ -178,6 +178,7 @@ pub fn run() {
             accounts::begin_microsoft_login,
             accounts::finish_microsoft_login,
             accounts::cancel_microsoft_login,
+            game::system_free_memory,
             pregen::pregen_start,
             pregen::pregen_cancel,
             pregen::pregen_status,

@@ -1,6 +1,7 @@
 import { createMemo, createResource, createSignal, For, type JSX, Match, onMount, Show, Switch } from "solid-js";
 import Alert from "../components/Alert";
 import { AccountAvatar } from "../components/accounts/AccountVisuals";
+import HostHealth from "../components/HostHealth";
 import InstanceSlot from "../components/InstanceSlot";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
@@ -441,6 +442,10 @@ function Hosting() {
               </For>
             </ul>
           </section>
+        </Show>
+
+        <Show when={host().instanceId && (host().separate || running())}>
+          <HostHealth instanceId={host().instanceId!} />
         </Show>
       </div>
     </div>

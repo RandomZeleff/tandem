@@ -29,6 +29,9 @@ pub const OUTPUT_EVENT: &str = "game://output";
 pub const STARTED_EVENT: &str = "game://started";
 pub const EXITED_EVENT: &str = "game://exited";
 pub const STATS_EVENT: &str = "game://stats";
+/// How the shared world keeps up (load indicator), from the game's or the world
+/// server's log.
+pub const HEALTH_EVENT: &str = "world://health";
 /// Setting (bool, on by default): back up played worlds when the game exits.
 pub const AUTO_BACKUP_SETTING: &str = "auto_backup_worlds";
 
@@ -116,6 +119,32 @@ struct OutputPayload<'a> {
     instance_id: &'a str,
     stream: &'static str,
     lines: &'a [String],
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct HealthPayload<'a> {
+    instance_id: &'a str,
+    signal: tandem_core::health::Signal,
+}
+
+/// Sends the health signal a log line carries, if any.
+pub fn emit_health(app: &AppHandle, instance_id: &str, line: &str) {
+    if let Some(signal) = tandem_core::health::parse(line) {
+        let _ = app.emit(
+            HEALTH_EVENT,
+            HealthPayload {
+                instance_id,
+                signal,
+            },
+        );
+    }
+}
+
+/// Memory the PC can still give, for the load indicator.
+#[tauri::command]
+pub fn system_free_memory() -> u64 {
+    tandem_core::health::free_memory_bytes()
 }
 
 #[derive(Clone, Serialize)]
@@ -439,7 +468,9 @@ async fn forward(app: AppHandle, id: String, stream: &'static str, output: impl 
             read = reader.read_until(b'\n', &mut buf) => match read {
                 Ok(0) | Err(_) => break,
                 Ok(_) => {
-                    batch.push(String::from_utf8_lossy(&buf).trim_end().to_owned());
+                    let line = String::from_utf8_lossy(&buf).trim_end().to_owned();
+                    emit_health(&app, &id, &line);
+                    batch.push(line);
                     buf.clear();
                     deadline.get_or_insert_with(|| tokio::time::Instant::now() + OUTPUT_BATCH_DELAY);
                     if batch.len() >= OUTPUT_BATCH_MAX {
