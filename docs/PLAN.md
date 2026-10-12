@@ -227,7 +227,7 @@ Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne »
 - [x] 1. Fondations (couleurs, texte, espacements, boutons, champs, panneaux, onglets, listes, icônes, états) et choix de la police des titres (D49)
 - [x] 2. Cadre de l'app (barre de titre, navigation, compte)
 - [x] 3. Accueil (reprendre sa partie en un clic, inviter, rejoindre, grand visuel)
-- [ ] 4. Jouer ensemble
+- [x] 4. Jouer ensemble
 - [ ] 5. Instances et fiche d'instance (tous les onglets)
 - [ ] 6. Découvrir et fiches de projet
 - [ ] 7. Réglages, Comptes, fenêtres, notifications, états vides et d'erreur
@@ -497,3 +497,9 @@ Ensuite : retour aux petits ajouts.
 - « Tes autres instances » (trois au plus) et Nouveautés à droite, en colonne sous 1 100 px.
 - Vérifié : TypeScript, détecteur, aperçu à 1 280 × 800 avec le faux backend (capture comme visuel, connexion Microsoft simulée puis code rejoint depuis l'accueil). Pas vérifié : une vraie image de galerie Modrinth dans l'app.
 - Prochaine étape : étape 4 (Jouer ensemble).
+
+### 2026-10-12 (refonte, étape 4 : Jouer ensemble)
+- Fait : en-tête simple (titre en Jersey 10, phrase, compte utilisé) à la place de la bannière de nuit ; « Inviter un ami » et « Rejoindre un ami » en vrais titres, boutons pleins (clair pour inviter, vert pour rejoindre) ; code d'invitation agrandi dans un creux, copie en un clic ; étapes de l'hôte à coches vertes ; invités, santé de la partie, préparation de l'instance de l'ami et sa barre de progression au nouveau style ; « Partie de Léo » comme titre côté invité. Interrupteurs et cases à cocher un peu plus grands, coins presque carrés.
+- Plus de textes explicatifs en 12 px : 13 px partout sur la page.
+- Vérifié avec le faux backend à 1 280 × 800 : compte Microsoft simulé, invitation, arrivée d'un ami (pastille sur « Jouer ensemble » depuis l'accueil, effacée à l'ouverture de la page, « 2 amis connectés » sur l'accueil), puis côté invité avec un code.
+- Prochaine étape : étape 5 (Instances et fiche d'instance).

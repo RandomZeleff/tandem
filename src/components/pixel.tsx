@@ -200,17 +200,17 @@ export function Toggle(props: { checked: boolean; label: string; disabled?: bool
       aria-label={props.label}
       title={props.label}
       disabled={props.disabled}
-      class="relative h-[18px] w-[34px] shrink-0 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+      class="relative h-5 w-9 shrink-0 rounded-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       classList={{
-        "bg-grass shadow-[inset_0_-2px_0_rgb(0_0_0/0.3)]": props.checked,
+        "bg-grass shadow-[inset_0_-2px_0_var(--color-grass-edge)]": props.checked,
         "bg-slate-900 shadow-[inset_0_0_0_1px_var(--color-line-strong)]": !props.checked,
       }}
       onClick={() => props.onChange(!props.checked)}
     >
       <span
-        class="absolute top-[3px] size-3 transition-[left] duration-100"
+        class="absolute top-[3px] size-3.5 rounded-[2px] transition-[left] duration-100"
         classList={{
-          "left-[19px] bg-chalk shadow-[inset_0_-2px_0_rgb(0_0_0/0.25)]": props.checked,
+          "left-[19px] bg-white shadow-[inset_0_-2px_0_rgb(0_0_0/0.2)]": props.checked,
           "left-[3px] bg-muted": !props.checked,
         }}
       />
@@ -226,11 +226,11 @@ export function Checkbox(props: { checked: boolean; label: JSX.Element; disabled
       role="checkbox"
       aria-checked={props.checked}
       disabled={props.disabled}
-      class={`group flex items-center gap-1.5 disabled:cursor-default disabled:opacity-50 ${props.class ?? "text-xs text-muted"}`}
+      class={`group flex items-center gap-2 disabled:cursor-default disabled:opacity-50 ${props.class ?? "text-[13px] text-muted"}`}
       onClick={() => props.onChange(!props.checked)}
     >
       <span
-        class="flex size-3.5 shrink-0 items-center justify-center group-hover:brightness-125 group-focus-visible:brightness-125"
+        class="flex size-4 shrink-0 items-center justify-center rounded-[2px] group-hover:brightness-125 group-focus-visible:brightness-125"
         classList={{
           "bg-grass shadow-[inset_0_-2px_0_rgb(0_0_0/0.3)]": props.checked,
           "bg-slate-900 shadow-[inset_0_0_0_1px_var(--color-line-strong)]": !props.checked,
