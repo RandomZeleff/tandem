@@ -220,6 +220,21 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Version NeoForge et 26.x du mod et du monde à part : après cette feuille de route, si le besoin existe.
 - Distance de simulation adaptée, réglages propres à certains mods.
 
+## Phase 7 — Refonte de l'interface (cadrée le 2026-10-12)
+
+Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne » (menus récents de Mojang), sombre, animations sobres. Une étape finie avant la suivante.
+
+- [ ] 1. Fondations (couleurs, texte, espacements, boutons, champs, panneaux, onglets, listes, icônes, états) et choix de la police des titres
+- [ ] 2. Cadre de l'app (barre de titre, navigation, compte)
+- [ ] 3. Accueil (reprendre sa partie en un clic, inviter, rejoindre, grand visuel)
+- [ ] 4. Jouer ensemble
+- [ ] 5. Instances et fiche d'instance (tous les onglets)
+- [ ] 6. Découvrir et fiches de projet
+- [ ] 7. Réglages, Comptes, fenêtres, notifications, états vides et d'erreur
+- [ ] 8. Finition : revue complète, `DESIGN.md`, décision qui remplace D11
+
+Ensuite : retour aux petits ajouts.
+
 ## Portage macOS
 
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
@@ -456,3 +471,8 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 - Vérifié : relevés sur de vrais serveurs 1.21.4 (FO) et 1.20.1 (Prominence), silence en solo, mod vérifié contre les 20 versions, carte testée avec le faux backend.
 - Pas vérifié en vrai : le relevé dans un monde ouvert en LAN depuis le jeu (impossible à ouvrir sans écran) ; même code, condition « monde publié » de Minecraft.
 - Prochaine étape : chantier 5 (monde du groupe, 6f) à recadrer avec Zeleff, ou passer au peaufinage complet de l'app.
+
+### 2026-10-12 (fin de « Jouer ensemble », cadrage de la refonte)
+- Chantier 5 (monde du groupe) abandonné (D48) : le groupe laisse héberger le meilleur PC. La feuille de route « Jouer ensemble » est terminée.
+- Refonte de l'interface cadrée (Phase 7, [REFONTE.md](REFONTE.md), [PRODUCT.md](../PRODUCT.md)) : retour de Zeleff et de son frère (« pas très propre ni agréable »), direction « le Minecraft moderne » choisie parmi plusieurs pistes, sombre, animations sobres, police carrée libre pour les grands titres.
+- Prochaine étape : Phase 7, étape 1 (fondations).
