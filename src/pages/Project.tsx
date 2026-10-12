@@ -177,7 +177,7 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
         <ProjectIcon url={d().iconUrl} size={96} />
         <div class="relative flex min-w-0 flex-1 flex-col gap-2">
           <div class="flex items-center gap-2 text-xs text-muted">
-            <span class="chip h-5 px-1.5 text-[11px] text-chalk-3">{projectTypeLabel(d().projectType)}</span>
+            <span class="chip h-5 px-1.5 text-xs text-chalk-3">{projectTypeLabel(d().projectType)}</span>
             <Show when={d().organization ?? d().authors[0]}>
               <span>
                 par{" "}
@@ -206,7 +206,7 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
             </span>
             <span title={formatDate(d().updated)}>Mis à jour {formatRelative(d().updated)}</span>
             <div class="flex flex-wrap gap-1.5">
-              <For each={d().categories}>{(c) => <span class="chip h-5 px-1.5 text-[11px]">{categoryLabel(c)}</span>}</For>
+              <For each={d().categories}>{(c) => <span class="chip h-5 px-1.5 text-xs">{categoryLabel(c)}</span>}</For>
             </div>
           </div>
         </div>
@@ -691,7 +691,7 @@ function SupportAuthor(props: { details: ProjectDetails }) {
             </For>
           </ul>
         </Show>
-        <p class="px-1 text-[11px] leading-snug text-faint">Sans publicité dans Tandem, ton soutien va directement à l'auteur.</p>
+        <p class="px-1 text-xs leading-snug text-faint">Sans publicité dans Tandem, ton soutien va directement à l'auteur.</p>
       </div>
     </Show>
   );
@@ -827,7 +827,7 @@ function Person(props: { name: string; avatar: string | null; role: string; onCl
         <span class="flex min-w-0 flex-col">
           <span class="truncate text-[13px] text-chalk group-hover:text-xp-text">{props.name}</span>
           <Show when={props.role}>
-            <span class="truncate text-[11px] text-muted">{props.role}</span>
+            <span class="truncate text-xs text-muted">{props.role}</span>
           </Show>
         </span>
       </button>

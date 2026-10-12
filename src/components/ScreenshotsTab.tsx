@@ -89,7 +89,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
           <div class="panel px-corners-md flex flex-col items-center gap-2 py-12 text-center">
             <p class="text-chalk-2">Aucune capture pour l'instant.</p>
             <p class="text-sm text-muted">
-              Appuie sur <kbd class="chip h-5 px-1.5 font-mono text-[11px]">F2</kbd> en jeu : tes captures apparaîtront ici.
+              Appuie sur <kbd class="chip h-5 px-1.5 font-mono text-xs">F2</kbd> en jeu : tes captures apparaîtront ici.
             </p>
           </div>
         }

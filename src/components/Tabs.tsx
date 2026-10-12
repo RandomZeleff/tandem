@@ -45,7 +45,7 @@ export default function Tabs<T extends string>(props: {
       aria-label={props.label}
       class={props.class}
       classList={{
-        "flex w-fit gap-0.5 bg-slate-900 p-[3px] shadow-[inset_0_0_0_1px_var(--color-line)]": segmented(),
+        "flex w-fit gap-0.5 rounded-md bg-slate-900 p-[3px] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.3)]": segmented(),
         "flex gap-1": !segmented(),
       }}
       onKeyDown={onKeyDown}
@@ -65,13 +65,13 @@ export default function Tabs<T extends string>(props: {
               classList={
                 segmented()
                   ? {
-                      "flex items-center gap-1.5 px-3 text-[13px]": true,
-                      "bg-slate-600 font-medium text-chalk shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]": selected(),
+                      "flex items-center gap-1.5 rounded-sm px-3 text-[13px] whitespace-nowrap transition-colors duration-100": true,
+                      "bg-slate-600 font-semibold text-chalk shadow-[0_1px_0_rgb(0_0_0/0.35),inset_0_1px_0_rgb(255_255_255/0.08)]": selected(),
                       "text-muted hover:text-chalk focus-visible:text-chalk": !selected(),
                     }
                   : {
-                      "h-11 px-3.5": true,
-                      "font-semibold text-chalk shadow-[inset_0_-3px_0_var(--color-xp)]": selected(),
+                      "h-11 px-3.5 transition-colors duration-100": true,
+                      "font-semibold text-chalk shadow-[inset_0_-3px_0_var(--color-grass-light)]": selected(),
                       "font-medium text-muted hover:text-chalk focus-visible:text-chalk": !selected(),
                     }
               }

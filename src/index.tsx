@@ -10,6 +10,11 @@ async function main() {
     const { installMocks } = await import("./dev/mock");
     installMocks();
   }
+  if (import.meta.env.DEV && location.search === "?fondations") {
+    const { default: Specimen } = await import("./dev/Specimen");
+    render(() => <Specimen />, document.getElementById("root") as HTMLElement);
+    return;
+  }
   const { default: App } = await import("./App");
   render(() => <App />, document.getElementById("root") as HTMLElement);
   // After the first frame is painted.

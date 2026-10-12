@@ -433,7 +433,7 @@ function SourceRow(props: {
       <button class="flex min-w-0 flex-1 flex-col text-left" onClick={props.onReview} title="Revoir et corriger les traductions">
         <span class="flex min-w-0 items-baseline gap-2">
           <span class="truncate text-sm hover:text-xp-text">{props.source.name}</span>
-          <span class="shrink-0 text-[11px] text-faint">{SOURCE_KINDS[props.source.kind]}</span>
+          <span class="shrink-0 text-xs text-faint">{SOURCE_KINDS[props.source.kind]}</span>
         </span>
         <span class="mt-1 h-1 w-full max-w-60 bg-slate-900">
           <span class="block h-full bg-xp" style={{ width: `${Math.round(done() * 100)}%` }} />
@@ -444,7 +444,7 @@ function SourceRow(props: {
           <span class="text-gold">{integer.format(c().missing)}</span> <span class="text-muted">à traduire</span>
         </Show>
       </span>
-      <span class="w-16 shrink-0 text-right font-mono text-[11px] text-faint">{integer.format(c().total)}</span>
+      <span class="w-16 shrink-0 text-right font-mono text-xs text-faint">{integer.format(c().total)}</span>
       <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.disabled} onClick={props.onReview}>
         Revoir
       </button>

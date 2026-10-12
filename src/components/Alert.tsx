@@ -15,7 +15,7 @@ export default function Alert(props: { tone?: AlertTone; children: JSX.Element; 
   return (
     <div
       role={tone() === "error" ? "alert" : "status"}
-      class={`flex items-start gap-3 px-3 py-2 text-sm ${TONES[tone()]} ${props.class ?? ""}`}
+      class={`flex items-start gap-3 rounded-sm px-3 py-2 text-sm ${TONES[tone()]} ${props.class ?? ""}`}
     >
       <p class="min-w-0 flex-1 break-words select-text">{props.children}</p>
       <Show when={props.onClose}>

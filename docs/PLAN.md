@@ -224,7 +224,7 @@ Après une exploration volontairement poussée (6c, 6d, 6e et 6f ouverts en para
 
 Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne » (menus récents de Mojang), sombre, animations sobres. Une étape finie avant la suivante.
 
-- [ ] 1. Fondations (couleurs, texte, espacements, boutons, champs, panneaux, onglets, listes, icônes, états) et choix de la police des titres
+- [x] 1. Fondations (couleurs, texte, espacements, boutons, champs, panneaux, onglets, listes, icônes, états) et choix de la police des titres (D49)
 - [ ] 2. Cadre de l'app (barre de titre, navigation, compte)
 - [ ] 3. Accueil (reprendre sa partie en un clic, inviter, rejoindre, grand visuel)
 - [ ] 4. Jouer ensemble
@@ -476,3 +476,10 @@ Ensuite : retour aux petits ajouts.
 - Chantier 5 (monde du groupe) abandonné (D48) : le groupe laisse héberger le meilleur PC. La feuille de route « Jouer ensemble » est terminée.
 - Refonte de l'interface cadrée (Phase 7, [REFONTE.md](REFONTE.md), [PRODUCT.md](../PRODUCT.md)) : retour de Zeleff et de son frère (« pas très propre ni agréable »), direction « le Minecraft moderne » choisie parmi plusieurs pistes, sombre, animations sobres, police carrée libre pour les grands titres.
 - Prochaine étape : Phase 7, étape 1 (fondations).
+
+### 2026-10-12 (refonte, étape 1 : fondations)
+- Fait (D49) : nouvelles couleurs graphite, boutons pleins qui s'enfoncent, champs, panneaux, onglets, listes, puces, messages, barres de défilement ; échelle de texte réduite sans 10-11 px ; icônes en pixels entiers. Toute l'app change d'habillage d'un coup (mêmes noms de classes).
+- Police des grands titres : Jersey 10, choisie par Zeleff sur une page de comparaison ; base des boutons et surfaces validée par lui.
+- Vérifié : TypeScript, page `/?fondations` et pages Accueil, Instances, fiche d'instance avec le faux backend.
+- Reste visible jusqu'aux étapes suivantes : mises en page de chaque page (titres dorés en capitales, cartes d'instance serrées), à refaire page par page.
+- Prochaine étape : étape 2 (cadre de l'app : barre de titre, navigation, compte).

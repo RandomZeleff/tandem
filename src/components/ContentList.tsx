@@ -398,10 +398,10 @@ function Row(props: {
             {props.item.title}
           </button>
           <Show when={props.item.isDependency}>
-            <span class="chip h-5 px-1.5 text-[11px] text-muted">dépendance</span>
+            <span class="chip h-5 px-1.5 text-xs text-muted">dépendance</span>
           </Show>
           <Show when={!props.item.enabled}>
-            <span class="chip h-5 px-1.5 text-[11px] text-muted">désactivé</span>
+            <span class="chip h-5 px-1.5 text-xs text-muted">désactivé</span>
           </Show>
         </span>
         <span class="flex min-w-0 items-center gap-1.5 font-mono text-xs text-muted">
@@ -456,13 +456,13 @@ function LocalRow(props: { file: LocalFile; locked: boolean; onToggle: (enabled:
         <span class="flex items-center gap-2">
           <span class="truncate text-sm font-medium">{props.file.name}</span>
           <span
-            class="chip h-5 shrink-0 px-1.5 text-[11px] text-muted"
+            class="chip h-5 shrink-0 px-1.5 text-xs text-muted"
             title="Ajouté à la main ou absent de Modrinth : Tandem ne peut pas le mettre à jour"
           >
             fichier local
           </span>
           <Show when={!props.file.enabled}>
-            <span class="chip h-5 px-1.5 text-[11px] text-muted">désactivé</span>
+            <span class="chip h-5 px-1.5 text-xs text-muted">désactivé</span>
           </Show>
         </span>
         <span class="truncate font-mono text-xs text-muted" title={props.file.fileName}>

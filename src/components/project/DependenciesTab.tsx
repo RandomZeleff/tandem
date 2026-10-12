@@ -164,7 +164,7 @@ function Row(props: { item: DependencyItem; instanceId?: string }) {
           <span class="flex items-center gap-2">
             <span class="truncate text-sm font-medium group-hover:text-xp-text">{p().title}</span>
             <Show when={installed()}>
-              <span class="chip h-5 shrink-0 px-1.5 text-[11px] text-xp-text">
+              <span class="chip h-5 shrink-0 px-1.5 text-xs text-xp-text">
                 <Icon name="check" size={9} />
                 installé
               </span>

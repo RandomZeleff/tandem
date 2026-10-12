@@ -37,11 +37,16 @@ const ICONS = {
 
 export type IconName = keyof typeof ICONS;
 
+/** Icons are drawn on a 12-pixel grid: shown at 12 or 24 so every pixel stays whole. */
+function iconSize(requested: number | undefined): number {
+  return (requested ?? 12) >= 18 ? 24 : 12;
+}
+
 export function Icon(props: { name: IconName; size?: number; class?: string; color?: string }) {
   return (
     <svg
-      width={props.size ?? 14}
-      height={props.size ?? 14}
+      width={iconSize(props.size)}
+      height={iconSize(props.size)}
       viewBox="0 0 12 12"
       shape-rendering="crispEdges"
       fill-rule="evenodd"

@@ -385,7 +385,7 @@ export default function Discover(props: { instanceId?: string; query?: string; k
                       </span>
                       <For each={hit.displayCategories.slice(0, 3)}>
                         {(category) => (
-                          <span class="chip h-5 px-1.5 text-[11px]">
+                          <span class="chip h-5 px-1.5 text-xs">
                             {isLoaderCategory(category) ? loaderLabel(category) : categoryLabel(category)}
                           </span>
                         )}

@@ -160,7 +160,7 @@ export default function TranslationSettings() {
                         précis qu'un grand modèle en ligne.
                         <Show when={info().id === "ollama"}>
                           {" "}Après l'installation, télécharge un modèle, par exemple{" "}
-                          <code class="bg-slate-900 px-1 font-mono text-[11px]">ollama pull qwen2.5:7b</code>.
+                          <code class="bg-slate-900 px-1 font-mono text-xs">ollama pull qwen2.5:7b</code>.
                         </Show>
                       </p>
                     </Show>

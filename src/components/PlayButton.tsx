@@ -14,8 +14,8 @@ export default function PlayButton(props: { id: string; size?: "lg" | "md" | "ic
 
   const sizeClass = () =>
     ({
-      lg: "px-corners-md h-[54px] px-7 font-pixel text-[22px] font-bold tracking-[1px]",
-      md: "px-corners h-[38px] px-4 font-pixel text-base font-semibold tracking-[0.5px]",
+      lg: "px-corners-md h-[54px] px-8 title-display text-[28px] uppercase [text-shadow:0_2px_0_rgb(0_0_0/0.3)]",
+      md: "px-corners h-[38px] px-4 text-sm font-semibold",
       icon: "px-corners h-8 w-9 px-0",
     })[size()];
 
@@ -33,7 +33,7 @@ export default function PlayButton(props: { id: string; size?: "lg" | "md" | "ic
           }}
         >
           <Icon name="stop" size={size() === "lg" ? 16 : 12} />
-          {label("ARRÊTER")}
+          {label("Arrêter")}
         </button>
       </Match>
       <Match when={state().status === "preparing"}>
@@ -52,7 +52,7 @@ export default function PlayButton(props: { id: string; size?: "lg" | "md" | "ic
           }}
         >
           <Icon name="play" size={size() === "lg" ? 18 : 12} />
-          {label("JOUER")}
+          {label("Jouer")}
         </button>
       </Match>
     </Switch>

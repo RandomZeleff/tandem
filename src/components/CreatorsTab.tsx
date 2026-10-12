@@ -101,7 +101,7 @@ function CreatorCard(props: { creator: Creator }) {
         </span>
         <span class="flex min-w-0 flex-col">
           <span class="truncate text-sm font-medium group-hover:text-xp-text">{c().name}</span>
-          <span class="truncate text-[11px] text-muted" title={c().projects.join(", ")}>
+          <span class="truncate text-xs text-muted" title={c().projects.join(", ")}>
             {c().projects.length > 2
               ? `${c().projects.slice(0, 2).join(", ")} et ${c().projects.length - 2} autre${c().projects.length > 3 ? "s" : ""}`
               : c().projects.join(", ")}

@@ -13,7 +13,7 @@ export default function Dialog(props: { title: string; onClose: () => void; chil
 
   return (
     <div
-      class="fixed inset-0 z-30 flex items-center justify-center bg-black/65 p-4"
+      class="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => e.target === e.currentTarget && props.onClose()}
     >
       <div
@@ -25,7 +25,7 @@ export default function Dialog(props: { title: string; onClose: () => void; chil
         class="panel px-corners-lg flex w-full flex-col gap-5 bg-slate-750 p-6 shadow-2xl"
         style={{ "max-width": `${props.width ?? 460}px` }}
       >
-        <h2 class="pixel-shadow font-pixel text-2xl font-bold">{props.title}</h2>
+        <h2 class="text-xl font-semibold">{props.title}</h2>
         {props.children}
       </div>
     </div>

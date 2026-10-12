@@ -89,7 +89,7 @@ export default function ReviewDialog(props: { instanceId: string; locale: string
                 {(entry) => (
                   <li class="grid grid-cols-2 gap-3 py-2.5">
                     <div class="flex min-w-0 flex-col gap-0.5">
-                      <span class="truncate font-mono text-[10.5px] text-faint" title={entry.key}>
+                      <span class="truncate font-mono text-xs text-faint" title={entry.key}>
                         {entry.key}
                       </span>
                       <span class="text-[13px] break-words whitespace-pre-wrap text-chalk-2 select-text">{entry.english}</span>

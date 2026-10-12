@@ -110,7 +110,7 @@ function AccountCard() {
       <Show when={open()}>
         <AccountMenu anchor={() => anchor} onClose={() => setOpen(false)}>
           <Show when={others().length > 0}>
-            <p class="mb-1.5 px-1.5 text-[11px] font-semibold tracking-wide text-faint uppercase">Changer de compte</p>
+            <p class="mb-1.5 px-1.5 text-xs font-semibold tracking-wide text-faint uppercase">Changer de compte</p>
             <ul class="mb-2 space-y-0.5">
               <For each={others()}>
                 {(account) => (
@@ -122,7 +122,7 @@ function AccountCard() {
                       <AccountAvatar account={account} size={22} />
                       <span class="flex min-w-0 flex-1 flex-col">
                         <span class="truncate">{account.username}</span>
-                        <span class="text-[11px] text-muted">
+                        <span class="text-xs text-muted">
                           <AccountKindLabel account={account} />
                         </span>
                       </span>
@@ -216,12 +216,12 @@ export default function Sidebar() {
                   <InstanceSlot instance={instance} size={30} />
                   <span class="flex min-w-0 flex-1 flex-col">
                     <span class="truncate text-[13px] font-medium">{instance.name}</span>
-                    <span class="text-[11px] text-faint">
+                    <span class="text-xs text-faint">
                       {instance.gameVersion} · <LoaderTag loader={instance.loader} size={10} />
                     </span>
                   </span>
                   <Show when={state().status === "preparing"}>
-                    <span class="font-mono text-[11px] text-xp-text">{Math.round(ratio() * 100)} %</span>
+                    <span class="font-mono text-xs text-xp-text">{Math.round(ratio() * 100)} %</span>
                   </Show>
                   <Show when={state().status === "running"}>
                     <span class="size-2 bg-xp shadow-[0_0_0_2px_rgb(139_224_78/0.25)]" title="En cours" />
@@ -246,7 +246,7 @@ export default function Sidebar() {
       >
         <Icon name="gear" size={18} color={route().page === "settings" ? "var(--color-xp)" : undefined} />
         <span class="flex-1 font-medium">Réglages</span>
-        <span class="font-mono text-[11px] text-faint">v{info()?.version ?? "…"}</span>
+        <span class="font-mono text-xs text-faint">v{info()?.version ?? "…"}</span>
       </button>
     </nav>
   );

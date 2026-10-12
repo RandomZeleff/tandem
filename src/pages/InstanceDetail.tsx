@@ -95,7 +95,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
           </div>
           <div class="flex items-stretch gap-2">
             <button
-              class="btn btn-danger px-corners-md h-[50px] w-12 px-0"
+              class="btn px-corners-md h-[50px] w-12 px-0 text-redstone-text"
               aria-label="Supprimer l'instance"
               disabled={state().status !== "idle"}
               onClick={() => setConfirmDelete(true)}

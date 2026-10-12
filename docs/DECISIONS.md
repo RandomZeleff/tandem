@@ -326,3 +326,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - La feuille de route « Jouer ensemble » (D44) est donc terminée. Reste possible, si le besoin revient : un simple « Envoyer mon monde à un ami » (copie manuelle).
 - Statut : validé
 
+
+### D49 · 2026-10-12 · Fondations de la refonte : « le Minecraft moderne », titres en Jersey 10
+- Couleurs : surfaces graphite en paliers nets (fond `#1b1c1f`, panneaux `#26272b`, boutons `#383a3f`), plus claires que « Deepslate » ; vert Minecraft `#3c8527` pour l'action principale, bouton clair « pierre » `#d0d1d4` pour l'action secondaire forte, rouge plein pour supprimer et arrêter.
+- Boutons à la manière des menus récents de Mojang : face pleine, contour sombre, bande plus foncée en bas qui disparaît quand on appuie (le bouton s'enfonce). Coins presque carrés (2 à 6 px) à la place des coins en escalier ; les classes `.btn*`, `.panel`, `.field`, `.slot`, `.chip`, `.px-corners*` gardent leur nom, l'habillage change partout d'un coup.
+- Texte : Geist pour tout, échelle courte (12, 13, 14, 15, 17, 20, 24, 32, 40, 52 px), plus de 10 ou 11 px. Grands titres seulement en **Jersey 10** (OFL, embarquée), choisie par Zeleff parmi Jersey 10, Russo One, Chakra Petch et Bungee : la plus proche des titres de Mojang, nette en grand. Pixelify Sans est retirée.
+- Icônes en pixels affichées à 12 ou 24 px seulement (pixels entiers).
+- Page de démonstration hors app : `pnpm dev` puis `/?fondations`.
+- D11 reste en vigueur pour ce que les étapes suivantes n'ont pas encore refait ; une décision finale la remplacera à l'étape 8 avec `DESIGN.md`.
+- Statut : validé

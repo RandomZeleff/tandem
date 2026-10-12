@@ -157,7 +157,7 @@ function AccountRow(props: { account: Account; onRemove: () => void }) {
         <span class="flex items-center gap-2">
           <span class="truncate font-semibold">{props.account.username}</span>
           <Show when={props.account.isActive}>
-            <span class="chip h-5 shrink-0 px-1.5 text-[11px] text-xp-text">utilisé</span>
+            <span class="chip h-5 shrink-0 px-1.5 text-xs text-xp-text">utilisé</span>
           </Show>
         </span>
         <span class="text-xs text-muted">

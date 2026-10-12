@@ -392,7 +392,7 @@ function Hosting() {
                   </Show>
                   <ol class="flex flex-col gap-0.5 text-chalk-2">
                     <li>
-                      1. Appuie sur <kbd class="chip px-1.5 font-mono text-[11px]">Échap</kbd>
+                      1. Appuie sur <kbd class="chip px-1.5 font-mono text-xs">Échap</kbd>
                     </li>
                     <li>
                       2. Clique sur <strong>Ouvrir au réseau local</strong>

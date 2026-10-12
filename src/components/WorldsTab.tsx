@@ -300,7 +300,7 @@ function WorldCard(props: {
             {(backup) => (
               <li class="flex items-center gap-3 py-2 text-sm">
                 <span class="flex-1">{new Date(backup.createdAt).toLocaleString("fr-FR")}</span>
-                <span class="chip h-5 px-1.5 text-[11px] text-muted">{KINDS[backup.kind]}</span>
+                <span class="chip h-5 px-1.5 text-xs text-muted">{KINDS[backup.kind]}</span>
                 <span class="w-16 text-right font-mono text-xs text-muted">{formatBytes(backup.sizeBytes)}</span>
                 <button
                   class="btn btn-ghost h-7 px-2 text-xs"

@@ -71,7 +71,7 @@ export default function GlossaryPanel(props: { instanceId: string; locale: strin
                 <Icon name="arrow" size={8} class="text-faint" />
                 <span>{t.translation}</span>
                 <Show when={!t.instanceId}>
-                  <span class="text-[10px] text-muted" title="Pour toutes les instances">partout</span>
+                  <span class="text-xs text-muted" title="Pour toutes les instances">partout</span>
                 </Show>
                 <button class="flex size-5 items-center justify-center text-muted hover:text-redstone-text" aria-label={`Retirer ${t.term}`} onClick={() => void remove(t)}>
                   <Icon name="close" size={8} />

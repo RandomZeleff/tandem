@@ -139,8 +139,8 @@ export default function Select(props: {
         aria-activedescendant={open() ? `${listId}-${active()}` : undefined}
         aria-label={props.label}
         disabled={props.disabled}
-        class={`field flex items-center gap-2 text-left disabled:cursor-default disabled:opacity-60 focus-visible:shadow-[inset_0_0_0_1px_var(--color-xp),inset_0_3px_0_rgb(0_0_0/0.4)] ${props.class ?? "text-sm"}`}
-        classList={{ "shadow-[inset_0_0_0_1px_var(--color-xp),inset_0_3px_0_rgb(0_0_0/0.4)]": open() }}
+        class={`field flex items-center gap-2 text-left disabled:cursor-default disabled:opacity-60${props.class ?? "text-sm"}`}
+        classList={{ "is-open": open() }}
         onClick={() => (open() ? setOpen(false) : show())}
         onKeyDown={onKeyDown}
       >
@@ -232,7 +232,7 @@ function SelectList(props: {
             data-index={i()}
             role="option"
             aria-selected={option.value === props.value}
-            class="flex h-8 cursor-pointer items-center gap-2 px-2.5 text-sm"
+            class="flex h-8 cursor-pointer items-center gap-2 rounded-sm px-2.5 text-sm"
             classList={{
               "bg-slate-600 text-chalk": i() === props.active,
               "text-chalk-2": i() !== props.active,
@@ -242,7 +242,7 @@ function SelectList(props: {
           >
             <span class="flex w-3 shrink-0 justify-center">
               <Show when={option.value === props.value}>
-                <Icon name="check" size={10} color="var(--color-xp)" />
+                <Icon name="check" size={10} color="var(--color-grass-light)" />
               </Show>
             </span>
             <Show when={option.icon}>

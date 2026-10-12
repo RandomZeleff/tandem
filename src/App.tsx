@@ -102,7 +102,7 @@ function App() {
         <Sidebar />
         <main
           ref={setPageScroller}
-          class="dither min-w-0 flex-1 bg-slate-800"
+          class="min-w-0 flex-1 bg-slate-800"
           classList={{
             "overflow-hidden": route().page === "instance",
             "overflow-y-auto p-6": route().page !== "instance",

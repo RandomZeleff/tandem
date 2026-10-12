@@ -1,51 +1,101 @@
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
-@import "@fontsource/pixelify-sans/latin-500.css";
-@import "@fontsource/pixelify-sans/latin-600.css";
-@import "@fontsource/pixelify-sans/latin-700.css";
+@import "@fontsource/jersey-10/latin-400.css";
+@import "@fontsource/jersey-10/latin-ext-400.css";
 @import "tailwindcss";
 
-/* Tandem visual system — see the "Fondations" board of the design canvas. */
+/*
+ * Tandem visual system, "le Minecraft moderne" (Phase 7, docs/REFONTE.md):
+ * graphite surfaces in clear steps, thick filled buttons with a darker bottom edge
+ * that sinks when pressed, Minecraft green for the main action, near-square corners.
+ * The square display face is for big titles only; everything else is Geist.
+ */
 @theme {
   --font-sans: "Geist Variable", system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
-  --font-pixel: "Pixelify Sans", ui-monospace, monospace;
+  --font-display: "Jersey 10", "Geist Variable", sans-serif;
+  /* Former name of the display face, kept so existing titles follow it. */
+  --font-pixel: var(--font-display);
 
-  --color-bedrock: #08090a;
-  --color-slate-900: #0b0c0e;
-  --color-slate-850: #0d0e10;
-  --color-slate-800: #111316;
-  --color-slate-750: #15171a;
-  --color-slate-700: #171a1e;
-  --color-slate-600: #1f2328;
-  --color-line: #23272c;
-  --color-line-strong: #343941;
-  --color-divider: #1e2125;
+  /* Type scale: few sizes, hierarchy through weight. */
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-base: 15px;
+  --text-base--line-height: 22px;
+  --text-lg: 17px;
+  --text-lg--line-height: 24px;
+  --text-xl: 20px;
+  --text-xl--line-height: 26px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 28px;
+  --text-3xl: 32px;
+  --text-3xl--line-height: 34px;
+  --text-4xl: 40px;
+  --text-4xl--line-height: 42px;
+  --text-5xl: 52px;
+  --text-5xl--line-height: 52px;
 
-  --color-chalk: #ece9e2;
-  --color-chalk-2: #d9d5cc;
-  --color-muted: #a9adb4;
-  --color-faint: #868b93;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
+  /* Surfaces, darkest to lightest. */
+  --color-bedrock: #101113;
+  --color-slate-900: #151619;
+  --color-slate-850: #18191c;
+  --color-slate-800: #1b1c1f;
+  --color-slate-750: #222327;
+  --color-slate-700: #26272b;
+  --color-slate-650: #2e3034;
+  --color-slate-600: #383a3f;
+  --color-slate-500: #45474d;
+  --color-line: #303237;
+  --color-line-strong: #46484e;
+  --color-divider: #2b2d31;
+  /* Outline drawn around buttons and raised controls. */
+  --color-outline: #0c0d0e;
+
+  --color-chalk: #f2f1ed;
+  --color-chalk-2: #dddbd5;
   --color-chalk-3: #c9ccd1;
+  --color-muted: #afb2b8;
+  --color-faint: #8d9198;
 
+  /* Minecraft green: the main action. Edge colours are the pressed-in bottom band. */
   --color-grass: #3c8527;
+  --color-grass-hover: #47962f;
+  --color-grass-edge: #1d4d13;
   --color-grass-light: #5dbb3f;
-  --color-xp: #8be04e;
+  --color-xp: #7fd14f;
   --color-xp-text: #8fd16a;
   --color-xp-deep: #4e9a1e;
+
+  /* Light Ore UI button: strong secondary action. */
+  --color-stone: #d0d1d4;
+  --color-stone-hover: #e2e3e5;
+  --color-stone-edge: #8c8d91;
+  --color-stone-ink: #1b1c1e;
+
   --color-gold: #f2c744;
   --color-gold-deep: #6b5518;
   --color-amethyst: #b99cf2;
   --color-diamond: #4fd6d0;
-  --color-redstone: #e0483a;
+  --color-redstone: #d93b2e;
+  --color-redstone-hover: #e5493c;
+  --color-redstone-edge: #7d1d16;
   --color-redstone-text: #f28a80;
 
   /* Message surfaces (alerts, toasts, warning panels). */
-  --color-danger: #2a1414;
+  --color-danger: #2c1716;
   --color-danger-line: #6e2a26;
-  --color-warning: #2a1f0e;
-  --color-success: #16240f;
+  --color-warning: #2b2213;
+  --color-success: #182615;
   --color-success-line: #2e5a1a;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 html,
@@ -61,7 +111,11 @@ body {
   color: var(--color-chalk);
   font-family: var(--font-sans);
   font-size: 14px;
+  line-height: 20px;
+  font-synthesis-weight: none;
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
+  caret-color: var(--color-xp);
   user-select: none;
 }
 
@@ -69,154 +123,174 @@ button {
   cursor: pointer;
 }
 
-/* No browser focus ring: keyboard focus reuses each control's hover look instead. */
+/* No browser focus ring: keyboard focus reuses each control's hover look instead (D26). */
 :focus,
 :focus-visible {
   outline: none;
 }
 
 ::selection {
-  background: rgb(139 224 78 / 0.3);
+  background: rgb(127 209 79 / 0.32);
   color: var(--color-chalk);
 }
 
+::placeholder {
+  color: var(--color-faint);
+  opacity: 1;
+}
+
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-slate-600);
-  border: 2px solid var(--color-slate-800);
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-slate-500);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 @layer components {
-  /* Stepped "pixel" corners instead of border-radius. */
+  /* Corner sizes. The names date from the stepped pixel corners of D11. */
   .px-corners {
-    clip-path: polygon(
-      0 2px, 2px 2px, 2px 0, calc(100% - 2px) 0, calc(100% - 2px) 2px, 100% 2px,
-      100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 100%,
-      2px 100%, 2px calc(100% - 2px), 0 calc(100% - 2px)
-    );
+    border-radius: var(--radius-sm);
   }
   .px-corners-md {
-    clip-path: polygon(
-      0 3px, 3px 3px, 3px 0, calc(100% - 3px) 0, calc(100% - 3px) 3px, 100% 3px,
-      100% calc(100% - 3px), calc(100% - 3px) calc(100% - 3px), calc(100% - 3px) 100%,
-      3px 100%, 3px calc(100% - 3px), 0 calc(100% - 3px)
-    );
+    border-radius: var(--radius-md);
   }
   .px-corners-lg {
-    clip-path: polygon(
-      0 6px, 3px 6px, 3px 3px, 6px 3px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 3px,
-      calc(100% - 3px) 3px, calc(100% - 3px) 6px, 100% 6px, 100% calc(100% - 6px),
-      calc(100% - 3px) calc(100% - 6px), calc(100% - 3px) calc(100% - 3px),
-      calc(100% - 6px) calc(100% - 3px), calc(100% - 6px) 100%, 6px 100%,
-      6px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 6px), 0 calc(100% - 6px)
-    );
+    border-radius: var(--radius-lg);
   }
 
+  /* Raised surface: a step lighter than the ground, hairline edge, soft drop. */
   .panel {
     background: var(--color-slate-700);
+    border-radius: var(--radius-md);
     box-shadow:
-      inset 0 0 0 1px var(--color-line),
-      inset 0 1px 0 rgb(255 255 255 / 0.04);
+      inset 0 0 0 1px rgb(255 255 255 / 0.055),
+      inset 0 1px 0 rgb(255 255 255 / 0.04),
+      0 1px 2px rgb(0 0 0 / 0.35);
   }
 
   .panel-title {
-    font-family: var(--font-pixel);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    color: var(--color-gold);
-    text-transform: uppercase;
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 650;
+    color: var(--color-chalk);
+  }
+
+  /* Big display titles: the square face, sitting on a short drop shadow. */
+  .title-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    text-shadow: 0 3px 0 rgb(0 0 0 / 0.35);
   }
 
   .pixel-shadow {
-    text-shadow: 3px 3px 0 rgb(0 0 0 / 0.45);
+    text-shadow: 0 3px 0 rgb(0 0 0 / 0.35);
   }
 
-  /* Bevelled buttons: light on top, shade below, pressed on :active. */
+  /*
+   * Buttons, as in Mojang's recent menus: solid face, dark outline, a darker band at the
+   * bottom. Pressing collapses the band and the face sinks into it.
+   */
   .btn {
+    --btn-face: var(--color-slate-600);
+    --btn-face-hover: var(--color-slate-500);
+    --btn-edge: #26272b;
+    --btn-ink: var(--color-chalk);
+    --btn-shine: rgb(255 255 255 / 0.1);
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     height: 38px;
-    padding: 0 14px;
+    padding: 0 16px 3px;
     border: 0;
+    border-radius: var(--radius-sm);
     font-weight: 600;
-    color: var(--color-chalk);
-    background: var(--color-slate-600);
+    white-space: nowrap;
+    color: var(--btn-ink);
+    background: var(--btn-face);
     box-shadow:
-      inset 0 0 0 1px var(--color-line-strong),
-      inset 0 -3px 0 rgb(0 0 0 / 0.35);
-    transition: filter 80ms, transform 80ms;
+      0 0 0 1px var(--color-outline),
+      inset 0 1px 0 var(--btn-shine),
+      inset 0 -4px 0 var(--btn-edge);
+    transition:
+      background-color 90ms,
+      box-shadow 70ms,
+      padding 70ms,
+      transform 70ms;
   }
   .btn:hover:not(:disabled),
   .btn:focus-visible:not(:disabled) {
-    filter: brightness(1.15);
+    background: var(--btn-face-hover);
   }
   .btn:active:not(:disabled) {
-    transform: translateY(1px);
+    padding-top: 2px;
+    padding-bottom: 1px;
     box-shadow:
-      inset 0 0 0 1px var(--color-line-strong),
-      inset 0 2px 0 rgb(0 0 0 / 0.35);
+      0 0 0 1px var(--color-outline),
+      inset 0 2px 0 rgb(0 0 0 / 0.18),
+      inset 0 -1px 0 var(--btn-edge);
   }
   .btn:disabled {
-    opacity: 0.45;
     cursor: default;
+    color: color-mix(in srgb, var(--btn-ink) 50%, transparent);
+    filter: saturate(0.4) brightness(0.8);
   }
 
   .btn-primary {
-    color: #fff;
-    background: var(--color-grass);
-    box-shadow:
-      inset 0 3px 0 rgb(255 255 255 / 0.2),
-      inset 0 -4px 0 rgb(0 0 0 / 0.32);
-    text-shadow: 2px 2px 0 rgb(0 0 0 / 0.25);
-  }
-  .btn-primary:active:not(:disabled) {
-    box-shadow: inset 0 3px 0 rgb(0 0 0 / 0.3);
+    --btn-face: var(--color-grass);
+    --btn-face-hover: var(--color-grass-hover);
+    --btn-edge: var(--color-grass-edge);
+    --btn-ink: #ffffff;
+    --btn-shine: rgb(255 255 255 / 0.2);
+    text-shadow: 0 1px 0 rgb(0 0 0 / 0.3);
   }
 
+  /* Light stone button: a strong secondary action next to green. */
+  .btn-light,
   .btn-gold {
-    color: var(--color-gold);
-    background: var(--color-slate-700);
-    box-shadow:
-      inset 0 0 0 2px var(--color-gold-deep),
-      inset 0 -3px 0 rgb(0 0 0 / 0.35);
+    --btn-face: var(--color-stone);
+    --btn-face-hover: var(--color-stone-hover);
+    --btn-edge: var(--color-stone-edge);
+    --btn-ink: var(--color-stone-ink);
+    --btn-shine: rgb(255 255 255 / 0.5);
   }
 
   .btn-danger {
-    color: var(--color-redstone-text);
-    background: var(--color-danger);
-    box-shadow:
-      inset 0 0 0 1px var(--color-danger-line),
-      inset 0 -3px 0 rgb(0 0 0 / 0.35);
+    --btn-face: var(--color-redstone);
+    --btn-face-hover: var(--color-redstone-hover);
+    --btn-edge: var(--color-redstone-edge);
+    --btn-ink: #ffffff;
+    --btn-shine: rgb(255 255 255 / 0.18);
+    text-shadow: 0 1px 0 rgb(0 0 0 / 0.3);
   }
 
-  /* Microsoft's light sign-in button, with the bevel of the others. */
+  /* Microsoft's light sign-in button, on the same build as the others. */
   .btn-microsoft {
-    color: #1b1b1b;
-    background: #ffffff;
-    box-shadow:
-      inset 0 0 0 1px #c8c8c8,
-      inset 0 -3px 0 rgb(0 0 0 / 0.18);
-  }
-  .btn-microsoft:hover:not(:disabled),
-  .btn-microsoft:focus-visible:not(:disabled) {
-    filter: brightness(0.94);
-  }
-  .btn-microsoft:active:not(:disabled) {
-    box-shadow:
-      inset 0 0 0 1px #c8c8c8,
-      inset 0 2px 0 rgb(0 0 0 / 0.18);
+    --btn-face: #ffffff;
+    --btn-face-hover: #f0f0f0;
+    --btn-edge: #b9b9b9;
+    --btn-ink: #1b1b1b;
+    --btn-shine: transparent;
   }
 
+  /* Quiet button: no build until hovered. */
   .btn-ghost {
+    padding-bottom: 0;
     color: var(--color-muted);
     background: transparent;
     box-shadow: none;
@@ -224,38 +298,53 @@ button {
   .btn-ghost:hover:not(:disabled),
   .btn-ghost:focus-visible:not(:disabled) {
     color: var(--color-chalk);
-    background: var(--color-slate-600);
-    filter: none;
+    background: rgb(255 255 255 / 0.07);
+  }
+  .btn-ghost:active:not(:disabled) {
+    padding-top: 0;
+    padding-bottom: 0;
+    box-shadow: none;
+    background: rgb(255 255 255 / 0.04);
   }
 
-  /* Inventory slot: shadow top-left, light bottom-right. */
+  /* Inventory slot: a recessed well for icons, shade at the top-left. */
   .slot {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: #8b8b8b;
+    border-radius: var(--radius-sm);
+    background: var(--color-slate-900);
     box-shadow:
-      inset 2px 2px 0 #373737,
-      inset -2px -2px 0 #ffffff;
+      inset 0 0 0 1px rgb(0 0 0 / 0.35),
+      inset 2px 2px 0 rgb(0 0 0 / 0.3),
+      inset -1px -1px 0 rgb(255 255 255 / 0.05);
   }
 
   .field {
-    height: 40px;
+    height: 38px;
     box-sizing: border-box;
     padding: 0 12px;
-    color: var(--color-chalk);
-    background: var(--color-slate-850);
     border: 0;
+    border-radius: var(--radius-sm);
     outline: none;
+    color: var(--color-chalk);
+    background: var(--color-slate-900);
     box-shadow:
-      inset 0 0 0 1px #2b3036,
-      inset 0 3px 0 rgb(0 0 0 / 0.4);
+      inset 0 0 0 1px var(--color-line-strong),
+      inset 0 2px 0 rgb(0 0 0 / 0.3);
+    transition: box-shadow 90ms;
   }
-  .field:focus {
+  .field:hover:not(:disabled) {
     box-shadow:
-      inset 0 0 0 1px var(--color-xp),
-      inset 0 3px 0 rgb(0 0 0 / 0.4);
+      inset 0 0 0 1px var(--color-slate-500),
+      inset 0 2px 0 rgb(0 0 0 / 0.3);
+  }
+  .field:focus,
+  .field.is-open {
+    box-shadow:
+      inset 0 0 0 2px var(--color-grass-light),
+      inset 0 2px 0 rgb(0 0 0 / 0.3);
   }
 
   .chip {
@@ -264,14 +353,25 @@ button {
     gap: 6px;
     height: 24px;
     padding: 0 8px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
-    background: rgb(17 19 22 / 0.8);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+    font-weight: 500;
+    color: var(--color-chalk-2);
+    background: rgb(255 255 255 / 0.07);
   }
 
-  .dither {
-    background-image: repeating-conic-gradient(rgb(255 255 255 / 0.012) 0% 25%, transparent 0% 50%);
-    background-size: 4px 4px;
+  /* Row in a list: flat until hovered or selected. */
+  .row {
+    border-radius: var(--radius-sm);
+    transition: background-color 90ms;
+  }
+  .row:hover,
+  .row:focus-visible {
+    background: rgb(255 255 255 / 0.05);
+  }
+  .row[aria-selected="true"],
+  .row.is-selected {
+    background: rgb(255 255 255 / 0.08);
   }
 }
 
@@ -283,7 +383,7 @@ button {
   }
 }
 .toast-in {
-  animation: toast-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: toast-in 180ms var(--ease-out-quart);
 }
 
 /* Loading placeholders breathe slowly; still when motion is reduced. */
@@ -319,7 +419,7 @@ button {
   }
 }
 .pop-in {
-  animation: pop-in 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: pop-in 240ms var(--ease-out-quart);
 }
 @keyframes step-pulse {
   50% {
@@ -442,10 +542,11 @@ button {
 .md blockquote {
   padding: 4px 14px;
   color: var(--color-muted);
-  border-left: 3px solid var(--color-line-strong);
+  border-left: 2px solid var(--color-line-strong);
 }
 .md :where(code, kbd) {
   padding: 1px 5px;
+  border-radius: var(--radius-xs);
   font-family: var(--font-mono);
   font-size: 12.5px;
   background: var(--color-slate-900);
@@ -453,6 +554,7 @@ button {
 }
 .md pre {
   padding: 12px 14px;
+  border-radius: var(--radius-sm);
   overflow-x: auto;
   background: var(--color-slate-900);
   box-shadow: inset 0 0 0 1px var(--color-line);
@@ -479,6 +581,7 @@ button {
 }
 .md details {
   padding: 8px 12px;
+  border-radius: var(--radius-sm);
   background: var(--color-slate-750);
   box-shadow: inset 0 0 0 1px var(--color-line);
 }
@@ -511,7 +614,7 @@ button {
   height: 44px;
   transform: translate(-50%, -50%);
   background: var(--color-redstone);
-  clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px));
+  border-radius: 10px;
 }
 .md a.md-video::before {
   content: "";

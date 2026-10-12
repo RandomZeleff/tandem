@@ -186,14 +186,14 @@ function Row(props: {
           <div class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span class="flex min-w-0 items-center gap-2">
               <span class="truncate font-mono text-[13px] text-chalk">{v().versionNumber}</span>
-              <span class={`shrink-0 text-[11px] font-semibold uppercase tracking-wide ${TYPE_CLASSES[v().versionType] ?? "text-muted"}`}>
+              <span class={`shrink-0 text-xs font-semibold uppercase tracking-wide ${TYPE_CLASSES[v().versionType] ?? "text-muted"}`}>
                 {versionTypeLabel(v().versionType)}
               </span>
               <Show when={props.recommended}>
-                <span class="chip h-5 shrink-0 px-1.5 text-[11px] text-xp-text">recommandée</span>
+                <span class="chip h-5 shrink-0 px-1.5 text-xs text-xp-text">recommandée</span>
               </Show>
               <Show when={props.installed}>
-                <span class="chip h-5 shrink-0 px-1.5 text-[11px] text-xp-text">
+                <span class="chip h-5 shrink-0 px-1.5 text-xs text-xp-text">
                   <Icon name="check" size={9} />
                   installée
                 </span>
