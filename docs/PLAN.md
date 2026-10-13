@@ -529,3 +529,7 @@ Ensuite : retour aux petits ajouts.
 - `DESIGN.md` écrit à partir du code livré, D50 remplace D11.
 - Vérifié : TypeScript, détecteur sur tout `src`, captures avec le faux backend. Pas encore vu dans la vraie app (`pnpm tauri dev`) ni sur de vrais visuels Modrinth.
 - Prochaine étape : retour aux petits ajouts ; test de la refonte par Zeleff dans la vraie app.
+
+### 2026-10-13 (retour de Zeleff sur les fiches de projet)
+- « Soutenir l'auteur » allongeait l'en-tête des fiches et laissait un grand vide sous le titre : il passe dans la colonne de droite, en bas de « Créateurs » ; « Voir sur Modrinth » devient le premier des « Liens ». L'en-tête ne garde que l'instance, Installer et la version.
+- Vérifié avec le faux backend (fiche de Sodium).

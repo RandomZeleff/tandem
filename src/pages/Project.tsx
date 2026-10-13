@@ -258,11 +258,6 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
               </p>
             </Match>
           </Switch>
-          <SupportAuthor details={d()} />
-          <button class="btn btn-ghost h-8 justify-start px-2 text-xs" onClick={() => openExternal(d().url)}>
-            <Icon name="external" size={10} />
-            Voir sur Modrinth
-          </button>
         </div>
       </header>
 
@@ -672,7 +667,7 @@ function SupportAuthor(props: { details: ProjectDetails }) {
 
   return (
     <Show when={links().length > 0}>
-      <div class="flex flex-col gap-1">
+      <div class="mt-2 flex flex-col gap-1.5">
         <button
           class="btn px-corners h-9 justify-start gap-2 px-3 text-meta"
           title={links().length === 1 ? links()[0].url : undefined}
@@ -715,7 +710,7 @@ function Aside(props: { details: ProjectDetails }) {
   const side = () => sideLabel(d());
   const [allAuthors, setAllAuthors] = createSignal(false);
   const authors = () => (allAuthors() ? d().authors : d().authors.slice(0, MAX_AUTHORS));
-  // Support links have their own button next to Install.
+  // Support links have their own button in the Créateurs section.
   const otherLinks = () => d().links.filter((l) => l.kind !== "donation");
 
   return (
@@ -747,7 +742,7 @@ function Aside(props: { details: ProjectDetails }) {
         </dl>
       </Section>
 
-      <Show when={d().organization || d().authors.length > 0}>
+      <Show when={d().organization || d().authors.length > 0 || d().links.some((l) => l.kind === "donation")}>
         <Section title="Créateurs">
           <ul class="flex flex-col gap-1">
             <Show when={d().organization}>
@@ -764,12 +759,23 @@ function Aside(props: { details: ProjectDetails }) {
               Voir les {d().authors.length - MAX_AUTHORS} autres
             </button>
           </Show>
+          <SupportAuthor details={d()} />
         </Section>
       </Show>
 
-      <Show when={otherLinks().length > 0}>
-        <Section title="Liens">
+      <Section title="Liens">
           <ul class="flex flex-col">
+            <li>
+              <button
+                class="flex w-full items-center gap-2.5 px-1 py-1.5 text-left text-meta text-chalk-2 hover:text-xp-text focus-visible:text-xp-text"
+                title={d().url}
+                onClick={() => openExternal(d().url)}
+              >
+                <Icon name="external" size={12} class="shrink-0 text-muted" />
+                <span class="flex-1 truncate">Voir sur Modrinth</span>
+                <Icon name="external" size={9} class="shrink-0 text-faint" />
+              </button>
+            </li>
             <For each={otherLinks()}>
               {(link) => (
                 <li>
@@ -787,7 +793,6 @@ function Aside(props: { details: ProjectDetails }) {
             </For>
           </ul>
         </Section>
-      </Show>
 
       <Section title="Détails">
         <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-meta">
