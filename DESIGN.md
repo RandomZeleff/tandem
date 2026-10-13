@@ -320,7 +320,7 @@ Tactile and built: a solid face, a near-black outline, a bright top hairline, an
 - **Disabled:** label at 50%, face desaturated and dimmed.
 
 ### Play Button
-The signature control. Large form: 54px tall, 4px corners, 32px side padding, Jersey 10 28px uppercase "JOUER" with an 18px play icon. Medium (38px) and icon-only (32×36) forms appear on cards and rows. It is stateful: green Play when idle, a disabled neutral button with an XP-green download icon and a mono percentage while installing, redstone Stop while running.
+The signature control, and the app's one authored motion moment. Large form: 54px tall, at least 236px wide (it never changes width between states), 4px corners, Jersey 10 28px uppercase "JOUER" with a 24px play icon. Medium (38px, at least 156px) and icon-only (32×36) forms appear on rows and cards. Pressed, it becomes a launch track (`.launch`): a recessed slate-900 well that the green face fills from the left while files download (scaled with a transform, never re-laid out), with the step in words and a mono percentage; steps with no amount to fill (checking, preparing the loader, starting) show a slow light sweep instead. "Démarrage du jeu…" lasts until the game logs that its sound engine started (the title screen is up, on every version and loader), then the track settles to a dark green "En jeu" with a stepped dot, after one bright flash of the fill. Stopping is a separate square button with a redstone icon next to the track, never the main button. Reduced motion: no sweep, no flash, no fill easing.
 
 ### Chips
 - **Style:** 24px tall, 3px corners, 7% white wash, chalk-2 12px medium label, optional 6px-gap icon. No stroke.

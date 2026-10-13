@@ -252,7 +252,7 @@ export default function Sidebar() {
                       {instance.gameVersion} · <LoaderTag loader={instance.loader} size={12} />
                     </span>
                   </span>
-                  <Show when={state().status === "preparing" && !sidebarCollapsed()}>
+                  <Show when={state().status === "preparing" && !sidebarCollapsed() && (state().progress?.totalBytes ?? 0) > 0}>
                     <span class="font-mono text-xs text-xp-text">{Math.round(ratio() * 100)} %</span>
                   </Show>
                   <Show when={state().status === "running"}>

@@ -32,7 +32,7 @@ export default function TitleBar() {
       if (state.status !== "preparing") continue;
       const p = state.progress;
       const ratio =
-        p && isTransferStage(p.stage) && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
+        p && isTransferStage(p.stage) && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : null;
       const name = instances().find((i) => i.id === id)?.name ?? id;
       return { id, name, ratio };
     }
@@ -108,10 +108,12 @@ export default function TitleBar() {
             >
               <Icon name="download" size={12} color="var(--color-xp)" />
               <span class="max-w-40 truncate">{job().name}</span>
-              <span class="w-16">
-                <XpBar value={job().ratio} segments={8} height={8} label={`Installation de ${job().name}`} />
+              <span class="w-16" classList={{ hidden: job().ratio === null }}>
+                <XpBar value={job().ratio ?? 0} segments={8} height={8} label={`Installation de ${job().name}`} />
               </span>
-              <span class="font-mono text-xp-text">{Math.round(job().ratio * 100)} %</span>
+              <Show when={job().ratio !== null} fallback={<span class="text-muted">Préparation…</span>}>
+                <span class="font-mono text-xp-text">{Math.round(job().ratio! * 100)} %</span>
+              </Show>
             </button>
           )}
         </Show>

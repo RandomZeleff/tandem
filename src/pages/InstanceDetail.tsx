@@ -139,9 +139,14 @@ export default function InstanceDetail(props: { instance: Instance }) {
           <div class="panel px-corners-md flex flex-col gap-2.5 p-4">
             <div class="flex items-center justify-between">
               <span class="panel-title">Installation</span>
-              <span class="font-mono text-sm text-xp-text">{Math.round(ratio() * 100)} %</span>
+              <Show when={state().progress && isTransferStage(state().progress!.stage)}>
+                <span class="font-mono text-sm text-xp-text">{Math.round(ratio() * 100)} %</span>
+              </Show>
             </div>
-            <XpBar value={ratio()} segments={32} height={14} label="Installation de l'instance" />
+            {/* A bar only when there is an amount to fill; the other steps say what they do. */}
+            <Show when={state().progress && isTransferStage(state().progress!.stage)}>
+              <XpBar value={ratio()} segments={32} height={14} label="Installation de l'instance" />
+            </Show>
             <span class="font-mono text-xs text-muted">{stageLabel(state().progress)}</span>
           </div>
         </Show>

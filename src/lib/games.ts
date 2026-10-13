@@ -19,11 +19,15 @@ import {
 const MAX_OUTPUT_LINES = 5000;
 /** Two minutes of samples at one every 2 s. */
 const MAX_STATS_SAMPLES = 60;
+/** Logged once the game has loaded its resources and shows the title screen (every version and loader). */
+const GAME_LOADED = "Sound engine started";
 
 export type GameStatus = "idle" | "preparing" | "running";
 
 export interface GameState {
   status: GameStatus;
+  /** Running and past its loading screen (the title screen is up). */
+  loaded?: boolean;
   progress?: InstallProgress;
   error?: string;
   lastExit?: GameExited;
@@ -87,7 +91,7 @@ export async function startGameEvents() {
     setGames(payload.instanceId, { status: "preparing", progress: payload, error: undefined });
   });
   await listen<string>(EVENTS.started, ({ payload: id }) => {
-    setGames(id, { status: "running", progress: undefined });
+    setGames(id, { status: "running", progress: undefined, loaded: false });
     onPlayedCallback();
     void onGameStarted(id).catch(() => {});
   });
@@ -107,6 +111,10 @@ export async function startGameEvents() {
       }),
     );
     setLastOutput(payload);
+    const game = games[payload.instanceId];
+    if (game?.status === "running" && !game.loaded && payload.lines.some((line) => line.includes(GAME_LOADED))) {
+      setGames(payload.instanceId, "loaded", true);
+    }
   });
   await listen<GameStats>(EVENTS.stats, ({ payload }) => {
     setStats(
@@ -124,7 +132,8 @@ export async function startGameEvents() {
   });
 
   for (const id of await api.runningInstances()) {
-    setGames(id, { status: "running" });
+    // Already running when the launcher opened: past its loading long ago.
+    setGames(id, { status: "running", loaded: true });
   }
 }
 

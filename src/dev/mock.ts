@@ -262,6 +262,8 @@ async function fakeLaunch(id: string) {
       totalBytes: total,
     });
   }
+  await emit("install://progress", { instanceId: id, stage: "processing", doneFiles: 0, totalFiles: 0, doneBytes: 0, totalBytes: 0 });
+  await new Promise((r) => setTimeout(r, 1200));
   await emit("game://started", id);
   let memory = 900e6;
   statsTimers[id] = setInterval(() => {
@@ -290,8 +292,11 @@ async function fakeLaunch(id: string) {
   await emit("game://output", {
     instanceId: id,
     stream: "stdout",
-    lines: ["[Render thread/INFO]: Setting user: Zeleff", "[Render thread/INFO]: Backend library: LWJGL", "[Render thread/INFO]: Sound engine started"],
+    lines: ["[Render thread/INFO]: Setting user: Zeleff", "[Render thread/INFO]: Backend library: LWJGL"],
   });
+  // The title screen shows up a few seconds later, as with a real game.
+  await new Promise((r) => setTimeout(r, 3000));
+  await emit("game://output", { instanceId: id, stream: "stdout", lines: ["[Render thread/INFO]: Sound engine started"] });
 }
 
 export function installMocks() {

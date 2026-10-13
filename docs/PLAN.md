@@ -534,3 +534,8 @@ Ensuite : retour aux petits ajouts.
 - « Soutenir l'auteur » allongeait l'en-tête des fiches et laissait un grand vide sous le titre : il passe dans la colonne de droite, en bas de « Créateurs » ; « Voir sur Modrinth » devient le premier des « Liens ». L'en-tête ne garde que l'instance, Installer et la version.
 - Vérifié avec le faux backend (fiche de Sodium).
 - Barre latérale repliable (demande de Zeleff) : bouton à gauche de la barre de titre ou Ctrl+B (⌘B sur Mac). Repliée (80 px), elle ne garde que les icônes, la tête du compte et celles des instances récentes, avec leur nom en info-bulle ; la pastille d'ami arrivé et le point « en cours » restent visibles. L'état est retenu sur ce PC.
+
+### 2026-10-13 (lancement du jeu)
+- Fait : le bouton Jouer devient une piste qui se remplit en vert pendant le téléchargement (étape et pourcentage), un balayage lumineux pendant les étapes sans quantité (vérification, loader, démarrage), « Démarrage du jeu… » jusqu'à l'écran titre (ligne « Sound engine started » du journal, toutes versions et loaders), puis « En jeu » après un bref éclat. Arrêter est un bouton carré à côté, plus jamais le bouton principal. Largeur fixe d'un état à l'autre ; sans animation si Windows les désactive.
+- Plus de « 0 % » trompeur pendant les étapes sans quantité (fiche, barre latérale, barre de titre).
+- Vérifié avec le faux backend (séquence complète, maintenant plus réaliste : étape du loader puis écran titre 3 s après le démarrage). Pas vérifié : un vrai jeu, en particulier la durée de « Démarrage du jeu… » sur un gros modpack.

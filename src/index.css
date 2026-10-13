@@ -337,6 +337,58 @@ button {
     background: rgb(255 255 255 / 0.04);
   }
 
+  /*
+   * The Play button once pressed: a recessed track the green fills from the left as the
+   * game installs, a light sweep while it waits, then a calm "in game" state.
+   */
+  .launch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    overflow: hidden;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--color-chalk);
+    background: var(--color-slate-900);
+    box-shadow:
+      0 0 0 1px var(--color-outline),
+      inset 0 2px 0 rgb(0 0 0 / 0.35);
+  }
+  .launch > :not(.launch-fill, .launch-sweep) {
+    position: relative;
+    text-shadow: 0 1px 0 rgb(0 0 0 / 0.45);
+  }
+  /* Full width, scaled from the left: the bar grows without relaying out the button. */
+  .launch-fill {
+    position: absolute;
+    inset: 0;
+    transform-origin: left;
+    background: var(--color-grass);
+    box-shadow:
+      inset 0 -4px 0 var(--color-grass-edge),
+      inset 0 1px 0 rgb(255 255 255 / 0.2);
+    transition: transform 450ms var(--ease-out-quart);
+  }
+  .launch-sweep {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / 0.13) 50%, transparent 65%) no-repeat;
+    background-size: 220% 100%;
+    animation: launch-sweep 1.5s linear infinite;
+  }
+  .launch.is-playing {
+    background: color-mix(in srgb, var(--color-grass-edge) 70%, var(--color-slate-900));
+  }
+  /* The one moment: the game reached its title screen. */
+  .launch.is-playing .launch-fill {
+    animation: launch-ready 700ms var(--ease-out-quart) both;
+  }
+
   /* Inventory slot: a recessed well for icons, shade at the top-left. */
   .slot {
     display: flex;
@@ -416,6 +468,25 @@ button {
   animation: toast-in 180ms var(--ease-out-quart);
 }
 
+@keyframes launch-sweep {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+@keyframes launch-ready {
+  from {
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+  to {
+    opacity: 0;
+    filter: brightness(1);
+  }
+}
+
 /* Loading placeholders breathe slowly; still when motion is reduced. */
 @keyframes skeleton {
   50% {
@@ -461,6 +532,13 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .launch.is-playing .launch-fill {
+    display: none;
+  }
+  .launch-fill {
+    transition: none;
+  }
+  .launch-sweep,
   .toast-in,
   .skeleton,
   .link-dot,
