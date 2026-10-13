@@ -186,23 +186,28 @@ export default function ContentList(props: { instance: Instance; locked: boolean
     if (all().length > 0) void run(checkUpdates(props.instance.id));
   });
 
-  const summary = () => {
-    const parts = [`${total()} élément${total() > 1 ? "s" : ""}`];
-    if (disabledCount() > 0) parts.push(`${disabledCount()} désactivé${disabledCount() > 1 ? "s" : ""}`);
-    return parts.join(" · ");
-  };
-
   return (
     <div class="flex h-full flex-col gap-4 overflow-y-auto">
-      <div class="flex items-center justify-between gap-3">
-        <span class="text-meta text-muted">
-          {total() === 0 ? "Aucun contenu installé." : summary()}
-          <Show when={props.locked && total() > 0}> · arrête le jeu pour modifier le contenu</Show>
-        </span>
-        <div class="flex gap-2">
+      <div class="flex items-center gap-3">
+        <Show when={total() > 0} fallback={<span class="flex-1" />}>
+          <div class="relative max-w-[440px] min-w-[200px] flex-1">
+            <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
+              <Icon name="search" size={12} />
+            </span>
+            <input
+              type="search"
+              class="field h-10 w-full pl-9 text-sm"
+              placeholder={`Rechercher parmi ${total()} élément${total() > 1 ? "s" : ""}${disabledCount() > 0 ? ` (${disabledCount()} désactivé${disabledCount() > 1 ? "s" : ""})` : ""}…`}
+              aria-label="Rechercher dans le contenu"
+              value={query()}
+              onInput={(e) => setQuery(e.currentTarget.value)}
+            />
+          </div>
+        </Show>
+        <div class="ml-auto flex gap-2">
           <Show when={all().length > 0}>
             <button
-              class="btn px-corners h-9"
+              class="btn px-corners h-10"
               disabled={isCheckingUpdates(props.instance.id) || isUpdatingAll(props.instance.id)}
               onClick={() => void run(checkUpdates(props.instance.id))}
             >
@@ -211,17 +216,21 @@ export default function ContentList(props: { instance: Instance; locked: boolean
             </button>
           </Show>
           <Show when={props.instance.loader === "fabric" || props.instance.loader === "quilt" || props.instance.loader === "vanilla"}>
-            <button class="btn px-corners h-9" disabled={exporting()} onClick={() => void exportPack()} title="Exporter en modpack Modrinth (.mrpack)">
+            <button class="btn px-corners h-10" disabled={exporting()} onClick={() => void exportPack()} title="Exporter en modpack Modrinth (.mrpack)">
               <Icon name="download" size={12} />
               {exporting() ? "Export…" : "Exporter"}
             </button>
           </Show>
-          <button class="btn btn-primary px-corners h-9" onClick={browse}>
+          <button class="btn btn-primary px-corners h-10" onClick={browse}>
             <Icon name="plus" size={12} />
             Ajouter du contenu
           </button>
         </div>
       </div>
+
+      <Show when={props.locked && total() > 0}>
+        <p class="-mt-1 text-meta text-muted">Le jeu tourne : arrête-le pour modifier le contenu.</p>
+      </Show>
 
       <Show when={error()}>
         <Alert onClose={() => setError(null)}>{error()}</Alert>
@@ -238,7 +247,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
             <Icon
               name="caret"
               size={12}
-              class={`shrink-0 text-faint transition-transform duration-100 ${noticesOpen() ? "" : "-rotate-90"} ${updates().length + perfCount() === 0 ? "invisible" : ""}`}
+              class={`shrink-0 text-faint transition-transform duration-100 ${noticesOpen() ? "" : "-rotate-90"} ${perfCount() === 0 ? "invisible" : ""}`}
             />
             <span class="text-sm font-semibold">À regarder</span>
             <span class="flex min-w-0 flex-wrap items-center gap-1.5">
@@ -310,29 +319,13 @@ export default function ContentList(props: { instance: Instance; locked: boolean
               </ul>
             </div>
           </Show>
-        <div class="flex flex-col divide-y divide-line border-t border-line" classList={{ hidden: !noticesOpen() }}>
-          <Show when={updates().length > 0}>
-            <p class="px-4 py-3 text-meta text-muted">
-              {updates().length === 1 ? "Une nouvelle version est disponible" : `${updates().length} nouvelles versions sont disponibles`} : elles
-              sont marquées dans la liste ci-dessous, ou « Tout mettre à jour » en un clic.
-            </p>
-          </Show>
+        <div class="border-t border-line" classList={{ hidden: !noticesOpen() || perfCount() === 0 }}>
           {/* Always mounted: it reports its count even while the strip is closed. */}
           <PerfSuggestions instance={props.instance} locked={props.locked} onError={setError} onCount={setPerfCount} />
         </div>
       </section>
 
       <Show when={contentLoaded(props.instance.id)} fallback={<LoadingRows count={4} height={52} label="Chargement du contenu…" />}>
-      <Show when={total() > 15}>
-        <input
-          type="search"
-          class="field h-9 w-full max-w-sm text-sm"
-          placeholder={`Filtrer les ${total()} éléments…`}
-          aria-label="Filtrer le contenu"
-          value={query()}
-          onInput={(e) => setQuery(e.currentTarget.value)}
-        />
-      </Show>
       <Show when={total() > 0 && items().length + locals().length === 0}>
         <p class="py-6 text-center text-sm text-muted">Rien ne correspond à « {query().trim()} ».</p>
       </Show>
@@ -423,19 +416,18 @@ function Row(props: {
   const frozen = () => props.locked || busy();
 
   return (
-    <li class="flex items-center gap-3 px-3 py-2.5">
+    <li class="flex items-center gap-3 py-1.5 pr-3 pl-1.5">
+      <button
+        class="group flex min-w-0 flex-1 items-center gap-3 rounded-sm py-1 pr-2 pl-1.5 text-left transition-colors duration-100 hover:bg-white/[0.04] focus-visible:bg-white/[0.05]"
+        title={`Voir la fiche de ${props.item.title}`}
+        onClick={() => openProject(props.item.projectId, props.instanceId)}
+      >
       <span class="transition-opacity" classList={{ "opacity-40 grayscale": !props.item.enabled }}>
         <ProjectIcon url={props.item.iconUrl} size={36} />
       </span>
       <div class="flex min-w-0 flex-1 flex-col" classList={{ "opacity-60": !props.item.enabled }}>
         <span class="flex items-center gap-2">
-          <button
-            class="truncate text-left text-sm font-medium hover:text-xp-text hover:underline focus-visible:text-xp-text"
-            title={`Voir la fiche de ${props.item.title}`}
-            onClick={() => openProject(props.item.projectId, props.instanceId)}
-          >
-            {props.item.title}
-          </button>
+          <span class="truncate text-sm font-medium group-hover:text-xp-text group-focus-visible:text-xp-text">{props.item.title}</span>
           <Show when={props.item.isDependency}>
             <span class="chip h-5 px-1.5 text-xs text-muted">dépendance</span>
           </Show>
@@ -455,6 +447,7 @@ function Row(props: {
           </Show>
         </span>
       </div>
+      </button>
       <Show when={update()}>
         <button
           class="btn px-corners h-8 shrink-0 px-2.5 text-xs"

@@ -69,7 +69,6 @@ export default function PerfSuggestions(props: {
               <Icon name="sparkle" size={12} class="text-xp-text" />
               Optimisations recommandées
             </h2>
-            <p class="text-meta text-muted">Mods reconnus pour gagner des FPS et de la mémoire, compatibles avec cette instance.</p>
           </div>
           <div class="flex shrink-0 gap-2">
             <button class="btn btn-ghost h-8 px-2.5 text-xs" onClick={() => void hide()}>
