@@ -539,3 +539,7 @@ Ensuite : retour aux petits ajouts.
 - Fait : le bouton Jouer devient une piste qui se remplit en vert pendant le téléchargement (étape et pourcentage), un balayage lumineux pendant les étapes sans quantité (vérification, loader, démarrage), « Démarrage du jeu… » jusqu'à l'écran titre (ligne « Sound engine started » du journal, toutes versions et loaders), puis « En jeu » après un bref éclat. Arrêter est un bouton carré à côté, plus jamais le bouton principal. Largeur fixe d'un état à l'autre ; sans animation si Windows les désactive.
 - Plus de « 0 % » trompeur pendant les étapes sans quantité (fiche, barre latérale, barre de titre).
 - Vérifié avec le faux backend (séquence complète, maintenant plus réaliste : étape du loader puis écran titre 3 s après le démarrage). Pas vérifié : un vrai jeu, en particulier la durée de « Démarrage du jeu… » sur un gros modpack.
+
+### 2026-10-13 (onglet Contenu désencombré)
+- Fait : les encadrés empilés au-dessus de la liste (optimisations recommandées, conflits, mises à jour) deviennent une seule bande « À regarder » avec un résumé (« 1 conflit · 2 mises à jour · 3 optimisations conseillées ») et « Tout mettre à jour » directement. Repliée par défaut : une ligne de 48 px. Seuls les conflits, qui peuvent empêcher le jeu de démarrer, affichent toujours leurs lignes et leurs boutons « Désactiver ». La bande disparaît quand il n'y a rien.
+- Vérifié avec le faux backend (instance avec un conflit, deux mises à jour et trois optimisations : liste des mods remontée d'environ 300 px).

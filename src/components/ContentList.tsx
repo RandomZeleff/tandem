@@ -151,6 +151,9 @@ export default function ContentList(props: { instance: Instance; locked: boolean
     if (!failure) toast(count === 1 ? "1 élément mis à jour" : `${count} éléments mis à jour`);
   }
   const updates = () => contentUpdates(props.instance.id);
+  const [perfCount, setPerfCount] = createSignal(0);
+  const noticeCount = () => (conflicts() ?? []).length + updates().length + perfCount();
+  const [noticesOpen, setNoticesOpen] = createSignal(false);
   const disabledCount = () => all().filter((i) => !i.enabled).length + allLocal().filter((f) => !f.enabled).length;
   const browse = () => navigate({ page: "discover", instanceId: props.instance.id });
 
@@ -224,64 +227,100 @@ export default function ContentList(props: { instance: Instance; locked: boolean
         <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
-      <PerfSuggestions instance={props.instance} locked={props.locked} onError={setError} />
-
-      <Show when={(conflicts() ?? []).length > 0}>
-        <div class="panel px-corners-md flex flex-col gap-2 p-3.5 panel-danger">
-          <span class="flex items-center gap-2 text-sm">
-            <span class="size-2 bg-redstone" />
-            {conflicts()!.length === 1 ? "Deux mods ne peuvent pas tourner ensemble" : `${conflicts()!.length} paires de mods incompatibles`}
-          </span>
-          <ul class="flex flex-col gap-1.5">
-            <For each={conflicts()}>
-              {(c) => {
-                const first = () => items().find((i) => i.fileName === c.fileName);
-                const second = () => items().find((i) => i.fileName === c.otherFileName);
-                return (
-                  <li class="flex flex-wrap items-center gap-2 text-meta text-chalk-2">
-                    <span class="mr-auto">
-                      <strong class="text-chalk">{c.name}</strong> et <strong class="text-chalk">{c.otherName}</strong> : le jeu risque de ne pas démarrer.
-                    </span>
-                    <Show when={first()}>
-                      {(item) => (
-                        <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.locked} onClick={() => toggle(item(), false)}>
-                          Désactiver {c.name}
-                        </button>
-                      )}
-                    </Show>
-                    <Show when={second()}>
-                      {(item) => (
-                        <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.locked} onClick={() => toggle(item(), false)}>
-                          Désactiver {c.otherName}
-                        </button>
-                      )}
-                    </Show>
-                  </li>
-                );
-              }}
-            </For>
-          </ul>
-        </div>
-      </Show>
-
-      <Show when={updates().length > 0}>
-        <div class="panel px-corners-md flex items-center justify-between gap-4 p-3.5 panel-success">
-          <div class="flex items-center gap-2.5">
-            <span class="size-2 bg-xp shadow-[0_0_0_2px_rgb(139_224_78/0.25)]" />
-            <span class="text-sm">
-              {updates().length === 1 ? "1 mise à jour disponible" : `${updates().length} mises à jour disponibles`}
-            </span>
-          </div>
+      {/* Everything that needs a look, in one strip; a conflict, which can stop the game, always shows its rows. */}
+      <section class="panel shrink-0 overflow-hidden" classList={{ hidden: noticeCount() === 0 }} aria-label="À regarder">
+        <div class="flex items-center gap-3 pr-3">
           <button
-            class="btn btn-primary px-corners h-9"
-            disabled={props.locked || isCheckingUpdates(props.instance.id) || isUpdatingAll(props.instance.id)}
-            onClick={() => void updateAll()}
+            class="flex h-12 min-w-0 flex-1 items-center gap-3 pl-4 text-left"
+            aria-expanded={noticesOpen()}
+            onClick={() => setNoticesOpen(!noticesOpen())}
           >
-            <Icon name="download" size={12} />
-            {isUpdatingAll(props.instance.id) ? "Mise à jour…" : "Tout mettre à jour"}
+            <Icon
+              name="caret"
+              size={12}
+              class={`shrink-0 text-faint transition-transform duration-100 ${noticesOpen() ? "" : "-rotate-90"} ${updates().length + perfCount() === 0 ? "invisible" : ""}`}
+            />
+            <span class="text-sm font-semibold">À regarder</span>
+            <span class="flex min-w-0 flex-wrap items-center gap-1.5">
+              <Show when={(conflicts() ?? []).length > 0}>
+                <span class="chip text-redstone-text">
+                  <span class="size-2 rounded-[1px] bg-redstone" />
+                  {conflicts()!.length === 1 ? "1 conflit" : `${conflicts()!.length} conflits`}
+                </span>
+              </Show>
+              <Show when={updates().length > 0}>
+                <span class="chip">
+                  <span class="size-2 rounded-[1px] bg-xp" />
+                  {updates().length === 1 ? "1 mise à jour" : `${updates().length} mises à jour`}
+                </span>
+              </Show>
+              <Show when={perfCount() > 0}>
+                <span class="chip">
+                  <Icon name="sparkle" size={12} class="text-xp-text" />
+                  {perfCount() === 1 ? "1 optimisation conseillée" : `${perfCount()} optimisations conseillées`}
+                </span>
+              </Show>
+            </span>
           </button>
+          <Show when={updates().length > 0}>
+            <button
+              class="btn px-corners h-8 shrink-0 px-3 text-meta"
+              disabled={props.locked || isCheckingUpdates(props.instance.id) || isUpdatingAll(props.instance.id)}
+              onClick={() => void updateAll()}
+            >
+              <Icon name="download" size={12} />
+              {isUpdatingAll(props.instance.id) ? "Mise à jour…" : "Tout mettre à jour"}
+            </button>
+          </Show>
         </div>
-      </Show>
+
+          <Show when={(conflicts() ?? []).length > 0}>
+            <div class="flex flex-col gap-2 border-t border-line px-4 py-3.5">
+              <span class="text-sm font-medium text-redstone-text">
+                {conflicts()!.length === 1 ? "Deux mods ne peuvent pas tourner ensemble" : `${conflicts()!.length} paires de mods incompatibles`}
+              </span>
+              <ul class="flex flex-col gap-1.5">
+                <For each={conflicts()}>
+                  {(c) => {
+                    const first = () => items().find((i) => i.fileName === c.fileName);
+                    const second = () => items().find((i) => i.fileName === c.otherFileName);
+                    return (
+                      <li class="flex flex-wrap items-center gap-2 text-meta text-chalk-2">
+                        <span class="mr-auto">
+                          <strong class="text-chalk">{c.name}</strong> et <strong class="text-chalk">{c.otherName}</strong> : le jeu risque de ne pas démarrer.
+                        </span>
+                        <Show when={first()}>
+                          {(item) => (
+                            <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.locked} onClick={() => toggle(item(), false)}>
+                              Désactiver {c.name}
+                            </button>
+                          )}
+                        </Show>
+                        <Show when={second()}>
+                          {(item) => (
+                            <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.locked} onClick={() => toggle(item(), false)}>
+                              Désactiver {c.otherName}
+                            </button>
+                          )}
+                        </Show>
+                      </li>
+                    );
+                  }}
+                </For>
+              </ul>
+            </div>
+          </Show>
+        <div class="flex flex-col divide-y divide-line border-t border-line" classList={{ hidden: !noticesOpen() }}>
+          <Show when={updates().length > 0}>
+            <p class="px-4 py-3 text-meta text-muted">
+              {updates().length === 1 ? "Une nouvelle version est disponible" : `${updates().length} nouvelles versions sont disponibles`} : elles
+              sont marquées dans la liste ci-dessous, ou « Tout mettre à jour » en un clic.
+            </p>
+          </Show>
+          {/* Always mounted: it reports its count even while the strip is closed. */}
+          <PerfSuggestions instance={props.instance} locked={props.locked} onError={setError} onCount={setPerfCount} />
+        </div>
+      </section>
 
       <Show when={contentLoaded(props.instance.id)} fallback={<LoadingRows count={4} height={52} label="Chargement du contenu…" />}>
       <Show when={total() > 15}>

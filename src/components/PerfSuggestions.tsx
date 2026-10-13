@@ -1,4 +1,4 @@
-import { createResource, createSignal, For, Show } from "solid-js";
+import { createEffect, createResource, createSignal, For, Show } from "solid-js";
 import { api, type Instance } from "../lib/api";
 import { installContent, installedContent, isBusy } from "../lib/content";
 import { Icon } from "./pixel";
@@ -18,11 +18,15 @@ const PURPOSE: Record<string, string> = {
 
 const hiddenKey = (id: string) => `perf_suggestions_hidden.${id}`;
 
-/** Performance mods the instance lacks, installable in one click. Errors (offline) hide the panel. */
+/**
+ * Performance mods the instance lacks, installable in one click; drawn inside the content
+ * tab's "À regarder" strip, which `onCount` keeps informed. Errors (offline) hide it.
+ */
 export default function PerfSuggestions(props: {
   instance: Instance;
   locked: boolean;
   onError: (message: string | null) => void;
+  onCount: (count: number) => void;
 }) {
   const id = () => props.instance.id;
   const [hidden, { mutate: setHidden }] = createResource(id, async (i) => (await api.getSetting<boolean>(hiddenKey(i))) ?? false);
@@ -33,6 +37,7 @@ export default function PerfSuggestions(props: {
   );
   const [installingAll, setInstallingAll] = createSignal(false);
   const list = () => suggestions.latest ?? [];
+  createEffect(() => props.onCount(hidden() === false ? list().length : 0));
 
   async function install(projectId: string) {
     props.onError(await installContent(id(), projectId));
@@ -57,14 +62,14 @@ export default function PerfSuggestions(props: {
 
   return (
     <Show when={hidden() === false && list().length > 0}>
-      <section class="panel px-corners-md flex flex-col gap-3 p-4 panel-success">
+      <section class="flex flex-col gap-3 px-4 py-3.5">
         <div class="flex items-start justify-between gap-4">
           <div class="flex flex-col gap-1">
             <h2 class="flex items-center gap-2 text-sm font-medium">
               <Icon name="sparkle" size={12} class="text-xp-text" />
               Optimisations recommandées
             </h2>
-            <p class="text-xs text-muted">Mods reconnus pour gagner des FPS et de la mémoire, compatibles avec cette instance.</p>
+            <p class="text-meta text-muted">Mods reconnus pour gagner des FPS et de la mémoire, compatibles avec cette instance.</p>
           </div>
           <div class="flex shrink-0 gap-2">
             <button class="btn btn-ghost h-8 px-2.5 text-xs" onClick={() => void hide()}>
@@ -75,7 +80,7 @@ export default function PerfSuggestions(props: {
               disabled={props.locked || installingAll()}
               onClick={() => void installAll()}
             >
-              <Icon name="download" size={10} />
+              <Icon name="download" size={12} />
               {installingAll() ? "Installation…" : "Tout installer"}
             </button>
           </div>
