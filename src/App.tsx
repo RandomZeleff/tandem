@@ -11,6 +11,7 @@ import type { ProjectType } from "./lib/api";
 import { startLogStream } from "./lib/logs";
 import { startTranslationEvents } from "./lib/translation";
 import { startDuoEvents } from "./lib/duo";
+import { toggleSidebar } from "./lib/ui";
 import {
   currentEntry,
   goBack,
@@ -41,6 +42,7 @@ const SHORTCUTS: Record<string, () => void> = {
   f: searchModrinth,
   n: () => setNewInstanceDialog({}),
   ",": () => navigate({ page: "settings" }),
+  b: toggleSidebar,
 };
 
 function searchModrinth() {

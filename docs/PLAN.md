@@ -533,3 +533,4 @@ Ensuite : retour aux petits ajouts.
 ### 2026-10-13 (retour de Zeleff sur les fiches de projet)
 - « Soutenir l'auteur » allongeait l'en-tête des fiches et laissait un grand vide sous le titre : il passe dans la colonne de droite, en bas de « Créateurs » ; « Voir sur Modrinth » devient le premier des « Liens ». L'en-tête ne garde que l'instance, Installer et la version.
 - Vérifié avec le faux backend (fiche de Sodium).
+- Barre latérale repliable (demande de Zeleff) : bouton à gauche de la barre de titre ou Ctrl+B (⌘B sur Mac). Repliée (80 px), elle ne garde que les icônes, la tête du compte et celles des instances récentes, avec leur nom en info-bulle ; la pastille d'ami arrivé et le point « en cours » restent visibles. L'état est retenu sur ce PC.

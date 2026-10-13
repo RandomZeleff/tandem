@@ -25,6 +25,7 @@ const ICONS = {
   dots: "M1 5h2v2H1zM5 5h2v2H5zM9 5h2v2H9z",
   user: "M4 1h4v4H4zM2 6h8v5H2z",
   arrow: "M0 5h8V3h1v1h1v1h1v2h-1v1H9v1H8V7H0z",
+  sidebar: "M0 1h12v10H0zM1 2v8h3V2zM5 2v8h6V2z",
   sparkle: "M5 0h2v3h3v2H7v3H5V5H2V3h3zM9 8h1v1h1v1h-1v1H9v-1H8V9h1z",
   heart: "M2 1h3v1H2zM7 1h3v1H7zM1 2h10v4H1zM2 6h8v1H2zM3 7h6v1H3zM4 8h4v1H4zM5 9h2v1H5z",
   external: "M7 1h4v4h-1V2H7zM9 2h1v1H9zM8 3h1v1H8zM7 4h1v1H7zM6 5h1v1H6zM5 6h1v1H5zM1 3h4v1H2v6h6V7h1v4H1z",

@@ -1,4 +1,4 @@
-import { onCleanup, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 
 const FOCUSABLE =
   'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
@@ -72,4 +72,27 @@ export function onDismiss(elements: () => (HTMLElement | undefined)[], onDismiss
       window.removeEventListener("keydown", onKey, true);
     });
   });
+}
+
+/** Sidebar reduced to its icons; remembered on this PC (read at startup, so no flash). */
+const SIDEBAR_KEY = "sidebar-collapsed";
+const [sidebarCollapsed, setSidebarCollapsed] = createSignal(readSidebar());
+export { sidebarCollapsed };
+
+function readSidebar(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function toggleSidebar() {
+  const collapsed = !sidebarCollapsed();
+  setSidebarCollapsed(collapsed);
+  try {
+    localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0");
+  } catch {
+    // Not remembered: the sidebar still toggles for this session.
+  }
 }

@@ -3,6 +3,7 @@ import { createMemo, Show } from "solid-js";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { games } from "../lib/games";
 import { canGoBack, canGoForward, goBack, goForward, instances, navigate } from "../lib/store";
+import { sidebarCollapsed, toggleSidebar } from "../lib/ui";
 import { Icon, XpBar } from "./pixel";
 
 // macOS draws its own traffic lights over the bar (titleBarStyle: Overlay).
@@ -51,10 +52,11 @@ export default function TitleBar() {
       <Show when={!isMac}>
         <div
           data-tauri-drag-region
-          class="flex h-full w-60 shrink-0 items-center gap-2.5 px-[22px] shadow-[inset_-1px_0_0_var(--color-divider)]"
+          class="flex h-full shrink-0 items-center gap-2.5 overflow-hidden px-[22px] shadow-[inset_-1px_0_0_var(--color-divider)] transition-[width] duration-150 ease-out motion-reduce:transition-none"
+          classList={{ "w-60": !sidebarCollapsed(), "w-20 justify-center px-0": sidebarCollapsed() }}
         >
           <Logo />
-          <span data-tauri-drag-region class="title-display text-xl leading-none">
+          <span data-tauri-drag-region class="title-display text-xl leading-none" classList={{ hidden: sidebarCollapsed() }}>
             Tandem
           </span>
         </div>
@@ -67,6 +69,16 @@ export default function TitleBar() {
         class="flex h-full items-center gap-0.5 px-2"
         classList={{ "pl-[84px]": isMac }}
       >
+        <button
+          class={navButton}
+          aria-label={sidebarCollapsed() ? "Afficher le menu" : "Réduire le menu"}
+          aria-expanded={!sidebarCollapsed()}
+          title={`${sidebarCollapsed() ? "Afficher le menu" : "Réduire le menu"} (${isMac ? "⌘B" : "Ctrl+B"})`}
+          onClick={toggleSidebar}
+        >
+          <Icon name="sidebar" size={12} />
+        </button>
+        <span class="mx-1 h-4 w-px bg-divider" aria-hidden="true" />
         <button
           class={navButton}
           aria-label="Page précédente"

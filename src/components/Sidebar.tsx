@@ -5,7 +5,7 @@ import { duoActive, markArrivalsSeen, unseenArrivals } from "../lib/duo";
 import { toast } from "../lib/toast";
 import { openAccounts, signInWithMicrosoft } from "../lib/accounts";
 import { AccountAvatar, AccountKindLabel, MicrosoftLogo } from "./accounts/AccountVisuals";
-import { onDismiss } from "../lib/ui";
+import { onDismiss, sidebarCollapsed } from "../lib/ui";
 import InstanceSlot from "./InstanceSlot";
 import { accounts, activeAccount, instances, navigate, refetchAccounts, route, type Route } from "../lib/store";
 import { Icon, type IconName, LoaderTag } from "./pixel";
@@ -40,7 +40,7 @@ function AccountMenu(props: { anchor: () => HTMLElement | undefined; onClose: ()
   let menu: HTMLDivElement | undefined;
   onDismiss(() => [menu, props.anchor()], props.onClose);
   return (
-    <div ref={menu} class="panel px-corners-md absolute top-full right-0 left-0 z-20 mt-1 bg-slate-750 p-1.5 shadow-[0_12px_32px_rgb(0_0_0/0.55)]">
+    <div ref={menu} class="panel px-corners-md absolute top-full left-0 z-20 mt-1 w-[216px] bg-slate-750 p-1.5 shadow-[0_12px_32px_rgb(0_0_0/0.55)]">
       {props.children}
     </div>
   );
@@ -73,12 +73,13 @@ function AccountCard() {
         fallback={
           <button
             class="px-corners-md flex w-full items-center gap-3 bg-slate-800 p-2 text-left shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] transition-colors duration-100 hover:bg-slate-750 focus-visible:bg-slate-750"
+            title={sidebarCollapsed() ? "Se connecter" : undefined}
             onClick={() => openAccounts()}
           >
             <span class="slot size-10 bg-white!">
               <MicrosoftLogo size={20} />
             </span>
-            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5" classList={{ hidden: sidebarCollapsed() }}>
               <span class="text-sm font-semibold">Se connecter</span>
               <span class="text-xs text-muted">Compte Microsoft</span>
             </span>
@@ -92,17 +93,20 @@ function AccountCard() {
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open()}
             aria-label={`Compte : ${account().username}`}
+            title={sidebarCollapsed() ? account().username : undefined}
           >
             <span class="slot size-10">
               <AccountAvatar account={account()} size={32} />
             </span>
-            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5" classList={{ hidden: sidebarCollapsed() }}>
               <span class="truncate text-sm font-semibold">{account().username}</span>
               <span class="text-xs text-muted">
                 <AccountKindLabel account={account()} />
               </span>
             </span>
-            <Icon name="caret" size={12} class={`mr-1 text-faint transition-transform duration-100 ${open() ? "rotate-180" : ""}`} />
+            <Show when={!sidebarCollapsed()}>
+              <Icon name="caret" size={12} class={`mr-1 text-faint transition-transform duration-100 ${open() ? "rotate-180" : ""}`} />
+            </Show>
           </button>
         )}
       </Show>
@@ -166,37 +170,47 @@ export default function Sidebar() {
   return (
     <nav
       aria-label="Navigation principale"
-      class="flex w-60 shrink-0 flex-col bg-slate-900 shadow-[inset_-1px_0_0_var(--color-divider)]"
+      class="relative z-10 flex shrink-0 flex-col bg-slate-900 shadow-[inset_-1px_0_0_var(--color-divider)] transition-[width] duration-150 ease-out motion-reduce:transition-none"
+      classList={{ "w-60": !sidebarCollapsed(), "w-20": sidebarCollapsed() }}
     >
       <AccountCard />
 
-      <div class="flex flex-col gap-0.5 px-3 py-2">
+      <div class="flex flex-col gap-0.5 overflow-hidden px-3 py-2">
         <For each={NAV}>
           {(item) => (
             <button
-              class="flex h-11 items-center gap-3 rounded-sm px-2.5 text-left transition-colors duration-100"
+              class="relative flex h-11 items-center gap-3 rounded-sm px-2.5 text-left whitespace-nowrap transition-colors duration-100"
               classList={{
+                "justify-center px-0": sidebarCollapsed(),
                 "bg-white/[0.08] font-semibold text-chalk": isActive(item),
                 "font-medium text-muted hover:bg-white/[0.04] hover:text-chalk focus-visible:bg-white/[0.04] focus-visible:text-chalk":
                   !isActive(item),
               }}
               aria-current={isActive(item) ? "page" : undefined}
-              title={item.shortcut ? `${item.label} (${MOD}${item.shortcut})` : undefined}
+              aria-label={sidebarCollapsed() ? item.label : undefined}
+              title={item.shortcut ? `${item.label} (${MOD}${item.shortcut})` : sidebarCollapsed() ? item.label : undefined}
               onClick={() => navigate(item.to)}
             >
               <Icon name={item.icon} size={24} color={isActive(item) ? "var(--color-grass-light)" : undefined} />
-              <span class="flex-1">{item.label}</span>
+              <Show when={!sidebarCollapsed()}>
+                <span class="flex-1">{item.label}</span>
+              </Show>
               <Show when={item.to.page === "multi"}>
                 <Show
                   when={unseenArrivals() > 0}
                   fallback={
                     <Show when={duoActive()}>
-                      <span class="step-pulse mr-1 size-2 rounded-[1px] bg-xp" title="Partie à plusieurs en cours" />
+                      <span
+                        class="step-pulse size-2 rounded-[1px] bg-xp"
+                        classList={{ "mr-1": !sidebarCollapsed(), "absolute top-2 right-2": sidebarCollapsed() }}
+                        title="Partie à plusieurs en cours"
+                      />
                     </Show>
                   }
                 >
                   <span
                     class="flex h-5 min-w-5 items-center justify-center rounded-sm bg-grass px-1.5 text-xs font-bold text-white shadow-[inset_0_-2px_0_var(--color-grass-edge)]"
+                    classList={{ "absolute -top-0.5 right-0.5": sidebarCollapsed() }}
                     title={unseenArrivals() > 1 ? `${unseenArrivals()} amis sont arrivés` : "Un ami est arrivé"}
                   >
                     {unseenArrivals()}
@@ -208,9 +222,11 @@ export default function Sidebar() {
         </For>
       </div>
 
-      <div class="flex min-h-0 flex-col gap-0.5 px-3 pt-4">
-        <span class="px-2.5 pb-1.5 text-xs font-semibold text-faint">Récentes</span>
-        <Show when={recents().length > 0} fallback={<p class="px-2.5 text-meta text-faint">Aucune instance pour l'instant.</p>}>
+      <div class="flex min-h-0 flex-col gap-0.5 overflow-hidden px-3 pt-4">
+        <Show when={!sidebarCollapsed()} fallback={<div class="mx-2 mb-2 h-px bg-divider" />}>
+          <span class="px-2.5 pb-1.5 text-xs font-semibold text-faint">Récentes</span>
+        </Show>
+        <Show when={recents().length > 0 || sidebarCollapsed()} fallback={<p class="px-2.5 text-meta text-faint">Aucune instance pour l'instant.</p>}>
           <For each={recents()}>
             {(instance) => {
               const state = () => gameState(instance.id);
@@ -220,24 +236,31 @@ export default function Sidebar() {
               };
               return (
                 <button
-                  class="row flex h-12 items-center gap-2.5 px-2 text-left"
+                  class="row relative flex h-12 items-center gap-2.5 px-2 text-left"
+                  title={sidebarCollapsed() ? instance.name : undefined}
+                  aria-label={sidebarCollapsed() ? instance.name : undefined}
                   classList={{
+                    "justify-center px-0": sidebarCollapsed(),
                     "is-selected": route().page === "instance" && (route() as { id: string }).id === instance.id,
                   }}
                   onClick={() => navigate({ page: "instance", id: instance.id })}
                 >
                   <InstanceSlot instance={instance} size={32} />
-                  <span class="flex min-w-0 flex-1 flex-col">
+                  <span class="flex min-w-0 flex-1 flex-col" classList={{ hidden: sidebarCollapsed() }}>
                     <span class="truncate text-meta font-semibold">{instance.name}</span>
                     <span class="text-xs text-faint">
                       {instance.gameVersion} · <LoaderTag loader={instance.loader} size={12} />
                     </span>
                   </span>
-                  <Show when={state().status === "preparing"}>
+                  <Show when={state().status === "preparing" && !sidebarCollapsed()}>
                     <span class="font-mono text-xs text-xp-text">{Math.round(ratio() * 100)} %</span>
                   </Show>
                   <Show when={state().status === "running"}>
-                    <span class="mr-1 size-2 rounded-[1px] bg-xp shadow-[0_0_0_2px_rgb(127_209_79/0.25)]" title="En cours" />
+                    <span
+                      class="size-2 rounded-[1px] bg-xp shadow-[0_0_0_2px_rgb(127_209_79/0.25)]"
+                      classList={{ "mr-1": !sidebarCollapsed(), "absolute top-1.5 right-2": sidebarCollapsed() }}
+                      title="En cours"
+                    />
                   </Show>
                 </button>
               );
@@ -248,10 +271,12 @@ export default function Sidebar() {
 
       <div class="flex-1" />
 
-      <div class="p-3 shadow-[inset_0_1px_0_var(--color-divider)]">
+      <div class="overflow-hidden p-3 shadow-[inset_0_1px_0_var(--color-divider)]">
         <button
-          class="flex h-10 w-full items-center gap-3 rounded-sm px-2.5 text-left transition-colors duration-100"
+          class="flex h-10 w-full items-center gap-3 rounded-sm px-2.5 text-left whitespace-nowrap transition-colors duration-100"
+          aria-label={sidebarCollapsed() ? "Réglages" : undefined}
           classList={{
+            "justify-center px-0": sidebarCollapsed(),
             "bg-white/[0.08] font-semibold text-chalk": route().page === "settings",
             "font-medium text-muted hover:bg-white/[0.04] hover:text-chalk focus-visible:bg-white/[0.04] focus-visible:text-chalk":
               route().page !== "settings",
@@ -261,8 +286,10 @@ export default function Sidebar() {
           onClick={() => navigate({ page: "settings" })}
         >
           <Icon name="gear" size={24} color={route().page === "settings" ? "var(--color-grass-light)" : undefined} />
-          <span class="flex-1">Réglages</span>
-          <span class="font-mono text-xs font-normal text-faint">v{info()?.version ?? "…"}</span>
+          <Show when={!sidebarCollapsed()}>
+            <span class="flex-1">Réglages</span>
+            <span class="font-mono text-xs font-normal text-faint">v{info()?.version ?? "…"}</span>
+          </Show>
         </button>
       </div>
     </nav>
