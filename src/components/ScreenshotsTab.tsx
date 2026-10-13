@@ -70,7 +70,7 @@ export default function ScreenshotsTab(props: { instanceId: string }) {
             : `${list().length} capture${list().length > 1 ? "s" : ""} · ${formatBytes(totalBytes())}`}
         </span>
         <button
-          class="btn btn-ghost h-8 px-2.5 text-xs"
+          class="btn btn-ghost h-9 px-3 text-meta"
           onClick={() => void attempt(() => api.openScreenshotsFolder(props.instanceId))}
         >
           <Icon name="folder" size={10} />
@@ -228,7 +228,7 @@ function Viewer(props: {
             {props.position} · {formatBytes(props.shot.sizeBytes)} · {props.shot.fileName}
           </span>
         </div>
-        <button class="btn btn-ghost h-8 px-2.5 text-xs" onClick={props.onReveal}>
+        <button class="btn btn-ghost h-9 px-3 text-meta" onClick={props.onReveal}>
           <Icon name="folder" size={10} />
           Afficher dans le dossier
         </button>

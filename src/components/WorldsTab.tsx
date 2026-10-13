@@ -103,14 +103,12 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
     <div class="flex h-full flex-col gap-4 overflow-y-auto">
       <div class="flex items-center justify-between gap-3">
         <span class="text-meta text-muted">
-          {worlds() === undefined
-            ? "Chargement…"
-            : worlds()!.length === 0
-              ? "Aucun monde."
-              : `${worlds()!.length} monde${worlds()!.length > 1 ? "s" : ""}`}
-          <Show when={props.locked}> · arrête le jeu pour sauvegarder ou restaurer</Show>
+          <Show when={props.locked}>Le jeu tourne : arrête-le pour sauvegarder ou restaurer.</Show>
         </span>
-        <label class="flex items-center gap-2.5 text-meta text-chalk-2">
+        <label
+          class="flex items-center gap-2.5 text-meta text-chalk-2"
+          title="Les 5 dernières sauvegardes automatiques de chaque monde sont gardées ; les manuelles, toutes."
+        >
           Sauvegarde automatique après chaque partie
           <Toggle
             checked={auto() ?? true}
@@ -162,7 +160,6 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
         </ul>
       </Show>
       </Show>
-      <p class="text-xs text-faint">Les 5 dernières sauvegardes automatiques de chaque monde sont gardées ; les manuelles, toutes.</p>
 
       <Show when={preparing()}>
         {(world) => (
@@ -251,8 +248,8 @@ function WorldCard(props: {
           {(icon) => <img src={icon()} alt="" class="size-12 shrink-0 [image-rendering:pixelated]" />}
         </Show>
         <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span class="truncate text-sm font-medium">{props.world.name}</span>
-          <span class="truncate text-xs text-muted">
+          <span class="truncate text-sm font-semibold">{props.world.name}</span>
+          <span class="truncate text-meta text-muted">
             {MODES[props.world.gameMode]}
             <Show when={props.world.version}> · {props.world.version}</Show> · {formatBytes(props.world.sizeBytes)} · joué{" "}
             {formatRelative(iso(props.world.lastPlayed))}
@@ -260,7 +257,7 @@ function WorldCard(props: {
         </div>
         <Show when={props.canPrepare}>
           <button
-            class="btn btn-ghost h-8 px-2.5 text-xs"
+            class="btn btn-ghost h-9 px-3 text-meta"
             title="Générer le terrain à l'avance, pour explorer à plusieurs sans ralentir l'hôte"
             onClick={props.onPrepare}
           >
@@ -268,11 +265,11 @@ function WorldCard(props: {
             Préparer
           </button>
         </Show>
-        <button class="btn btn-ghost h-8 px-2.5 text-xs" aria-expanded={packsOpen()} onClick={() => setPacksOpen(!packsOpen())}>
+        <button class="btn btn-ghost h-9 px-3 text-meta" aria-expanded={packsOpen()} onClick={() => setPacksOpen(!packsOpen())}>
           Datapacks
         </button>
         <button
-          class="btn btn-ghost h-8 px-2.5 text-xs"
+          class="btn btn-ghost h-9 px-3 text-meta"
           aria-expanded={open()}
           disabled={props.backups.length === 0}
           onClick={() => setOpen(!open())}
@@ -280,7 +277,7 @@ function WorldCard(props: {
           {props.backups.length === 0 ? "Aucune sauvegarde" : `Sauvegardes (${props.backups.length})`}
         </button>
         <button
-          class="btn px-corners h-8 shrink-0 px-2.5 text-xs"
+          class="btn px-corners h-9 shrink-0 px-3 text-meta"
           disabled={props.locked || props.busy !== null}
           onClick={props.onBackup}
         >
@@ -303,7 +300,7 @@ function WorldCard(props: {
                 <span class="chip h-5 px-1.5 text-xs text-muted">{KINDS[backup.kind]}</span>
                 <span class="w-16 text-right font-mono text-xs text-muted">{formatBytes(backup.sizeBytes)}</span>
                 <button
-                  class="btn btn-ghost h-7 px-2 text-xs"
+                  class="btn btn-ghost h-8 px-2.5 text-meta"
                   disabled={props.locked || props.busy !== null}
                   onClick={() => props.onRestore(backup)}
                 >
@@ -313,7 +310,7 @@ function WorldCard(props: {
             )}
           </For>
           <li class="py-2">
-            <button class="btn btn-ghost h-7 px-2 text-xs" onClick={props.onOpen}>
+            <button class="btn btn-ghost h-8 px-2.5 text-meta" onClick={props.onOpen}>
               <Icon name="folder" size={10} />
               Ouvrir le dossier des sauvegardes
             </button>
@@ -345,7 +342,7 @@ function PregenPanel(props: { view: PregenView; onCancel: () => void }) {
     <div class="flex flex-col gap-2 border-t border-line px-3.5 py-3" aria-live="polite">
       <div class="flex items-center justify-between gap-3">
         <span class="text-xs text-chalk-2">Préparation pour jouer à plusieurs : {text()}</span>
-        <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.view.status === "stopping"} onClick={props.onCancel}>
+        <button class="btn btn-ghost h-8 px-2.5 text-meta" disabled={props.view.status === "stopping"} onClick={props.onCancel}>
           Annuler
         </button>
       </div>
@@ -411,7 +408,7 @@ function DatapackList(props: { instanceId: string; world: World; locked: boolean
         </Show>
       </Show>
       <button
-        class="btn px-corners h-8 w-fit px-2.5 text-xs"
+        class="btn px-corners h-9 w-fit px-3 text-meta"
         onClick={() => navigate({ page: "discover", instanceId: props.instanceId, kind: "datapack", world: props.world.folder })}
       >
         <Icon name="plus" size={10} />

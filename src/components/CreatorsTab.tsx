@@ -56,10 +56,7 @@ function CreatorsView(props: { data: Resource<Creators>; empty: string }) {
                   : {supported().length} accepte{supported().length > 1 ? "nt" : ""} les soutiens.
                 </Show>
               </p>
-              <p class="text-xs text-muted">
-                Tandem n'affiche pas de publicité, celle qui rémunère les auteurs sur Modrinth. Les liens mènent directement chez eux :
-                Tandem ne prend rien.
-              </p>
+              <p class="text-meta text-muted">Sans publicité dans Tandem, ton soutien va directement aux auteurs.</p>
             </section>
 
             <Show when={supported().length > 0}>
@@ -74,7 +71,7 @@ function CreatorsView(props: { data: Resource<Creators>; empty: string }) {
                 <For each={allOthers() ? others() : others().slice(0, FIRST_OTHERS)}>{(c) => <CreatorCard creator={c} />}</For>
               </ul>
               <Show when={!allOthers() && others().length > FIRST_OTHERS}>
-                <button class="btn btn-ghost h-8 self-start px-2 text-xs" onClick={() => setAllOthers(true)}>
+                <button class="btn btn-ghost h-9 self-start px-3 text-meta" onClick={() => setAllOthers(true)}>
                   Voir les {others().length - FIRST_OTHERS} autres
                 </button>
               </Show>
@@ -111,7 +108,7 @@ function CreatorCard(props: { creator: Creator }) {
       <Show
         when={c().support.length > 0}
         fallback={
-          <button class="btn btn-ghost h-7 self-start px-2 text-xs" onClick={() => openExternal(c().url)}>
+          <button class="btn btn-ghost h-8 self-start px-2.5 text-meta" onClick={() => openExternal(c().url)}>
             <Icon name="external" size={9} />
             Voir sur Modrinth
           </button>
@@ -120,7 +117,7 @@ function CreatorCard(props: { creator: Creator }) {
         <div class="flex flex-wrap gap-1.5">
           <For each={c().support}>
             {(s) => (
-              <button class="btn px-corners h-7 gap-1.5 px-2.5 text-xs" title={s.url} onClick={() => openExternal(s.url)}>
+              <button class="btn px-corners h-8 gap-1.5 px-3 text-meta" title={s.url} onClick={() => openExternal(s.url)}>
                 <Icon name="heart" size={10} class="text-redstone-text" />
                 {platform(s.url, s.platform)}
               </button>

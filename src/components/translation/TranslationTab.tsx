@@ -191,7 +191,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
                       {o().estimate.texts === 0 ? "Tout est traduit" : `Traduire ${integer.format(o().estimate.texts)} textes`}
                     </button>
                     <Show when={o().estimate.texts > 0 && provider()}>
-                      <span class="text-xs text-muted">
+                      <span class="text-meta text-muted">
                         ≈ {formatCount(o().estimate.inputTokens + o().estimate.outputTokens)} tokens
                         <Show when={duration()}>
                           {(d) => (
@@ -202,8 +202,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
                             </>
                           )}
                         </Show>
-                        .{o().estimate.texts < o().totals.missing ? " Un texte répété n'est traduit qu'une fois." : ""} Les noms
-                        d'objets passent en premier ; tu peux arrêter quand tu veux, rien n'est perdu.
+                        . Tu peux arrêter quand tu veux, rien n'est perdu.
                       </span>
                     </Show>
                   </div>
@@ -226,7 +225,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
               <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
                 <div class="flex flex-col gap-0.5">
                   <span class="text-sm font-medium">Traduction active dans le jeu</span>
-                  <span class="text-xs text-muted">
+                  <span class="text-meta text-muted">
                     {active()
                       ? `Pack « Tandem » activé${o().gameLanguage === currentLocale() ? ", jeu en " + languageName(currentLocale()) : ""}.`
                       : otherActive()
@@ -246,10 +245,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
               </div>
 
               <Show when={o().quests === "inPlace"}>
-                <p class="text-xs text-muted">
-                  Les quêtes de ce pack sont écrites directement dans leurs fichiers : Tandem les traduit sur place et garde
-                  les originaux, remis en place si tu désactives la traduction.
-                </p>
+                <p class="text-meta text-muted">Les quêtes sont traduites dans leurs fichiers ; les originaux reviennent si tu désactives la traduction.</p>
               </Show>
             </>
           )}
@@ -445,7 +441,7 @@ function SourceRow(props: {
         </Show>
       </span>
       <span class="w-16 shrink-0 text-right font-mono text-xs text-faint">{integer.format(c().total)}</span>
-      <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.disabled} onClick={props.onReview}>
+      <button class="btn btn-ghost h-8 px-2.5 text-meta" disabled={props.disabled} onClick={props.onReview}>
         Revoir
       </button>
       <button

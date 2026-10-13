@@ -65,7 +65,7 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
           <Section title="Instance">
             <NameField instance={props.instance} onSave={(name) => save({ name }, "Instance renommée")} />
             <IconField instance={props.instance} onError={setError} />
-            <Row label="Copie" hint="Une nouvelle instance identique : mods, réglages et mondes. Les mods ne prennent pas de place en plus.">
+            <Row label="Copie" hint="Mods, réglages et mondes ; les mods ne prennent pas de place en plus.">
               <button class="btn px-corners h-9 text-meta" disabled={props.locked} onClick={() => setDuplicating(true)}>
                 <Icon name="plus" size={11} />
                 Dupliquer
@@ -77,7 +77,7 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
               <dt class="text-muted">Version</dt>
               <dd class="flex flex-wrap items-center gap-x-2">
                 Minecraft {props.instance.gameVersion}
-                <button class="btn btn-ghost h-7 px-2 text-xs" disabled={props.locked} onClick={() => setChangingVersion(true)}>
+                <button class="btn btn-ghost h-8 px-2.5 text-meta" disabled={props.locked} onClick={() => setChangingVersion(true)}>
                   Changer…
                 </button>
               </dd>
@@ -108,7 +108,7 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
           </Section>
           <Section title="Supprimer l'instance">
             <div class="flex items-center justify-between gap-4 py-3">
-              <span class="text-meta text-muted">Son dossier entier part avec elle, mondes compris. Une confirmation est demandée.</span>
+              <span class="text-meta text-muted">Son dossier entier part avec elle, mondes compris.</span>
               <button class="btn px-corners h-9 shrink-0 text-meta text-redstone-text" disabled={props.locked} onClick={() => props.onDelete()}>
                 <Icon name="trash" size={12} />
                 Supprimer…
@@ -207,7 +207,7 @@ function IconField(props: { instance: Instance; onError: (message: string) => vo
   }
 
   return (
-    <Row label="Icône" hint="Une image (carrée de préférence) ou un bloc.">
+    <Row label="Icône">
       <div class="flex flex-wrap items-center gap-3">
         <InstanceSlot instance={props.instance} size={56} />
         <div class="flex flex-col gap-2">
@@ -231,7 +231,7 @@ function IconField(props: { instance: Instance; onError: (message: string) => vo
             </For>
           </div>
           <div class="flex gap-2">
-            <button class="btn btn-ghost h-8 px-2.5 text-xs" onClick={() => void pickImage()}>
+            <button class="btn btn-ghost h-9 px-3 text-meta" onClick={() => void pickImage()}>
               <Icon name="folder" size={10} />
               Choisir une image…
             </button>
@@ -334,7 +334,7 @@ function WindowField(props: { instance: Instance; onSave: (size: [number, number
   }
 
   return (
-    <Row label="Fenêtre du jeu" for="instance-window" hint="Taille de la fenêtre au lancement ; le plein écran se règle dans le jeu (F11).">
+    <Row label="Fenêtre du jeu" for="instance-window" hint="Le plein écran se règle dans le jeu (F11).">
       <div class="flex flex-wrap items-center gap-2">
         <Select
           id="instance-window"
@@ -388,7 +388,7 @@ function OptimizationsField(props: { instance: Instance; onError: (message: stri
     <div class="flex items-center justify-between gap-6 py-3">
       <div class="flex min-w-0 flex-col gap-0.5">
         <span class="text-sm font-medium">Optimisations Tandem</span>
-        <span class="text-xs text-muted">Un petit mod ajouté au lancement, jamais installé dans l'instance : le monde saute le travail inutile.</span>
+        <span class="text-meta text-muted">Un petit mod ajouté au lancement, jamais installé dans l'instance : le monde saute le travail inutile.</span>
       </div>
       <Toggle checked={on() ?? true} label="Optimisations Tandem" onChange={(v) => void change(v)} />
     </div>
@@ -425,7 +425,7 @@ function MemoryPicker(props: { instance: Instance; onError: (message: string) =>
         ]}
         onChange={(value) => void choose(value)}
       />
-      <Show when={info()}>{(i) => <span class="text-xs text-muted">{formatGigabytes(i().totalMb)} sur cette machine.</span>}</Show>
+      <Show when={info()}>{(i) => <span class="text-meta text-muted">{formatGigabytes(i().totalMb)} sur cette machine.</span>}</Show>
     </div>
   );
 }
@@ -461,7 +461,7 @@ function DuplicateDialog(props: { instance: Instance; onClose: () => void }) {
           </label>
           <input id="duplicate-name" autofocus class="field h-10 w-full" maxLength={64} value={name()} onInput={(e) => setName(e.currentTarget.value)} />
         </div>
-        <p class="text-xs text-muted">Mondes et captures compris. Les mods, partagés avec l'original, ne prennent pas de place en plus.</p>
+        <p class="text-meta text-muted">Mondes et captures compris. Les mods, partagés avec l'original, ne prennent pas de place en plus.</p>
         <Show when={error()}>
           <Alert onClose={() => setError(null)}>{error()}</Alert>
         </Show>
