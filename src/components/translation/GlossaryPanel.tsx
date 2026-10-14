@@ -44,10 +44,7 @@ export default function GlossaryPanel(props: { instanceId: string; locale: strin
     <section class="panel px-corners-md flex flex-col gap-3 p-4">
       <div class="flex flex-col gap-0.5">
         <h2 class="panel-title">Glossaire</h2>
-        <p class="text-xs text-muted">
-          Les noms officiels de Minecraft et ceux déjà traduits par les auteurs sont repris tout seuls. Ajoute ici les termes
-          du pack à traduire toujours pareil, ou à ne jamais traduire (même mot des deux côtés).
-        </p>
+        <p class="text-xs text-muted">Termes à toujours traduire pareil. Même mot des deux côtés pour ne pas traduire.</p>
       </div>
       <Show when={error()}>
         <Alert onClose={() => setError(null)}>{error()}</Alert>

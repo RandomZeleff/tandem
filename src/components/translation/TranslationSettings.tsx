@@ -111,8 +111,7 @@ export default function TranslationSettings() {
       <div class="flex flex-col gap-0.5">
         <h2 class="panel-title">Traduction IA</h2>
         <p class="text-xs text-muted">
-          Traduis les mods, quêtes et livres d'une instance depuis son onglet « Traduction ». Tandem n'a pas de clé à lui :
-          utilise un modèle sur ton PC (gratuit) ou ton propre compte chez un service.
+          Se lance depuis l'onglet « Traduction » d'une instance, avec un modèle sur ton PC (gratuit) ou ta propre clé.
         </p>
       </div>
       <Show when={error()}>
@@ -135,7 +134,7 @@ export default function TranslationSettings() {
               <div class="flex items-center justify-between gap-4">
                 <div class="flex flex-col gap-0.5">
                   <span class="text-sm font-medium">Mettre le jeu dans cette langue</span>
-                  <span class="text-xs text-muted">Quand tu actives la traduction d'une instance ; l'ancienne langue revient si tu la désactives.</span>
+                  <span class="text-xs text-muted">Tant que la traduction d'une instance est active.</span>
                 </div>
                 <Toggle
                   checked={settings().preferences.setGameLanguage}
@@ -143,6 +142,18 @@ export default function TranslationSettings() {
                   onChange={(v) => void savePreferences({ setGameLanguage: v })}
                 />
               </div>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <Field label="Service" for="tr-preset">
+                <Select
+                  id="tr-preset"
+                  class="h-9 w-full text-sm"
+                  value={preset()}
+                  options={settings().presets.map((p) => ({ value: p.id, label: p.label, hint: p.local ? "sur ton PC" : "en ligne" }))}
+                  onChange={choosePreset}
+                />
+              </Field>
               <Show when={presetInfo()}>
                 {(info) => (
                   <div class="flex flex-col gap-2 bg-slate-750 p-3.5 text-xs text-chalk-2 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
@@ -150,14 +161,12 @@ export default function TranslationSettings() {
                       when={info().local}
                       fallback={
                         <p>
-                          Payant à l'usage, sur ton propre compte. Seuls les textes des mods sont envoyés. Rapide : plusieurs
-                          requêtes en parallèle.
+                          Payant à l'usage, sur ton compte. Seuls les textes des mods sont envoyés.
                         </p>
                       }
                     >
                       <p>
-                        Gratuit et privé : tout reste sur ton PC. Plus lent (une carte graphique aide beaucoup) et un peu moins
-                        précis qu'un grand modèle en ligne.
+                        Gratuit et privé : tout reste sur ton PC. Plus lent, surtout sans carte graphique.
                         <Show when={info().id === "ollama"}>
                           {" "}Après l'installation, télécharge un modèle, par exemple{" "}
                           <code class="bg-slate-900 px-1 font-mono text-xs">ollama pull qwen2.5:7b</code>.
@@ -173,18 +182,6 @@ export default function TranslationSettings() {
                   </div>
                 )}
               </Show>
-            </div>
-
-            <div class="flex flex-col gap-4">
-              <Field label="Service" for="tr-preset">
-                <Select
-                  id="tr-preset"
-                  class="h-9 w-full text-sm"
-                  value={preset()}
-                  options={settings().presets.map((p) => ({ value: p.id, label: p.label, hint: p.local ? "sur ton PC" : "en ligne" }))}
-                  onChange={choosePreset}
-                />
-              </Field>
               <Show when={preset() === "custom" || !presetInfo()?.baseUrl}>
                 <Field label="Adresse de l'API (compatible OpenAI)" for="tr-url">
                   <input id="tr-url" class="field h-9 w-full font-mono text-meta" placeholder="https://…/v1" value={baseUrl()} onInput={(e) => setBaseUrl(e.currentTarget.value)} />

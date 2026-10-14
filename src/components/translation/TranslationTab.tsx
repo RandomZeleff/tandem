@@ -202,7 +202,6 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
                             </>
                           )}
                         </Show>
-                        . Tu peux arrêter quand tu veux, rien n'est perdu.
                       </span>
                     </Show>
                   </div>
@@ -216,7 +215,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
                   <Alert tone={report().error ? "warning" : "success"} onClose={() => dismissReport(props.instance.id)}>
                     {report().cancelled ? "Traduction arrêtée. " : ""}
                     {integer.format(report().progress.done)} textes traduits
-                    {report().progress.failed > 0 ? `, ${integer.format(report().progress.failed)} rejetés (codes du jeu abîmés ou réponse illisible)` : ""}.
+                    {report().progress.failed > 0 ? `, ${integer.format(report().progress.failed)} rejetés` : ""}.
                     {report().error ? ` Arrêt : ${report().error}` : ""}
                   </Alert>
                 )}
@@ -229,11 +228,11 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
                     {active()
                       ? `Pack « Tandem » activé${o().gameLanguage === currentLocale() ? ", jeu en " + languageName(currentLocale()) : ""}.`
                       : otherActive()
-                        ? `La traduction en ${languageName(otherActive()!)} est active : l'activer ici la remplace.`
+                        ? `La traduction en ${languageName(otherActive()!)} est active : celle-ci la remplacera.`
                         : o().totals.translated === 0
                           ? "Traduis d'abord des textes."
                           : "Désactivée : le jeu affiche les textes d'origine."}
-                    {props.locked ? " Le jeu tourne : relance-le ou appuie sur F3+T pour voir les changements." : ""}
+                    {props.locked ? " Visible au prochain lancement ou avec F3+T." : ""}
                   </span>
                 </div>
                 <Toggle
@@ -245,7 +244,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
               </div>
 
               <Show when={o().quests === "inPlace"}>
-                <p class="text-meta text-muted">Les quêtes sont traduites dans leurs fichiers ; les originaux reviennent si tu désactives la traduction.</p>
+                <p class="text-meta text-muted">Les quêtes sont traduites dans leurs fichiers, restaurés si tu désactives.</p>
               </Show>
             </>
           )}
