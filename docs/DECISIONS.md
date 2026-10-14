@@ -352,3 +352,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Rayons gardés 10 minutes en mémoire, comme les fiches (D32).
 - Statut : validé
 
+### D52 · 2026-10-14 · Carnet de partie : seulement ce que le jeu enregistre déjà
+- Sources : `level.dat`, `stats/`, `advancements/` et FTB Quests. Rien n'est ajouté au jeu (pas de mod, pas de suivi par Tandem) : le carnet marche aussi pour les mondes joués avant Tandem.
+- Pas de « X progrès sur Y » : les mods déclarent des centaines de progrès (souvent des recettes déguisées) et le total n'est connu que du jeu. À la place, 9 grandes étapes vanilla choisies, datées par leurs critères.
+- Quêtes : on compte les quêtes du livre (chapitres `always_invisible` et quêtes `invisible` écartés) faites par l'équipe la plus avancée du monde. Seulement le format FTB Quests 1.16+ (`chapters/*.snbt`) ; les autres livres (Heracles, Better Questing, FTB Quests 1.12) ne sont pas lus.
+- Joueur retenu : celui qui a le plus de temps de jeu dans le monde (un monde peut avoir connu plusieurs comptes).
+- Statut : validé
+

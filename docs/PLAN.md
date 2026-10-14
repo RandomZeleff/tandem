@@ -241,7 +241,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 
 - [x] 1. Découvrir : tri (téléchargements, abonnés, nouveautés, mis à jour), filtres par catégorie, version du jeu pour les modpacks, rayons « Nouveautés », « Mis à jour récemment », « Les plus suivis » quand on ne cherche rien (D51). Pas de « tendances » (Modrinth n'en donne pas).
 - [x] 2. « Continuer » en un clic, directement dans le dernier monde (1.20+), avec choix d'un autre monde ou de l'écran titre ; « Jouer » sur chaque monde de l'onglet Mondes
-- [ ] 3. Carnet de partie par monde (statistiques, progrès, quêtes)
+- [x] 3. Carnet de partie par monde : jour, temps de jeu, distance, créatures, blocs, morts ; grandes étapes vanilla datées ; quêtes FTB par chapitre (D52)
 - [ ] 4. Fiches de modpack « est-ce pour moi ? » (RAM conseillée face à celle du PC, nombre de mods, quêtes, style du pack, packs proches)
 
 ## Portage macOS
@@ -569,4 +569,12 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Les autres boutons Jouer (cartes d'instance, barre latérale, fiche) ouvrent toujours l'écran titre : l'Accueil sert à reprendre, le reste à choisir.
 - Vérifié avec le faux backend (choix du monde, appel `launch_instance` avec le bon dossier depuis l'Accueil et l'onglet Mondes). Pas vérifié dans un vrai jeu cette fois ; le même chemin sert déjà à « Jouer ensemble » (Fabric, Forge, NeoForge).
 - Prochaine étape : chantier 3, carnet de partie par monde.
+
+### 2026-10-14 (Phase 8, chantier 3 : carnet de partie)
+- Fait : module `journal` (Rust) qui lit ce que le jeu enregistre déjà, sans rien modifier : `level.dat` (jour), `stats/` (temps de jeu, distance, créatures vaincues, blocs minés, morts ; format 1.13+ et ancien), `advancements/` (9 grandes étapes vanilla, avec leur date), et la progression FTB Quests (`saves/<monde>/ftbquests/` face au livre `config/ftbquests/quests/chapters/`, titres des chapitres pris dans le fichier ou dans `lang/`, chapitres et quêtes invisibles écartés). Petit lecteur SNBT en arbre ajouté à `translate/snbt.rs`.
+- Onglet Mondes : cliquer sur un monde (icône et nom) déplie son carnet : chiffres, grandes étapes (cochées, datées, « Prochaine » sur la suivante), quêtes avec une barre d'XP et le détail par chapitre.
+- Accueil : à côté du monde choisi, un résumé (« Jour 418 · 112 h de jeu · Quêtes 64 / 230 », ou la prochaine étape sans quêtes) qui ouvre le carnet dans l'onglet Mondes. La route d'instance accepte maintenant un onglet et un monde.
+- Correction : `search_content` dépassait la limite de 7 arguments de clippy (commit du chantier 1) ; tri et filtres regroupés en un seul argument.
+- Vérifié : tests Rust (dates des critères, statistiques nouvel et ancien format, quêtes par chapitre, arbre SNBT) ; exemple `journal <instance>` sur de vrais mondes (DawnCraft 3/230 quêtes, Prominence II 1 752 quêtes lues en 0,5 s en debug, Fabulously Optimized, Cobbleverse) ; interface avec le faux backend.
+- Prochaine étape : chantier 4, fiches de modpack « est-ce pour moi ? ».
 
