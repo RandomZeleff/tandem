@@ -1,4 +1,4 @@
-import { createResource, createSignal, For, Show } from "solid-js";
+import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 import Alert from "../components/Alert";
 import InstanceCard from "../components/InstanceCard";
 import InstanceVisual from "../components/InstanceVisual";
@@ -6,17 +6,142 @@ import { Icon, LoaderTag } from "../components/pixel";
 import PlayButton from "../components/PlayButton";
 import Scene from "../components/Scene";
 import { openAccounts } from "../lib/accounts";
-import { api, errorMessage, type Instance } from "../lib/api";
+import { api, errorMessage, type Instance, type World } from "../lib/api";
 import { duo, formatCode, joinFriend } from "../lib/duo";
 import { formatRelative } from "../lib/format";
 import { gameState } from "../lib/games";
 import { activeAccount, instances, navigate, setNewInstanceDialog } from "../lib/store";
+import { onDismiss } from "../lib/ui";
+import { GAME_MODES, lastWorld, opensWorld, worldPlayedAt } from "../lib/worlds";
+
+/** The world "Continuer" opens, and the other ones (or the title screen) on demand. */
+function WorldPicker(props: { worlds: World[]; chosen: World | null; onChoose: (world: World | null) => void }) {
+  const [open, setOpen] = createSignal(false);
+  let anchor: HTMLButtonElement | undefined;
+  let menu: HTMLDivElement | undefined;
+  const choose = (world: World | null) => {
+    props.onChoose(world);
+    setOpen(false);
+    anchor?.focus();
+  };
+  const Menu = () => {
+    onDismiss(() => [menu, anchor], () => setOpen(false));
+    return (
+      <div
+        ref={menu}
+        class="panel px-corners-md absolute bottom-full left-0 z-20 mb-1.5 flex max-h-[260px] w-[320px] flex-col overflow-y-auto bg-slate-750 p-1.5 shadow-[0_12px_32px_rgb(0_0_0/0.55)]"
+      >
+        <ul role="listbox" aria-label="Monde" class="flex flex-col gap-0.5">
+          <For each={props.worlds}>
+            {(world) => (
+              <li>
+                <button
+                  role="option"
+                  aria-selected={props.chosen?.folder === world.folder}
+                  class="row flex h-12 w-full items-center gap-3 px-2 text-left"
+                  onClick={() => choose(world)}
+                >
+                  <WorldIcon world={world} size={32} />
+                  <span class="flex min-w-0 flex-1 flex-col">
+                    <span class="truncate text-sm font-semibold">{world.name}</span>
+                    <span class="truncate text-xs text-muted">
+                      {GAME_MODES[world.gameMode]} · joué {formatRelative(worldPlayedAt(world))}
+                    </span>
+                  </span>
+                  <Show when={props.chosen?.folder === world.folder}>
+                    <Icon name="check" size={12} color="var(--color-xp-text)" />
+                  </Show>
+                </button>
+              </li>
+            )}
+          </For>
+        </ul>
+        <div class="my-1.5 h-px shrink-0 bg-divider" />
+        <button class="row flex h-9 w-full shrink-0 items-center gap-3 px-2 text-left text-sm text-chalk-2" onClick={() => choose(null)}>
+          <span class="flex w-8 justify-center">
+            <Icon name="home" size={12} />
+          </span>
+          <span class="flex-1">Écran titre du jeu</span>
+          <Show when={!props.chosen}>
+            <Icon name="check" size={12} color="var(--color-xp-text)" />
+          </Show>
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div class="relative w-fit max-w-full">
+      <button
+        ref={anchor}
+        class="px-corners flex h-11 max-w-full items-center gap-2.5 bg-black/35 py-1 pr-3 pl-1.5 text-left transition-colors duration-100 hover:bg-black/55 focus-visible:bg-black/55"
+        aria-expanded={open()}
+        aria-label={props.chosen ? `Monde : ${props.chosen.name}. Changer de monde` : "Écran titre du jeu. Choisir un monde"}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Show
+          when={props.chosen}
+          fallback={
+            <>
+              <span class="slot size-8">
+                <Icon name="home" size={12} />
+              </span>
+              <span class="text-sm font-semibold">Écran titre du jeu</span>
+            </>
+          }
+        >
+          {(world) => (
+            <>
+              <WorldIcon world={world()} size={32} />
+              <span class="truncate text-sm font-semibold">{world().name}</span>
+              <span class="shrink-0 text-meta text-chalk-3">{GAME_MODES[world().gameMode]}</span>
+            </>
+          )}
+        </Show>
+        <Icon name="caret" size={12} class={`ml-0.5 shrink-0 text-chalk-3 transition-transform duration-100 ${open() ? "rotate-180" : ""}`} />
+      </button>
+      <Show when={open()}>
+        <Menu />
+      </Show>
+    </div>
+  );
+}
+
+function WorldIcon(props: { world: World; size: number }) {
+  return (
+    <span class="slot shrink-0" style={{ width: `${props.size}px`, height: `${props.size}px` }}>
+      <Show when={props.world.icon} fallback={<Icon name="grid" size={12} color="var(--color-slate-500)" />}>
+        {(icon) => (
+          <img
+            src={icon()}
+            alt=""
+            class="[image-rendering:pixelated]"
+            style={{ width: `${props.size - 8}px`, height: `${props.size - 8}px` }}
+          />
+        )}
+      </Show>
+    </span>
+  );
+}
 
 function Hero(props: { instance: Instance }) {
   const state = () => gameState(props.instance.id);
   const exit = () => state().lastExit;
   const [error, setError] = createSignal<string | null>(null);
   const guests = () => duo.host?.guests.length ?? 0;
+  // Worlds are read again after each run: the one just played comes first.
+  const [worlds] = createResource(
+    () => (opensWorld(props.instance.gameVersion) ? { id: props.instance.id, exit: exit() } : false),
+    ({ id }) => api.listWorlds(id).catch(() => [] as World[]),
+  );
+  /** `undefined`: follow the last played world; `null`: the title screen. */
+  const [picked, setPicked] = createSignal<{ instance: string; folder: string | null }>();
+  const chosen = createMemo<World | null>(() => {
+    const list = worlds() ?? [];
+    const pick = picked();
+    if (pick?.instance === props.instance.id) return list.find((w) => w.folder === pick.folder) ?? null;
+    return lastWorld(list) ?? null;
+  });
 
   return (
     <section
@@ -59,8 +184,22 @@ function Hero(props: { instance: Instance }) {
           </Alert>
         </Show>
 
+        <Show when={state().status === "idle" && (worlds() ?? []).length > 0}>
+          <WorldPicker
+            worlds={worlds()!}
+            chosen={chosen()}
+            onChoose={(world) => setPicked({ instance: props.instance.id, folder: world?.folder ?? null })}
+          />
+        </Show>
+
         <div class="flex flex-wrap items-center gap-3">
-          <PlayButton id={props.instance.id} size="lg" name={props.instance.name} />
+          <PlayButton
+            id={props.instance.id}
+            size="lg"
+            name={props.instance.name}
+            world={chosen()?.folder ?? null}
+            worldName={chosen()?.name}
+          />
           <button class="btn btn-light px-corners-md h-[54px] px-6 text-base" onClick={() => navigate({ page: "multi" })}>
             <Icon name="invite" size={12} />
             <Show when={duo.host} fallback="Inviter des amis">
