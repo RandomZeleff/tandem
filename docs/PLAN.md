@@ -584,3 +584,9 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Vérifié : tests Rust (thèmes sans bibliothèques, mods de quêtes reconnus) ; exemple `project` sur de vrais packs (Prominence II : 446 mods, 1,7 Go, quêtes, 0,4 s ; Fabulously Optimized : 49 mods, 45 Mo ; Cobbleverse : 150 mods, 940 Mo) ; interface avec le faux backend.
 - Phase 8 terminée. Prochaine étape : Zeleff teste les quatre chantiers dans la vraie app.
 
+
+### 2026-10-14 (harmonie de l'interface)
+- Demande de Zeleff : moins de textes trop explicatifs, éléments mieux placés, plus de cohérence.
+- Fait : tour de toutes les pages dans le navigateur. Textes d'aide raccourcis ou retirés partout (Accueil, Instances, réglages d'instance, Réglages, Jouer ensemble, Traduction, Glossaire, comptes, imports, dialogues) ; sous-titres de page retirés. Onglets d'instance : Contenu par défaut, Console déplacée en fin. Réglages d'instance : Dupliquer et Supprimer réunis dans « Gestion », listes de même largeur. Accueil : les 3 autres instances sur une ligne, bouton « Détails » plus clair que l'icône de console. Réglages : l'aide du service de traduction passe sous « Service ». Jouer ensemble : « Tu joues en tant que » seulement avec un compte Microsoft. Références à l'ancien onglet « Informations » corrigées en « Réglages ». Règle notée en D54.
+- Vérifié : types (`tsc`), pages revues avec le faux backend.
+- Prochaine étape : Zeleff regarde dans la vraie app et signale ce qui détonne encore.

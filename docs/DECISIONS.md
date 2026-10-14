@@ -367,3 +367,11 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Packs proches : recherche par ses deux premières catégories et sa version du jeu (une seule catégorie s'il y a moins de 3 résultats), pas par mods en commun (trop coûteux).
 - Statut : validé
 
+
+### D54 · 2026-10-14 · Textes de l'interface : une ligne, seulement si elle apprend quelque chose
+- Un réglage ou une section n'a une phrase d'aide que si elle dit ce que le libellé et l'option ne disent pas déjà (« Pour les joueurs avancés. », « Mondes compris. »). Une ligne, pas de justification technique.
+- Pas de sous-titre sous les titres de page (Instances, Jouer ensemble, Réglages…) : le titre et les boutons suffisent.
+- Les détails (pourquoi un relais, comment marche un mod) vont dans une info-bulle ou nulle part.
+- Une information apparaît là où on agit dessus : l'aide d'un service de traduction sous le choix du service, Dupliquer et Supprimer ensemble dans « Gestion ».
+- Onglets d'instance : Contenu d'abord (onglet par défaut), Console en avant-dernier, Réglages en dernier.
+- Statut : validé
