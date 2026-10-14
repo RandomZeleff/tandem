@@ -1,4 +1,4 @@
-import { type InstallProgress, isTransferStage } from "../lib/api";
+import { api, type InstallProgress, isTransferStage } from "../lib/api";
 import { Match, Show, Switch } from "solid-js";
 import { gameState, launch, stop } from "../lib/games";
 import { Icon } from "./pixel";
@@ -26,7 +26,15 @@ function stepLabel(p: InstallProgress | undefined): string {
  * while the game installs, sweeps while it starts, then shows "in game" next to a stop
  * button, so stopping is never one stray click on the main button.
  */
-export default function PlayButton(props: { id: string; size?: "lg" | "md" | "icon"; name?: string }) {
+export default function PlayButton(props: {
+  id: string;
+  size?: "lg" | "md" | "icon";
+  name?: string;
+  /** World folder to open at once (1.20+): the button then reads "Continuer". */
+  world?: string | null;
+  /** Shown name of that world, for screen readers. */
+  worldName?: string;
+}) {
   const state = () => gameState(props.id);
   const size = () => props.size ?? "md";
   const transfer = () => {
@@ -57,14 +65,21 @@ export default function PlayButton(props: { id: string; size?: "lg" | "md" | "ic
         <button
           class={`btn btn-primary ${box()}`}
           classList={{ "title-display text-[28px] uppercase [text-shadow:0_2px_0_rgb(0_0_0/0.3)]": size() === "lg", "text-sm": size() === "md" }}
-          aria-label={props.name ? `Jouer à ${props.name}` : "Jouer"}
+          aria-label={
+            props.world
+              ? `Continuer « ${props.worldName ?? props.world} »`
+              : props.name
+                ? `Jouer à ${props.name}`
+                : "Jouer"
+          }
           onClick={(e) => {
             e.stopPropagation();
-            void launch(props.id);
+            const world = props.world;
+            void launch(props.id, world ? () => api.launchInstance(props.id, world) : undefined);
           }}
         >
           <Icon name="play" size={size() === "lg" ? 24 : 12} />
-          {label("Jouer")}
+          {label(props.world ? "Continuer" : "Jouer")}
         </button>
       </Match>
 

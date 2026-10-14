@@ -1,24 +1,18 @@
 import { createEffect, createResource, createSignal, For, on, onMount, Show } from "solid-js";
 import Alert from "./Alert";
-import { api, errorMessage, type BackupKind, type GameMode, type PregenView, type World, type WorldBackup } from "../lib/api";
+import { api, errorMessage, type BackupKind, type PregenView, type World, type WorldBackup } from "../lib/api";
 import { formatBytes, formatRelative } from "../lib/format";
-import { gameState } from "../lib/games";
+import { gameState, launch } from "../lib/games";
 import { toast } from "../lib/toast";
 import Dialog from "./Dialog";
 import LoadingRows from "./LoadingRows";
 import { Icon, Toggle, XpBar } from "./pixel";
 import ProjectIcon from "./ProjectIcon";
-import { navigate } from "../lib/store";
+import { instances, navigate } from "../lib/store";
+import { GAME_MODES, opensWorld } from "../lib/worlds";
 import { openProject } from "../lib/projects";
 import { formatEta, isPregenActive, PREGEN_SIZES, pregens, watchPregen } from "../lib/pregen";
 
-const MODES: Record<GameMode, string> = {
-  survival: "Survie",
-  creative: "Créatif",
-  adventure: "Aventure",
-  spectator: "Spectateur",
-  hardcore: "Hardcore",
-};
 
 const KINDS: Record<BackupKind, string> = {
   manual: "Manuelle",
@@ -40,6 +34,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
   const [backups, { refetch: refetchBackups }] = createResource(source, ({ id }) => api.listWorldBackups(id));
   const [auto, { mutate: setAuto }] = createResource(async () => (await api.getSetting<boolean>(AUTO_BACKUP_SETTING)) ?? true);
   const [busy, setBusy] = createSignal<string | null>(null);
+  const opens = () => opensWorld(instances().find((i) => i.id === props.instanceId)?.gameVersion ?? "");
   const [restoring, setRestoring] = createSignal<WorldBackup | null>(null);
   const [preparing, setPreparing] = createSignal<World | null>(null);
   const [radius, setRadius] = createSignal<number>(PREGEN_SIZES[1].radius);
@@ -154,6 +149,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
                 }
                 onRestore={setRestoring}
                 onOpen={() => run(`open:${world.folder}`, () => api.openWorldBackups(props.instanceId, world.folder))}
+                onPlay={opens() ? () => void launch(props.instanceId, () => api.launchInstance(props.instanceId, world.folder)) : undefined}
               />
             )}
           </For>
@@ -238,6 +234,8 @@ function WorldCard(props: {
   onBackup: () => void;
   onRestore: (backup: WorldBackup) => void;
   onOpen: () => void;
+  /** Starts the game straight into this world (1.20+ only). */
+  onPlay?: () => void;
 }) {
   const [open, setOpen] = createSignal(false);
   const [packsOpen, setPacksOpen] = createSignal(false);
@@ -250,7 +248,7 @@ function WorldCard(props: {
         <div class="flex min-w-0 flex-1 flex-col gap-0.5">
           <span class="truncate text-sm font-semibold">{props.world.name}</span>
           <span class="truncate text-meta text-muted">
-            {MODES[props.world.gameMode]}
+            {GAME_MODES[props.world.gameMode]}
             <Show when={props.world.version}> · {props.world.version}</Show> · {formatBytes(props.world.sizeBytes)} · joué{" "}
             {formatRelative(iso(props.world.lastPlayed))}
           </span>
@@ -284,6 +282,19 @@ function WorldCard(props: {
           <Icon name="download" size={10} />
           {props.busy === props.world.folder ? "Sauvegarde…" : "Sauvegarder"}
         </button>
+        <Show when={props.onPlay}>
+          {(play) => (
+            <button
+              class="btn px-corners h-9 shrink-0 px-3 text-meta"
+              disabled={props.locked}
+              aria-label={`Jouer dans « ${props.world.name} »`}
+              onClick={() => play()()}
+            >
+              <Icon name="play" size={12} />
+              Jouer
+            </button>
+          )}
+        </Show>
       </div>
       <Show when={props.pregen}>
         {(view) => <PregenPanel view={view()} onCancel={props.onCancelPregen} />}
