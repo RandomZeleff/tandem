@@ -6,6 +6,7 @@ use tandem_core::content::project::{self, DependencyItem, ProjectDetails, Projec
 use tandem_core::content::{self, creators, mrpack, perf, ContentUpdate, InstalledContent};
 use tandem_core::install;
 use tandem_core::instance::{self, Instance, NewInstance};
+use tandem_core::journal;
 use tandem_core::jvm;
 use tandem_core::logging::LogEntry;
 use tandem_core::meta::loader::{self, Loader, LoaderVersion};
@@ -145,6 +146,17 @@ pub async fn list_worlds(
     blocking(move || Ok(worlds::list(&dir))).await
 }
 
+/// What the game recorded about a world: day, statistics, big steps, quests.
+#[tauri::command]
+pub async fn world_journal(
+    state: State<'_, AppState>,
+    instance_id: String,
+    world: String,
+) -> CommandResult<journal::Journal> {
+    let dir = state.ctx.data.instance_dir(&instance_id);
+    blocking(move || journal::read(&dir, &world)).await
+}
+
 #[tauri::command]
 pub async fn list_world_backups(
     state: State<'_, AppState>,
@@ -253,6 +265,16 @@ async fn blocking<T: Send + 'static>(
         .map_err(Into::into)
 }
 
+/// Order and filters of a Discover search, on top of the query and the instance.
+#[derive(Debug, Default, serde::Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Narrowing {
+    sort: Option<SearchSort>,
+    categories: Vec<String>,
+    /// Modpacks only: other kinds follow the instance.
+    game_version: Option<String>,
+}
+
 #[tauri::command]
 pub async fn search_content(
     state: State<'_, AppState>,
@@ -260,10 +282,13 @@ pub async fn search_content(
     kind: ProjectType,
     instance_id: Option<String>,
     offset: u32,
-    sort: Option<SearchSort>,
-    categories: Option<Vec<String>>,
-    game_version: Option<String>,
+    narrow: Option<Narrowing>,
 ) -> CommandResult<SearchResults> {
+    let Narrowing {
+        sort,
+        categories,
+        game_version,
+    } = narrow.unwrap_or_default();
     // Modpacks create their own instance: the current one does not narrow the search.
     let instance = match (&instance_id, kind) {
         (Some(id), kind) if kind != ProjectType::Modpack => {
@@ -271,7 +296,6 @@ pub async fn search_content(
         }
         _ => None,
     };
-    let categories = categories.unwrap_or_default();
     let filter = SearchFilter {
         query: &query,
         kind,

@@ -371,7 +371,8 @@ export function installMocks() {
         case "search_content": {
           await new Promise((r) => setTimeout(r, 250));
           const q = (args.query as string).toLowerCase();
-          const categories = (args.categories as string[] | undefined) ?? [];
+          const narrow = (args.narrow ?? {}) as { sort?: string | null; categories?: string[] };
+          const categories = narrow.categories ?? [];
           const hits = CATALOGUE[args.kind as ProjectType].filter(
             (h) => h.title.toLowerCase().includes(q) && categories.every((c) => h.displayCategories.includes(c)),
           );
@@ -381,7 +382,7 @@ export function installMocks() {
             updated: (h) => Date.parse(h.dateModified),
             downloads: (h) => h.downloads,
           };
-          const key = by[(args.sort as string | null) ?? (q ? "" : "downloads")];
+          const key = by[narrow.sort ?? (q ? "" : "downloads")];
           if (key) hits.sort((a, b) => key(b) - key(a));
           return { hits, offset: 0, limit: 20, totalHits: hits.length };
         }
@@ -438,6 +439,44 @@ export function installMocks() {
           const view = pregens[args.instanceId as string];
           if (view) view.cancelled = true;
           return null;
+        }
+        case "world_journal": {
+          await new Promise((r) => setTimeout(r, 300));
+          const fresh = args.world !== "Survie";
+          const step = (id: string, daysAgo: number | null) => ({ id, doneAt: daysAgo === null ? null : now - daysAgo * 86_400_000 });
+          return {
+            day: fresh ? 3 : 418,
+            stats: fresh
+              ? { playSeconds: 2_520, deaths: 0, mobKills: 4, distanceM: 640, blocksMined: 310 }
+              : { playSeconds: 403_200, deaths: 23, mobKills: 1_874, distanceM: 84_300, blocksMined: 61_250 },
+            milestones: [
+              step("story/smelt_iron", fresh ? null : 40),
+              step("story/mine_diamond", fresh ? null : 38),
+              step("story/enter_the_nether", fresh ? null : 30),
+              step("nether/find_fortress", fresh ? null : 29),
+              step("story/follow_ender_eye", fresh ? null : 12),
+              step("story/enter_the_end", null),
+              step("end/kill_dragon", null),
+              step("nether/summon_wither", null),
+              step("end/elytra", null),
+            ],
+            quests: fresh
+              ? null
+              : {
+                  done: 64,
+                  total: 230,
+                  chapters: [
+                    { title: "Pour commencer", done: 40, total: 40 },
+                    { title: "Créatures notoires dans ce royaume", done: 12, total: 56 },
+                    { title: "Magie", done: 7, total: 19 },
+                    { title: "Stockage", done: 5, total: 18 },
+                    { title: "La sorcellerie", done: 0, total: 34 },
+                    { title: "Reforgeage", done: 0, total: 16 },
+                    { title: "Objets perdus", done: 0, total: 44 },
+                    { title: "Récompenses", done: 0, total: 3 },
+                  ],
+                },
+          };
         }
         case "list_worlds":
           return [...(worlds[args.instanceId as string] ?? [])];

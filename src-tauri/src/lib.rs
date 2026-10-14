@@ -100,6 +100,7 @@ pub fn run() {
             commands::delete_instance,
             commands::memory_info,
             commands::list_worlds,
+            commands::world_journal,
             commands::list_world_backups,
             commands::backup_world,
             commands::restore_world_backup,

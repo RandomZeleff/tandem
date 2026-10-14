@@ -496,6 +496,16 @@ export interface World {
   icon: string | null;
 }
 
+/** What the game recorded about a world (see `journal.rs`). */
+export interface Journal {
+  /** In-game day, from 1. */
+  day: number | null;
+  stats: { playSeconds: number; deaths: number; mobKills: number; distanceM: number; blocksMined: number } | null;
+  /** Vanilla big steps, in order; `doneAt` (Unix ms, 0 when undated) once reached. */
+  milestones: { id: string; doneAt: number | null }[];
+  quests: { done: number; total: number; chapters: { title: string; done: number; total: number }[] } | null;
+}
+
 export type BackupKind = "manual" | "auto" | "beforeRestore" | "beforeUpdate";
 
 export interface WorldBackup {
@@ -742,9 +752,7 @@ export const api = {
       kind,
       instanceId,
       offset,
-      sort: narrow.sort ?? null,
-      categories: narrow.categories ?? [],
-      gameVersion: narrow.gameVersion ?? null,
+      narrow: { sort: narrow.sort ?? null, categories: narrow.categories ?? [], gameVersion: narrow.gameVersion ?? null },
     }),
   listContent: (instanceId: string) => invoke<InstalledContent[]>("list_content", { instanceId }),
   /** The best compatible version when `versionId` is omitted. */
@@ -760,6 +768,7 @@ export const api = {
   removeContent: (instanceId: string, projectId: string) =>
     invoke<void>("remove_content", { instanceId, projectId }),
   listWorlds: (instanceId: string) => invoke<World[]>("list_worlds", { instanceId }),
+  worldJournal: (instanceId: string, world: string) => invoke<Journal>("world_journal", { instanceId, world }),
   listDatapacks: (instanceId: string, world: string) => invoke<Datapack[]>("list_datapacks", { instanceId, world }),
   installDatapack: (instanceId: string, world: string, projectId: string) =>
     invoke<Datapack>("install_datapack", { instanceId, world, projectId }),
