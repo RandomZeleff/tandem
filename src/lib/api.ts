@@ -289,6 +289,18 @@ export interface ProjectSummary {
   projectType: string;
   iconUrl: string | null;
   downloads: number;
+  categories: string[];
+}
+
+/** What a player wants to know before installing a modpack version. */
+export interface PackOverview {
+  /** Mods published on Modrinth that the version ships. */
+  mods: number;
+  downloadBytes: number;
+  /** Main themes of those mods, most common first. */
+  themes: { category: string; mods: number }[];
+  quests: boolean;
+  memory: { wantedMb: number; givenMb: number; totalMb: number };
 }
 
 export interface DependencyItem {
@@ -759,6 +771,7 @@ export const api = {
   installContent: (instanceId: string, projectId: string, versionId?: string) =>
     invoke<InstalledContent[]>("install_content", { instanceId, projectId, versionId: versionId ?? null }),
   projectDetails: (id: string) => invoke<ProjectDetails>("project_details", { id }),
+  packOverview: (projectId: string, versionId: string) => invoke<PackOverview>("pack_overview", { projectId, versionId }),
   projectVersions: (projectId: string, instanceId: string | null) =>
     invoke<ProjectVersions>("project_versions", { projectId, instanceId }),
   versionChangelog: (projectId: string, versionId: string) =>

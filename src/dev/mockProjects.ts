@@ -124,6 +124,7 @@ export function projectMocks(catalogue: Record<ProjectType, SearchHit[]>, instan
     projectType,
     iconUrl: hit.iconUrl,
     downloads: hit.downloads,
+    categories: hit.displayCategories,
   });
 
   function dependencies(projectId: string): DependencyItem[] {

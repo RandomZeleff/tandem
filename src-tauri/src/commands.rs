@@ -415,6 +415,16 @@ pub async fn version_dependencies(
     Ok(project::dependencies(&state.ctx, &state.projects, &project_id, &version_id).await?)
 }
 
+/// Mods, download size, themes, quests and memory of a modpack version.
+#[tauri::command]
+pub async fn pack_overview(
+    state: State<'_, AppState>,
+    project_id: String,
+    version_id: String,
+) -> CommandResult<project::PackOverview> {
+    Ok(project::pack_overview(&state.ctx, &state.projects, &project_id, &version_id).await?)
+}
+
 /// The people who made the mods of a modpack version, with their support links.
 #[tauri::command]
 pub async fn pack_creators(

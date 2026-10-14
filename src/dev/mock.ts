@@ -440,6 +440,23 @@ export function installMocks() {
           if (view) view.cancelled = true;
           return null;
         }
+        case "pack_overview": {
+          await new Promise((r) => setTimeout(r, 400));
+          const big = args.projectId !== "1KVo5zza";
+          return {
+            mods: big ? 446 : 49,
+            downloadBytes: big ? 1_707_743_076 : 45_113_946,
+            themes: big
+              ? [
+                  { category: "adventure", mods: 87 },
+                  { category: "equipment", mods: 66 },
+                  { category: "magic", mods: 41 },
+                ]
+              : [{ category: "optimization", mods: 17 }, { category: "decoration", mods: 8 }],
+            quests: big,
+            memory: { wantedMb: big ? 8192 : 4096, givenMb: big ? 5120 : 4096, totalMb: 11_200 },
+          };
+        }
         case "world_journal": {
           await new Promise((r) => setTimeout(r, 300));
           const fresh = args.world !== "Survie";
