@@ -5,6 +5,7 @@ import ModpackInstallDialog from "../components/ModpackInstallDialog";
 import { Icon, type IconName, LoaderIcon, LoaderTag } from "../components/pixel";
 import DependenciesTab from "../components/project/DependenciesTab";
 import Gallery from "../components/project/Gallery";
+import PackFit, { SimilarPacks } from "../components/project/PackFit";
 import RichText from "../components/project/RichText";
 import VersionsTab, { Retry } from "../components/project/VersionsTab";
 import ProjectIcon from "../components/ProjectIcon";
@@ -265,6 +266,10 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
         <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
+      <Show when={isModpack()}>
+        <PackFit projectId={d().id} versionId={recommended()?.id} />
+      </Show>
+
       <div class="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-5">
         <div class="flex min-w-0 flex-col gap-4">
           <Tabs label="Sections du projet" idPrefix="project" items={tabs()} value={currentTab()} onChange={setTab} class="border-b border-line" />
@@ -322,7 +327,11 @@ function Page(props: { details: ProjectDetails; instanceId?: string }) {
             </Switch>
           </div>
         </div>
-        <Aside details={d()} />
+        <Aside details={d()}>
+          <Show when={isModpack()}>
+            <SimilarPacks projectId={d().id} categories={d().categories} gameVersion={recommended()?.gameVersions[0]} />
+          </Show>
+        </Aside>
       </div>
 
       {/* Keyed: the dialog keeps its version while it closes. */}
@@ -704,7 +713,7 @@ function SupportAuthor(props: { details: ProjectDetails }) {
   );
 }
 
-function Aside(props: { details: ProjectDetails }) {
+function Aside(props: { details: ProjectDetails; children?: JSX.Element }) {
   const d = () => props.details;
   const loaders = () => d().loaders.filter((l) => l !== "minecraft");
   const side = () => sideLabel(d());
@@ -818,6 +827,7 @@ function Aside(props: { details: ProjectDetails }) {
           <dd>{d().downloads.toLocaleString("fr-FR")} fois</dd>
         </dl>
       </Section>
+      {props.children}
     </aside>
   );
 }
