@@ -240,8 +240,9 @@ Ensuite : retour aux petits ajouts.
 Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer seul, sans se prendre la tête. Le jeu à deux et la traduction restent des bonus, pas la vitrine. Un chantier fini avant le suivant.
 
 - [x] 1. Découvrir : tri (téléchargements, abonnés, nouveautés, mis à jour), filtres par catégorie, version du jeu pour les modpacks, rayons « Nouveautés », « Mis à jour récemment », « Les plus suivis » quand on ne cherche rien (D51). Pas de « tendances » (Modrinth n'en donne pas).
-- [ ] 2. « Continuer » en un clic, directement dans le dernier monde, puis carnet de partie par monde (statistiques, progrès, quêtes)
-- [ ] 3. Fiches de modpack « est-ce pour moi ? » (RAM conseillée face à celle du PC, nombre de mods, quêtes, style du pack, packs proches)
+- [x] 2. « Continuer » en un clic, directement dans le dernier monde (1.20+), avec choix d'un autre monde ou de l'écran titre ; « Jouer » sur chaque monde de l'onglet Mondes
+- [ ] 3. Carnet de partie par monde (statistiques, progrès, quêtes)
+- [ ] 4. Fiches de modpack « est-ce pour moi ? » (RAM conseillée face à celle du PC, nombre de mods, quêtes, style du pack, packs proches)
 
 ## Portage macOS
 
@@ -561,4 +562,11 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Vérifié : tests Rust (facettes, ordre automatique), facettes testées sur la vraie API Modrinth, page avec le faux backend (rayons, filtres, « Tout voir », modpacks). Pas vérifié : la vraie app avec les vrais résultats.
 - Prochaine étape : chantier 2, « Continuer » en un clic dans le dernier monde.
 - Retour de Zeleff (« un peu le bordel ») : Découvrir remis en ordre. Les types deviennent les onglets de la page (soulignés), avec l'instance (ou « Importer un fichier » pour les modpacks) à droite ; tri, version et catégories passent dans une colonne de filtres à gauche (cases à cocher) ; la recherche mène la colonne principale. Un seul rayon en images (« Nouveautés » : image mise en avant du projet, sinon son icône sur sa couleur), puis « Mis à jour récemment » et « Les plus suivis » en deux listes courtes de 5, côte à côte quand la place le permet. Phrase d'introduction et encadré des modpacks retirés (l'explication passe en info-bulle du bouton d'import).
+
+### 2026-10-14 (Phase 8, chantier 2 : « Continuer » en un clic)
+- Fait : sur l'Accueil, le grand bouton devient « Continuer » et lance le jeu directement dans le dernier monde joué de l'instance (`--quickPlaySingleplayer`, que le moteur savait déjà faire pour « Jouer ensemble »). Au-dessus, le monde choisi (icône, nom, mode) ouvre un petit menu : les autres mondes avec leur date, ou « Écran titre du jeu » pour revenir au bouton « Jouer » habituel. La liste est relue après chaque partie. Avant la 1.20 (le jeu ne sait pas ouvrir un monde au lancement) ou sans monde, rien ne change.
+- Onglet Mondes : bouton « Jouer » sur chaque monde (1.20+), désactivé quand le jeu tourne.
+- Les autres boutons Jouer (cartes d'instance, barre latérale, fiche) ouvrent toujours l'écran titre : l'Accueil sert à reprendre, le reste à choisir.
+- Vérifié avec le faux backend (choix du monde, appel `launch_instance` avec le bon dossier depuis l'Accueil et l'onglet Mondes). Pas vérifié dans un vrai jeu cette fois ; le même chemin sert déjà à « Jouer ensemble » (Fabric, Forge, NeoForge).
+- Prochaine étape : chantier 3, carnet de partie par monde.
 
