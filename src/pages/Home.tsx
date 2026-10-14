@@ -13,6 +13,7 @@ import { gameState } from "../lib/games";
 import { activeAccount, instances, navigate, setNewInstanceDialog } from "../lib/store";
 import { onDismiss } from "../lib/ui";
 import { GAME_MODES, lastWorld, opensWorld, worldPlayedAt } from "../lib/worlds";
+import { formatNumber, formatPlayTime, isEmptyJournal, nextMilestone } from "../lib/journal";
 
 /** The world "Continuer" opens, and the other ones (or the title screen) on demand. */
 function WorldPicker(props: { worlds: World[]; chosen: World | null; onChoose: (world: World | null) => void }) {
@@ -142,6 +143,22 @@ function Hero(props: { instance: Instance }) {
     if (pick?.instance === props.instance.id) return list.find((w) => w.folder === pick.folder) ?? null;
     return lastWorld(list) ?? null;
   });
+  const [journal] = createResource(
+    () => (chosen() ? { id: props.instance.id, world: chosen()!.folder, at: chosen()!.lastPlayed } : false),
+    ({ id, world }) => api.worldJournal(id, world).catch(() => null),
+  );
+  /** A few words of the chosen world's logbook, the reason to go back in. */
+  const summary = () => {
+    const j = journal();
+    if (!j || isEmptyJournal(j)) return [];
+    const next = nextMilestone(j);
+    return [
+      j.day !== null && `Jour ${formatNumber(j.day)}`,
+      j.stats && `${formatPlayTime(j.stats.playSeconds)} de jeu`,
+      j.quests && `Quêtes ${formatNumber(j.quests.done)} / ${formatNumber(j.quests.total)}`,
+      !j.quests && next && `Prochaine étape : ${next}`,
+    ].filter((x): x is string => !!x);
+  };
 
   return (
     <section
@@ -185,11 +202,23 @@ function Hero(props: { instance: Instance }) {
         </Show>
 
         <Show when={state().status === "idle" && (worlds() ?? []).length > 0}>
-          <WorldPicker
-            worlds={worlds()!}
-            chosen={chosen()}
-            onChoose={(world) => setPicked({ instance: props.instance.id, folder: world?.folder ?? null })}
-          />
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <WorldPicker
+              worlds={worlds()!}
+              chosen={chosen()}
+              onChoose={(world) => setPicked({ instance: props.instance.id, folder: world?.folder ?? null })}
+            />
+            <Show when={chosen() && summary().length > 0}>
+              <button
+                class="flex items-center gap-2 text-meta text-chalk-2 transition-colors duration-100 hover:text-chalk focus-visible:text-chalk"
+                title="Ouvrir le carnet de ce monde"
+                onClick={() => navigate({ page: "instance", id: props.instance.id, tab: "worlds", world: chosen()!.folder })}
+              >
+                <Icon name="book" size={12} />
+                {summary().join(" · ")}
+              </button>
+            </Show>
+          </div>
         </Show>
 
         <div class="flex flex-wrap items-center gap-3">

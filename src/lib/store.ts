@@ -4,7 +4,8 @@ import { api, type ProjectType } from "./api";
 export type Route =
   | { page: "home" }
   | { page: "instances" }
-  | { page: "instance"; id: string }
+  /** `tab`: section to open (e.g. "worlds"); `world`: its logbook open in Mondes. */
+  | { page: "instance"; id: string; tab?: string; world?: string }
   | { page: "discover"; instanceId?: string; query?: string; kind?: ProjectType; world?: string }
   /** Modrinth project page (id or slug); `instanceId` is where content would go. */
   | { page: "project"; id: string; instanceId?: string }

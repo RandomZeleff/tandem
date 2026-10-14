@@ -8,6 +8,7 @@ import Dialog from "./Dialog";
 import LoadingRows from "./LoadingRows";
 import { Icon, Toggle, XpBar } from "./pixel";
 import ProjectIcon from "./ProjectIcon";
+import WorldJournal from "./WorldJournal";
 import { instances, navigate } from "../lib/store";
 import { GAME_MODES, opensWorld } from "../lib/worlds";
 import { openProject } from "../lib/projects";
@@ -26,7 +27,7 @@ const AUTO_BACKUP_SETTING = "auto_backup_worlds";
 const iso = (ms: number | null) => (ms === null ? null : new Date(ms).toISOString());
 
 /** Singleplayer worlds of an instance and their backups. */
-export default function WorldsTab(props: { instanceId: string; locked: boolean }) {
+export default function WorldsTab(props: { instanceId: string; locked: boolean; /** World whose logbook starts open. */ openWorld?: string }) {
   const [error, setError] = createSignal<string | null>(null);
   // Re-read after every run: the game changes worlds and Tandem backs them up on exit.
   const source = () => ({ id: props.instanceId, exit: gameState(props.instanceId).lastExit });
@@ -133,6 +134,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean }
               <WorldCard
                 instanceId={props.instanceId}
                 world={world}
+                journalOpen={world.folder === props.openWorld}
                 backups={backupsOf(world.folder)}
                 locked={props.locked || pregenActive()}
                 busy={busy()}
@@ -236,23 +238,36 @@ function WorldCard(props: {
   onOpen: () => void;
   /** Starts the game straight into this world (1.20+ only). */
   onPlay?: () => void;
+  journalOpen?: boolean;
 }) {
   const [open, setOpen] = createSignal(false);
+  const [journal, setJournal] = createSignal(props.journalOpen ?? false);
   const [packsOpen, setPacksOpen] = createSignal(false);
   return (
     <li class="panel px-corners-md flex flex-col">
       <div class="flex items-center gap-3.5 p-3.5">
+        {/* The world itself opens its logbook. */}
+        <button
+          class="group/world -m-1.5 flex min-w-0 flex-1 items-center gap-3.5 rounded-sm p-1.5 text-left transition-colors duration-100 hover:bg-white/[0.04] focus-visible:bg-white/[0.04]"
+          aria-expanded={journal()}
+          aria-label={`Carnet de « ${props.world.name} »`}
+          onClick={() => setJournal(!journal())}
+        >
         <Show when={props.world.icon} fallback={<div class="size-12 shrink-0 bg-slate-700 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]" />}>
           {(icon) => <img src={icon()} alt="" class="size-12 shrink-0 [image-rendering:pixelated]" />}
         </Show>
         <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span class="truncate text-sm font-semibold">{props.world.name}</span>
+          <span class="flex items-center gap-1.5 text-sm font-semibold">
+            <span class="truncate group-hover/world:text-xp-text group-focus-visible/world:text-xp-text">{props.world.name}</span>
+            <Icon name="caret" size={12} class={`shrink-0 text-faint transition-transform duration-100 ${journal() ? "rotate-180" : ""}`} />
+          </span>
           <span class="truncate text-meta text-muted">
             {GAME_MODES[props.world.gameMode]}
             <Show when={props.world.version}> · {props.world.version}</Show> · {formatBytes(props.world.sizeBytes)} · joué{" "}
             {formatRelative(iso(props.world.lastPlayed))}
           </span>
         </div>
+        </button>
         <Show when={props.canPrepare}>
           <button
             class="btn btn-ghost h-9 px-3 text-meta"
@@ -296,6 +311,9 @@ function WorldCard(props: {
           )}
         </Show>
       </div>
+      <Show when={journal()}>
+        <WorldJournal instanceId={props.instanceId} world={props.world.folder} version={props.world.lastPlayed} />
+      </Show>
       <Show when={props.pregen}>
         {(view) => <PregenPanel view={view()} onCancel={props.onCancelPregen} />}
       </Show>

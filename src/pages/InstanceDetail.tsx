@@ -35,8 +35,8 @@ function stageLabel(p: InstallProgress | undefined): string {
   return `${p.doneFiles} / ${p.totalFiles} fichiers · ${formatBytes(p.doneBytes)} / ${formatBytes(p.totalBytes)}`;
 }
 
-export default function InstanceDetail(props: { instance: Instance }) {
-  const [tab, setTab] = remembered<Tab>("tab", "console");
+export default function InstanceDetail(props: { instance: Instance; tab?: string; world?: string }) {
+  const [tab, setTab] = remembered<Tab>("tab", (props.tab as Tab | undefined) ?? "console");
   const [confirmDelete, setConfirmDelete] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const state = () => gameState(props.instance.id);
@@ -164,7 +164,7 @@ export default function InstanceDetail(props: { instance: Instance }) {
               <ContentList instance={props.instance} locked={state().status !== "idle"} />
             </Match>
             <Match when={tab() === "worlds"}>
-              <WorldsTab instanceId={props.instance.id} locked={state().status !== "idle"} />
+              <WorldsTab instanceId={props.instance.id} locked={state().status !== "idle"} openWorld={props.world} />
             </Match>
             <Match when={tab() === "screenshots"}>
               <ScreenshotsTab instanceId={props.instance.id} />

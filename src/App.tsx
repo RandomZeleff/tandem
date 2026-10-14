@@ -139,7 +139,10 @@ function App() {
                   </div>
                 }
               >
-                {(instance) => <InstanceDetail instance={instance} />}
+                {(instance) => {
+                  const r = route() as { tab?: string; world?: string };
+                  return <InstanceDetail instance={instance} tab={r.tab} world={r.world} />;
+                }}
               </Show>
             </Match>
             <Match when={route().page === "discover"}>
