@@ -152,6 +152,8 @@ pub struct Project {
     pub icon_url: Option<String>,
     #[serde(default)]
     pub downloads: u64,
+    #[serde(default)]
+    pub categories: Vec<String>,
 }
 
 /// Everything Modrinth says about a project, for its page.

@@ -80,6 +80,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
         let log = project::changelog(&ctx, &cache, &page.id, version).await?;
         println!("changelog: {} bytes of HTML", log.len());
+        if page.project_type == "modpack" {
+            let started = Instant::now();
+            let overview = project::pack_overview(&ctx, &cache, &page.id, version).await?;
+            println!("overview [{:?}]: {overview:#?}", started.elapsed());
+        }
     }
     Ok(())
 }

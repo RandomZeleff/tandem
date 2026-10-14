@@ -154,6 +154,7 @@ pub struct ProjectSummary {
     pub project_type: String,
     pub icon_url: Option<String>,
     pub downloads: u64,
+    pub categories: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -510,6 +511,135 @@ pub async fn dependencies(
     Ok(items)
 }
 
+/// What a player wants to know before installing a modpack version.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PackOverview {
+    /// Mods the version ships that are published on Modrinth (others may come as files).
+    pub mods: u32,
+    /// The pack file plus every shipped Modrinth file.
+    pub download_bytes: u64,
+    /// Main themes of the shipped mods, most common first.
+    pub themes: Vec<Theme>,
+    /// The pack says it has quests, or ships a quest book mod.
+    pub quests: bool,
+    pub memory: PackMemory,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Theme {
+    pub category: String,
+    pub mods: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PackMemory {
+    /// What automatic memory would want for this many mods.
+    pub wanted_mb: u32,
+    /// What it would really give on this PC.
+    pub given_mb: u32,
+    pub total_mb: u64,
+}
+
+/// Mod categories that say what a pack is about (libraries and tools say nothing).
+const THEMES: &[&str] = &[
+    "adventure",
+    "technology",
+    "magic",
+    "worldgen",
+    "mobs",
+    "decoration",
+    "storage",
+    "equipment",
+    "food",
+    "transportation",
+    "game-mechanics",
+    "economy",
+    "minigame",
+    "optimization",
+];
+
+/// Mods, size, themes, quests and memory of a modpack version.
+pub async fn pack_overview(
+    ctx: &Context,
+    cache: &ProjectCache,
+    project_id: &str,
+    version_id: &str,
+) -> Result<PackOverview> {
+    let page = details(ctx, cache, project_id).await?;
+    let all = all_versions(ctx, cache, &page.id).await?;
+    let version = all
+        .iter()
+        .find(|v| v.id == version_id)
+        .ok_or_else(|| Error::ContentNotFound(version_id.to_owned()))?;
+    let shipped: Vec<String> = version
+        .dependencies
+        .iter()
+        .filter(|d| d.dependency_type == "embedded")
+        .filter_map(|d| d.version_id.clone())
+        .collect();
+    let (items, files) = tokio::try_join!(
+        dependencies(ctx, cache, &page.id, version_id),
+        try_join_all(
+            shipped
+                .chunks(BATCH)
+                .map(|chunk| modrinth::versions(ctx, chunk))
+        ),
+    )?;
+    let mods: Vec<&ProjectSummary> = items
+        .iter()
+        .filter(|i| i.kind == "embedded" && i.project.project_type == "mod")
+        .map(|i| &i.project)
+        .collect();
+    let download_bytes = version.primary_file().map_or(0, |f| f.size)
+        + files
+            .iter()
+            .flatten()
+            .filter_map(|v| v.primary_file())
+            .map(|f| f.size)
+            .sum::<u64>();
+    let total_mb = crate::jvm::total_memory_mb();
+    Ok(PackOverview {
+        mods: mods.len() as u32,
+        download_bytes,
+        themes: themes(&mods),
+        quests: page.categories.iter().any(|c| c == "quests")
+            || mods.iter().any(|m| is_quest_book(&m.slug)),
+        memory: PackMemory {
+            wanted_mb: crate::jvm::auto_memory_mb(u64::MAX, mods.len()),
+            given_mb: crate::jvm::auto_memory_mb(total_mb, mods.len()),
+            total_mb,
+        },
+    })
+}
+
+fn themes(mods: &[&ProjectSummary]) -> Vec<Theme> {
+    let mut counts: HashMap<&str, u32> = HashMap::new();
+    for category in mods.iter().flat_map(|m| m.categories.iter()) {
+        if let Some(theme) = THEMES.iter().find(|t| **t == category) {
+            *counts.entry(theme).or_default() += 1;
+        }
+    }
+    let mut themes: Vec<Theme> = counts
+        .into_iter()
+        .map(|(category, mods)| Theme {
+            category: category.to_owned(),
+            mods,
+        })
+        .collect();
+    themes.sort_by(|a, b| b.mods.cmp(&a.mods).then(a.category.cmp(&b.category)));
+    themes.truncate(4);
+    themes
+}
+
+/// Quest book mods and their add-ons (FTB Quests itself is not on Modrinth, its
+/// companions are).
+fn is_quest_book(slug: &str) -> bool {
+    slug.contains("quest") || slug.starts_with("heracles")
+}
+
 /// Alphabetical order that skips tags like `[EMF]` in front of a title.
 fn sort_key(title: &str) -> String {
     let title = title.trim_start_matches(|c: char| !c.is_alphanumeric());
@@ -562,6 +692,7 @@ async fn summaries(
             project_type: project.project_type,
             icon_url: project.icon_url,
             downloads: project.downloads,
+            categories: project.categories,
         };
         cache.summaries.put(&[summary.id.as_str()], summary.clone());
         found.push(summary);
@@ -572,6 +703,50 @@ async fn summaries(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn summary(slug: &str, categories: &[&str]) -> ProjectSummary {
+        ProjectSummary {
+            id: slug.into(),
+            slug: slug.into(),
+            title: slug.into(),
+            summary: String::new(),
+            project_type: "mod".into(),
+            icon_url: None,
+            downloads: 0,
+            categories: categories.iter().map(|c| (*c).to_owned()).collect(),
+        }
+    }
+
+    #[test]
+    fn pack_themes_skip_libraries() {
+        let mods = [
+            summary("create", &["technology", "decoration"]),
+            summary("mekanism", &["technology", "utility"]),
+            summary("fabric-api", &["library"]),
+            summary("ars", &["magic"]),
+        ];
+        let refs: Vec<&ProjectSummary> = mods.iter().collect();
+        let found: Vec<(String, u32)> = themes(&refs)
+            .into_iter()
+            .map(|t| (t.category, t.mods))
+            .collect();
+        assert_eq!(
+            found,
+            [
+                ("technology".into(), 2),
+                ("decoration".into(), 1),
+                ("magic".into(), 1)
+            ]
+        );
+    }
+
+    #[test]
+    fn spots_quest_books() {
+        assert!(is_quest_book("ftb-quests-freeze-fix"));
+        assert!(is_quest_book("odyssey-quests"));
+        assert!(is_quest_book("heracles-for-villagers"));
+        assert!(!is_quest_book("sodium"));
+    }
 
     fn version(id: &str, kind: &str, games: &[&str], loaders: &[&str]) -> Version {
         serde_json::from_value(serde_json::json!({
