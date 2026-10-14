@@ -242,7 +242,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - [x] 1. Découvrir : tri (téléchargements, abonnés, nouveautés, mis à jour), filtres par catégorie, version du jeu pour les modpacks, rayons « Nouveautés », « Mis à jour récemment », « Les plus suivis » quand on ne cherche rien (D51). Pas de « tendances » (Modrinth n'en donne pas).
 - [x] 2. « Continuer » en un clic, directement dans le dernier monde (1.20+), avec choix d'un autre monde ou de l'écran titre ; « Jouer » sur chaque monde de l'onglet Mondes
 - [x] 3. Carnet de partie par monde : jour, temps de jeu, distance, créatures, blocs, morts ; grandes étapes vanilla datées ; quêtes FTB par chapitre (D52)
-- [ ] 4. Fiches de modpack « est-ce pour moi ? » (RAM conseillée face à celle du PC, nombre de mods, quêtes, style du pack, packs proches)
+- [x] 4. Fiches de modpack « est-ce pour moi ? » : mémoire face au PC, nombre de mods et taille, quêtes, thèmes dominants ; packs « dans le même esprit » (D53)
 
 ## Portage macOS
 
@@ -577,4 +577,10 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Correction : `search_content` dépassait la limite de 7 arguments de clippy (commit du chantier 1) ; tri et filtres regroupés en un seul argument.
 - Vérifié : tests Rust (dates des critères, statistiques nouvel et ancien format, quêtes par chapitre, arbre SNBT) ; exemple `journal <instance>` sur de vrais mondes (DawnCraft 3/230 quêtes, Prominence II 1 752 quêtes lues en 0,5 s en debug, Fabulously Optimized, Cobbleverse) ; interface avec le faux backend.
 - Prochaine étape : chantier 4, fiches de modpack « est-ce pour moi ? ».
+
+### 2026-10-14 (Phase 8, chantier 4 : fiches de modpack « est-ce pour moi ? »)
+- Fait : sur la fiche d'un modpack, sous l'en-tête, une bande de quatre cases pour la version qu'« Installer » choisirait : Mémoire (« Ton PC suit », « Un peu juste » ou « Trop lourd pour ton PC », d'après la mémoire automatique de D18 face à celle de la machine), Contenu (nombre de mods et taille à télécharger), Quêtes (livre de quêtes ou pas), Surtout (deux thèmes dominants des mods inclus). Dans la colonne de droite, « Dans le même esprit » : 5 modpacks qui partagent ses catégories et sa version du jeu, les plus suivis d'abord.
+- Moteur : `project::pack_overview` (mods inclus déjà résolus pour l'onglet Contenu, tailles des fichiers en lots de 100, catégories des mods) ; les résumés de projets gardent maintenant leurs catégories.
+- Vérifié : tests Rust (thèmes sans bibliothèques, mods de quêtes reconnus) ; exemple `project` sur de vrais packs (Prominence II : 446 mods, 1,7 Go, quêtes, 0,4 s ; Fabulously Optimized : 49 mods, 45 Mo ; Cobbleverse : 150 mods, 940 Mo) ; interface avec le faux backend.
+- Phase 8 terminée. Prochaine étape : Zeleff teste les quatre chantiers dans la vraie app.
 

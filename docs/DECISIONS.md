@@ -359,3 +359,11 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Joueur retenu : celui qui a le plus de temps de jeu dans le monde (un monde peut avoir connu plusieurs comptes).
 - Statut : validé
 
+### D53 · 2026-10-14 · Fiche de modpack : des repères honnêtes, sans télécharger le pack
+- Tout vient de Modrinth et de la machine, sans télécharger le `.mrpack` (jusqu'à des dizaines de Mo) juste pour afficher une fiche.
+- Nombre de mods : les mods inclus publiés sur Modrinth. Un pack peut en ajouter d'autres directement dans ses fichiers (souvent ceux de CurseForge) : l'info-bulle le dit.
+- Mémoire : la règle de la mémoire automatique (D18) appliquée à ce nombre de mods, comparée à ce qu'elle donnerait sur ce PC. « Un peu juste » à partir de 75 % du souhaité, « Trop lourd » en dessous. Modrinth ne donne aucune exigence officielle.
+- Quêtes : catégorie « Quêtes » du pack, ou un mod de quêtes parmi les inclus (FTB Quests n'est pas sur Modrinth, ses compagnons si). Sinon « Pas annoncées », jamais « Aucune ».
+- Packs proches : recherche par ses deux premières catégories et sa version du jeu (une seule catégorie s'il y a moins de 3 résultats), pas par mods en commun (trop coûteux).
+- Statut : validé
+
