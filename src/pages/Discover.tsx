@@ -1,12 +1,14 @@
 import { createEffect, createMemo, createResource, createSignal, For, type JSX, on, onCleanup, Show } from "solid-js";
 import { Icon, LoaderIcon } from "../components/pixel";
 import Alert from "../components/Alert";
+import DiscoverShelf from "../components/DiscoverShelf";
 import ModpackInstallDialog from "../components/ModpackInstallDialog";
 import ProjectIcon from "../components/ProjectIcon";
 import Select from "../components/Select";
 import Tabs, { tabPanel } from "../components/Tabs";
-import { api, errorMessage, type ProjectType, type SearchHit } from "../lib/api";
+import { api, errorMessage, type ProjectType, type SearchHit, type SearchNarrowing, type SearchSort } from "../lib/api";
 import { installContent, isBusy, isInstalled, loadContent } from "../lib/content";
+import { FILTER_CATEGORIES, SHELVES, SORT_LABELS } from "../lib/discover";
 import { formatCount, loaderLabel } from "../lib/format";
 import { importModpackFile, installPack, isInstallingPack } from "../lib/modpacks";
 import { categoryLabel, isLoaderCategory, openProject } from "../lib/projects";
@@ -55,8 +57,50 @@ export default function Discover(props: { instanceId?: string; query?: string; k
   const [error, setError] = createSignal<string | null>(null);
   const [actionError, setActionError] = createSignal<string | null>(null);
   const [importing, setImporting] = createSignal(false);
+  // Empty: the automatic order (relevance with a query, most downloaded otherwise).
+  const [sort, setSort] = remembered<SearchSort | "">("sort", "");
+  const [categories, setCategories] = remembered<string[]>("categories", []);
+  const [packVersion, setPackVersion] = remembered("packVersion", "");
 
   const modpacks = () => kind() === "modpack";
+  // Each kind has its own categories, and opens on its shelves.
+  createEffect(
+    on(
+      kind,
+      () => {
+        setCategories([]);
+        setSort("");
+      },
+      { defer: true },
+    ),
+  );
+  let filters: HTMLDivElement | undefined;
+  // "Most downloaded" is the automatic order without a query.
+  createEffect(() => {
+    if (!debounced().trim() && (sort() === "downloads" || sort() === "relevance")) setSort("");
+  });
+  const [gameVersions] = createResource(
+    () => modpacks() || false,
+    () => api.listVersions().then((list) => list.versions.filter((v) => v.type === "release").map((v) => v.id)),
+  );
+  const narrowing = (): SearchNarrowing => ({
+    sort: sort() || undefined,
+    categories: categories(),
+    gameVersion: modpacks() ? packVersion() || undefined : undefined,
+  });
+  /** Nothing typed or narrowed: shelves come first. */
+  const browsing = () => !debounced().trim() && !sort() && categories().length === 0;
+  const sortOptions = () => {
+    const searching = !!debounced().trim();
+    const order: SearchSort[] = searching ? ["downloads", "follows", "newest", "updated"] : ["follows", "newest", "updated"];
+    return [
+      { value: "", label: SORT_LABELS[searching ? "relevance" : "downloads"] },
+      ...order.map((value) => ({ value, label: SORT_LABELS[value] })),
+    ];
+  };
+  function toggleCategory(category: string) {
+    setCategories((list) => (list.includes(category) ? list.filter((c) => c !== category) : [...list, category]));
+  }
   const instance = createMemo(() => instances().find((i) => i.id === instanceId()));
   const needsInstance = () => !modpacks() && instances().length === 0;
   const needsLoader = () => kind() === "mod" && instance()?.loader === "vanilla";
@@ -86,7 +130,7 @@ export default function Discover(props: { instanceId?: string; query?: string; k
     setLoading(true);
     setError(null);
     try {
-      const results = await api.searchContent(debounced(), kind(), instanceId() || null, append ? hits().length : 0);
+      const results = await api.searchContent(debounced(), kind(), instanceId() || null, append ? hits().length : 0, narrowing());
       if (current !== generation) return;
       setHits(append ? [...hits(), ...results.hits] : results.hits);
       setTotal(results.totalHits);
@@ -98,7 +142,7 @@ export default function Discover(props: { instanceId?: string; query?: string; k
   }
 
   createEffect(
-    on([debounced, kind, instanceId, searchable], () => {
+    on([debounced, kind, instanceId, searchable, sort, categories, packVersion], () => {
       setActionError(null);
       if (!searchable()) {
         generation++;
@@ -351,13 +395,72 @@ export default function Discover(props: { instanceId?: string; query?: string; k
       </Show>
 
       <Show when={searchable()}>
-        <span class="text-meta text-muted">
-          {loading() && hits().length === 0 ? "Recherche…" : `${formatCount(total())} résultats`}
-        </span>
+        <div ref={filters} role="group" aria-label="Filtres" class="flex scroll-mt-4 flex-wrap items-center gap-1.5">
+          <Select class="mr-1.5 w-56 text-sm" label="Trier par" value={sort()} options={sortOptions()} onChange={(v) => setSort(v as SearchSort | "")} />
+          <Show when={modpacks()}>
+            <Select
+              class="mr-1.5 w-48 text-sm"
+              label="Version du jeu"
+              value={packVersion()}
+              options={[
+                { value: "", label: "Toutes les versions" },
+                ...(gameVersions() ?? []).map((v) => ({ value: v, label: v })),
+              ]}
+              onChange={setPackVersion}
+            />
+          </Show>
+          <For each={FILTER_CATEGORIES[kind()]}>
+            {(category) => (
+              <button class="chip" aria-pressed={categories().includes(category)} onClick={() => toggleCategory(category)}>
+                <Show when={categories().includes(category)}>
+                  <Icon name="check" size={12} />
+                </Show>
+                {categoryLabel(category)}
+              </button>
+            )}
+          </For>
+          <Show when={categories().length > 0}>
+            <button class="btn btn-ghost h-7 px-2 text-sm" onClick={() => setCategories([])}>
+              Effacer
+            </button>
+          </Show>
+        </div>
+      </Show>
+
+      <Show when={searchable() && browsing()}>
+        <For each={SHELVES}>
+          {(shelf) => (
+            <DiscoverShelf
+              title={shelf.title}
+              sort={shelf.sort}
+              kind={kind()}
+              instanceId={modpacks() ? null : instanceId() || null}
+              gameVersion={modpacks() ? packVersion() || undefined : undefined}
+              onOpen={(hit) => openProject(hit.slug || hit.projectId, modpacks() ? undefined : instanceId() || undefined)}
+              onSeeAll={() => {
+                setSort(shelf.sort);
+                filters?.scrollIntoView({ block: "nearest" });
+              }}
+            />
+          )}
+        </For>
+      </Show>
+
+      <Show when={searchable()}>
+        <div class="flex items-baseline gap-3">
+          <Show when={browsing()}>
+            <h2 class="text-lg font-semibold">{SORT_LABELS.downloads}</h2>
+          </Show>
+          <span class="text-meta text-muted">
+            {loading() && hits().length === 0 ? "Recherche…" : `${formatCount(total())} résultat${total() > 1 ? "s" : ""}`}
+          </span>
+        </div>
         <Show when={!loading() && hits().length === 0 && !error()}>
           <div class="panel px-corners-md flex flex-col items-center gap-1.5 py-12 text-center">
             <p class="text-chalk-2">Rien trouvé{debounced() ? ` pour « ${debounced()} »` : ""}.</p>
-            <p class="text-sm text-muted">Essaie un autre mot, ou un autre type de contenu.</p>
+            <p class="text-sm text-muted">
+              {categories().length > 0 ? "Essaie avec moins de catégories." : "Essaie un autre mot, ou un autre type de contenu."}
+            </p>
           </div>
         </Show>
         <ul {...tabPanel("discover-kind", kind())} class="panel flex flex-col divide-y divide-line overflow-hidden" classList={{ hidden: hits().length === 0 }}>

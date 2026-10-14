@@ -441,6 +441,24 @@ button {
     color: var(--color-chalk-2);
     background: rgb(255 255 255 / 0.07);
   }
+  /* A chip that filters: washes on hover, raised like a selected segment when on. */
+  button.chip {
+    height: 28px;
+    padding: 0 10px;
+    transition:
+      background-color 100ms,
+      color 100ms;
+  }
+  button.chip:hover,
+  button.chip:focus-visible {
+    background: rgb(255 255 255 / 0.12);
+    color: var(--color-chalk);
+  }
+  button.chip[aria-pressed="true"] {
+    background: var(--color-slate-600);
+    color: var(--color-chalk);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
 
   /* Row in a list: flat until hovered or selected. */
   .row {

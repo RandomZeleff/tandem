@@ -111,7 +111,20 @@ export interface SearchHit {
   follows: number;
   iconUrl: string | null;
   displayCategories: string[];
+  dateCreated: string;
   dateModified: string;
+}
+
+/** Modrinth's result orders; `relevance` only makes sense with a query. */
+export type SearchSort = "relevance" | "downloads" | "follows" | "newest" | "updated";
+
+export interface SearchNarrowing {
+  /** Omitted: relevance with a query, most downloaded otherwise. */
+  sort?: SearchSort;
+  /** Modrinth categories, all required. */
+  categories?: string[];
+  /** Modpacks only (other kinds follow the instance). */
+  gameVersion?: string;
 }
 
 export interface SearchResults {
@@ -719,8 +732,16 @@ export const api = {
   installRosetta: () => invoke<boolean>("install_rosetta"),
   runningInstances: () => invoke<string[]>("running_instances"),
 
-  searchContent: (query: string, kind: ProjectType, instanceId: string | null, offset = 0) =>
-    invoke<SearchResults>("search_content", { query, kind, instanceId, offset }),
+  searchContent: (query: string, kind: ProjectType, instanceId: string | null, offset = 0, narrow: SearchNarrowing = {}) =>
+    invoke<SearchResults>("search_content", {
+      query,
+      kind,
+      instanceId,
+      offset,
+      sort: narrow.sort ?? null,
+      categories: narrow.categories ?? [],
+      gameVersion: narrow.gameVersion ?? null,
+    }),
   listContent: (instanceId: string) => invoke<InstalledContent[]>("list_content", { instanceId }),
   /** The best compatible version when `versionId` is omitted. */
   installContent: (instanceId: string, projectId: string, versionId?: string) =>

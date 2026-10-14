@@ -67,7 +67,7 @@ function fakeLoaderVersions(loader: Loader, gameVersion: string) {
 
 type Row = [id: string, title: string, author: string, description: string, downloads: number, categories: string[]];
 
-const hit = ([projectId, title, author, description, downloads, displayCategories]: Row): SearchHit => ({
+const hit = ([projectId, title, author, description, downloads, displayCategories]: Row, index: number): SearchHit => ({
   projectId,
   slug: projectId,
   title,
@@ -77,7 +77,8 @@ const hit = ([projectId, title, author, description, downloads, displayCategorie
   follows: Math.round(downloads / 1000),
   iconUrl: `https://cdn.modrinth.com/data/${projectId}/icon.png`,
   displayCategories,
-  dateModified: iso(48),
+  dateCreated: iso(24 * (3 + index * 11)),
+  dateModified: iso(6 + index * 30),
 });
 
 /** Fake Modrinth catalogue (real project ids, so icons load from the Modrinth CDN). */
@@ -368,7 +369,18 @@ export function installMocks() {
         case "search_content": {
           await new Promise((r) => setTimeout(r, 250));
           const q = (args.query as string).toLowerCase();
-          const hits = CATALOGUE[args.kind as ProjectType].filter((h) => h.title.toLowerCase().includes(q));
+          const categories = (args.categories as string[] | undefined) ?? [];
+          const hits = CATALOGUE[args.kind as ProjectType].filter(
+            (h) => h.title.toLowerCase().includes(q) && categories.every((c) => h.displayCategories.includes(c)),
+          );
+          const by: Record<string, (h: SearchHit) => number> = {
+            follows: (h) => h.follows,
+            newest: (h) => Date.parse(h.dateCreated),
+            updated: (h) => Date.parse(h.dateModified),
+            downloads: (h) => h.downloads,
+          };
+          const key = by[(args.sort as string | null) ?? (q ? "" : "downloads")];
+          if (key) hits.sort((a, b) => key(b) - key(a));
           return { hits, offset: 0, limit: 20, totalHits: hits.length };
         }
         case "list_content":
