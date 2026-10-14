@@ -35,13 +35,6 @@ export const SORT_LABELS: Record<SearchSort, string> = {
   updated: "Mis à jour récemment",
 };
 
-/** The shelves shown above the full list when the player is just browsing. */
-export const SHELVES: { sort: SearchSort; title: string }[] = [
-  { sort: "newest", title: "Nouveautés" },
-  { sort: "updated", title: "Mis à jour récemment" },
-  { sort: "follows", title: "Les plus suivis" },
-];
-
 const SHELF_TTL_MS = 10 * 60 * 1000;
 const shelfCache = new Map<string, { at: number; results: Promise<SearchResults> }>();
 

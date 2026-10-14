@@ -1,14 +1,14 @@
 import { createEffect, createMemo, createResource, createSignal, For, type JSX, on, onCleanup, Show } from "solid-js";
-import { Icon, LoaderIcon } from "../components/pixel";
+import { Checkbox, Icon, LoaderIcon } from "../components/pixel";
 import Alert from "../components/Alert";
-import DiscoverShelf from "../components/DiscoverShelf";
+import { ListShelf, PictureShelf } from "../components/DiscoverShelf";
 import ModpackInstallDialog from "../components/ModpackInstallDialog";
 import ProjectIcon from "../components/ProjectIcon";
 import Select from "../components/Select";
 import Tabs, { tabPanel } from "../components/Tabs";
 import { api, errorMessage, type ProjectType, type SearchHit, type SearchNarrowing, type SearchSort } from "../lib/api";
 import { installContent, isBusy, isInstalled, loadContent } from "../lib/content";
-import { FILTER_CATEGORIES, SHELVES, SORT_LABELS } from "../lib/discover";
+import { FILTER_CATEGORIES, SORT_LABELS } from "../lib/discover";
 import { formatCount, loaderLabel } from "../lib/format";
 import { importModpackFile, installPack, isInstallingPack } from "../lib/modpacks";
 import { categoryLabel, isLoaderCategory, openProject } from "../lib/projects";
@@ -74,7 +74,7 @@ export default function Discover(props: { instanceId?: string; query?: string; k
       { defer: true },
     ),
   );
-  let filters: HTMLDivElement | undefined;
+  let top: HTMLDivElement | undefined;
   // "Most downloaded" is the automatic order without a query.
   createEffect(() => {
     if (!debounced().trim() && (sort() === "downloads" || sort() === "relevance")) setSort("");
@@ -261,23 +261,30 @@ export default function Discover(props: { instanceId?: string; query?: string; k
     );
   }
 
-  return (
-    <div class="mx-auto flex max-w-[1400px] flex-col gap-5">
-      <div class="flex flex-col gap-1.5">
-        <h1 class="title-display text-title">Découvrir</h1>
-        <span class="text-base text-chalk-2">
-          Mods, packs de textures, shaders, datapacks et modpacks de Modrinth, filtrés sur la version et le loader de ton instance.
-        </span>
-      </div>
+  const shelf = (sort: SearchSort) => ({
+    sort,
+    title: SORT_LABELS[sort],
+    kind: kind(),
+    instanceId: modpacks() ? null : instanceId() || null,
+    gameVersion: modpacks() ? packVersion() || undefined : undefined,
+    onOpen: (hit: SearchHit) => openProject(hit.slug || hit.projectId, modpacks() ? undefined : instanceId() || undefined),
+    onSeeAll: () => {
+      setSort(sort);
+      top?.scrollIntoView({ block: "nearest" });
+    },
+  });
 
-      <div class="flex flex-wrap items-center gap-3">
+  return (
+    <div class="mx-auto flex max-w-[1400px] flex-col gap-6">
+      <h1 class="title-display text-title">Découvrir</h1>
+
+      {/* Kinds are the page's sections; what they apply to sits at the right end. */}
+      <div class="flex items-center gap-3 shadow-[inset_0_-1px_0_var(--color-divider)]">
+        <Tabs label="Type de contenu" idPrefix="discover-kind" class="mr-auto" items={KINDS} value={kind()} onChange={setKind} />
         <Show when={!modpacks() && instances().length > 0}>
-          <label class="sr-only" for="discover-instance">
-            Instance
-          </label>
           <Select
-            id="discover-instance"
-            class="w-64 text-sm"
+            class="w-60 text-sm"
+            label="Instance"
             value={instanceId()}
             options={instances().map((i) => ({
               value: i.id,
@@ -288,225 +295,223 @@ export default function Discover(props: { instanceId?: string; query?: string; k
             onChange={setInstanceId}
           />
         </Show>
-
         <Show when={datapacks() && (worlds() ?? []).length > 0}>
           <Select
-            class="w-52 text-sm"
+            class="w-48 text-sm"
             label="Monde"
             value={world()}
             options={(worlds() ?? []).map((w) => ({ value: w.folder, label: w.name, hint: w.version ?? undefined }))}
             onChange={setWorld}
           />
         </Show>
-
-        <Tabs
-          label="Type de contenu"
-          idPrefix="discover-kind"
-          variant="segmented"
-          tabClass="h-[34px]"
-          items={KINDS}
-          value={kind()}
-          onChange={setKind}
-        />
-
-        <div class="relative min-w-[220px] flex-1">
-          <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
-            <Icon name="search" size={13} />
-          </span>
-          <input
-            id="discover-search"
-            type="search"
-            class="field w-full pl-9 text-sm"
-            placeholder={`Rechercher sur Modrinth… (${navigator.userAgent.includes("Mac") ? "⌘K" : "Ctrl+K"})`}
-            aria-label="Rechercher"
-            value={query()}
-            onInput={(e) => setQuery(e.currentTarget.value)}
-          />
-        </div>
+        <Show when={modpacks()}>
+          <button
+            class="btn btn-ghost h-9 px-3 text-sm"
+            title="Un fichier .mrpack : il crée sa propre instance"
+            disabled={importing()}
+            onClick={() => void importFile()}
+          >
+            <Icon name="folder" size={12} />
+            {importing() ? "Import…" : "Importer un fichier"}
+          </button>
+        </Show>
       </div>
 
-      <Show when={modpacks()}>
-        <div class="panel px-corners-md flex items-center justify-between gap-4 p-4">
-          <p class="text-sm text-chalk-2">
-            Chaque modpack crée sa propre instance, avec la bonne version du jeu et du loader.
-          </p>
-          <button class="btn px-corners shrink-0" disabled={importing()} onClick={() => void importFile()}>
-            <Icon name="folder" size={12} />
-            {importing() ? "Import…" : "Importer un modpack"}
-          </button>
-        </div>
-      </Show>
-
-      <Show when={needsWorld()}>
-        <div class="panel px-corners-md flex flex-col items-center gap-2 py-12 text-center">
-          <p class="text-chalk-2">Les datapacks s'ajoutent à un monde, et « {instance()?.name} » n'en a pas encore.</p>
-          <p class="text-sm text-muted">Lance le jeu et crée un monde : il apparaîtra ici.</p>
-        </div>
-      </Show>
-
-      <Show when={needsInstance()}>
-        <div class="panel px-corners-md flex flex-col items-center gap-3 py-14 text-center">
-          <p class="text-chalk-2">Crée d'abord une instance pour y installer du contenu, ou pars d'un modpack.</p>
-          <div class="flex gap-2">
-            <button class="btn btn-primary px-corners" onClick={() => setNewInstanceDialog({})}>
-              <Icon name="plus" size={12} />
-              Nouvelle instance
-            </button>
-            <button class="btn px-corners" onClick={() => setKind("modpack")}>
-              Voir les modpacks
-            </button>
-          </div>
-        </div>
-      </Show>
-
-      <Show when={needsLoader()}>
-        <div class="panel px-corners-md flex items-center justify-between gap-4 p-4">
-          <p class="text-sm text-chalk-2">
-            Les mods ont besoin d'un loader : « {instance()?.name} » est une instance Vanilla.
-          </p>
-          <button class="btn px-corners shrink-0" onClick={() => setNewInstanceDialog({ version: instance()?.gameVersion })}>
-            <LoaderIcon loader="fabric" size={12} />
-            Créer une instance Fabric
-          </button>
-        </div>
-      </Show>
-
-      <Show when={needsIris()}>
-        <div class="panel px-corners-md flex items-center justify-between gap-4 p-4">
-          <p class="text-sm text-chalk-2">Les shaders ont besoin du mod Iris dans l'instance.</p>
-          <button class="btn px-corners shrink-0" disabled={isBusy(instanceId(), "iris")} onClick={() => void install("iris")}>
-            <Icon name="download" size={12} />
-            {isBusy(instanceId(), "iris") ? "Installation…" : "Installer Iris"}
-          </button>
-        </div>
-      </Show>
-
-      <Show when={actionError() ?? error()}>
-        {(message) => (
-          <Alert
-            onClose={() => {
-              setActionError(null);
-              setError(null);
-            }}
-          >
-            {message()}
-          </Alert>
-        )}
-      </Show>
-
-      <Show when={searchable()}>
-        <div ref={filters} role="group" aria-label="Filtres" class="flex scroll-mt-4 flex-wrap items-center gap-1.5">
-          <Select class="mr-1.5 w-56 text-sm" label="Trier par" value={sort()} options={sortOptions()} onChange={(v) => setSort(v as SearchSort | "")} />
-          <Show when={modpacks()}>
-            <Select
-              class="mr-1.5 w-48 text-sm"
-              label="Version du jeu"
-              value={packVersion()}
-              options={[
-                { value: "", label: "Toutes les versions" },
-                ...(gameVersions() ?? []).map((v) => ({ value: v, label: v })),
-              ]}
-              onChange={setPackVersion}
-            />
-          </Show>
-          <For each={FILTER_CATEGORIES[kind()]}>
-            {(category) => (
-              <button class="chip" aria-pressed={categories().includes(category)} onClick={() => toggleCategory(category)}>
-                <Show when={categories().includes(category)}>
-                  <Icon name="check" size={12} />
+      <div ref={top} class="grid scroll-mt-6 items-start gap-8" classList={{ "grid-cols-[200px_minmax(0,1fr)]": searchable() }}>
+        <Show when={searchable()}>
+          <aside aria-label="Filtres" class="sticky top-0 flex flex-col gap-5">
+            <div class="flex flex-col gap-2">
+              <span class="text-meta font-medium text-muted">Trier par</span>
+              <Select class="w-full text-sm" label="Trier par" value={sort()} options={sortOptions()} onChange={(v) => setSort(v as SearchSort | "")} />
+            </div>
+            <Show when={modpacks()}>
+              <div class="flex flex-col gap-2">
+                <span class="text-meta font-medium text-muted">Version du jeu</span>
+                <Select
+                  class="w-full text-sm"
+                  label="Version du jeu"
+                  value={packVersion()}
+                  options={[
+                    { value: "", label: "Toutes les versions" },
+                    ...(gameVersions() ?? []).map((v) => ({ value: v, label: v })),
+                  ]}
+                  onChange={setPackVersion}
+                />
+              </div>
+            </Show>
+            <div role="group" aria-labelledby="discover-categories" class="flex flex-col">
+              <div class="flex h-7 items-center justify-between">
+                <span id="discover-categories" class="text-meta font-medium text-muted">
+                  Catégories
+                </span>
+                <Show when={categories().length > 0}>
+                  <button class="btn btn-ghost h-7 px-2 text-xs" onClick={() => setCategories([])}>
+                    Effacer
+                  </button>
                 </Show>
-                {categoryLabel(category)}
-              </button>
-            )}
-          </For>
-          <Show when={categories().length > 0}>
-            <button class="btn btn-ghost h-7 px-2 text-sm" onClick={() => setCategories([])}>
-              Effacer
-            </button>
-          </Show>
-        </div>
-      </Show>
-
-      <Show when={searchable() && browsing()}>
-        <For each={SHELVES}>
-          {(shelf) => (
-            <DiscoverShelf
-              title={shelf.title}
-              sort={shelf.sort}
-              kind={kind()}
-              instanceId={modpacks() ? null : instanceId() || null}
-              gameVersion={modpacks() ? packVersion() || undefined : undefined}
-              onOpen={(hit) => openProject(hit.slug || hit.projectId, modpacks() ? undefined : instanceId() || undefined)}
-              onSeeAll={() => {
-                setSort(shelf.sort);
-                filters?.scrollIntoView({ block: "nearest" });
-              }}
-            />
-          )}
-        </For>
-      </Show>
-
-      <Show when={searchable()}>
-        <div class="flex items-baseline gap-3">
-          <Show when={browsing()}>
-            <h2 class="text-lg font-semibold">{SORT_LABELS.downloads}</h2>
-          </Show>
-          <span class="text-meta text-muted">
-            {loading() && hits().length === 0 ? "Recherche…" : `${formatCount(total())} résultat${total() > 1 ? "s" : ""}`}
-          </span>
-        </div>
-        <Show when={!loading() && hits().length === 0 && !error()}>
-          <div class="panel px-corners-md flex flex-col items-center gap-1.5 py-12 text-center">
-            <p class="text-chalk-2">Rien trouvé{debounced() ? ` pour « ${debounced()} »` : ""}.</p>
-            <p class="text-sm text-muted">
-              {categories().length > 0 ? "Essaie avec moins de catégories." : "Essaie un autre mot, ou un autre type de contenu."}
-            </p>
-          </div>
+              </div>
+              <For each={FILTER_CATEGORIES[kind()]}>
+                {(category) => (
+                  <Checkbox
+                    class="row -mx-2 h-8 px-2 text-sm text-chalk-2"
+                    checked={categories().includes(category)}
+                    label={categoryLabel(category)}
+                    onChange={() => toggleCategory(category)}
+                  />
+                )}
+              </For>
+            </div>
+          </aside>
         </Show>
-        <ul {...tabPanel("discover-kind", kind())} class="panel flex flex-col divide-y divide-line overflow-hidden" classList={{ hidden: hits().length === 0 }}>
-          <For each={hits()}>
-            {(hit) => (
-              <li class="flex items-start gap-4 p-3.5 transition-colors duration-100 hover:bg-white/[0.03] has-[button:focus-visible]:bg-white/[0.03]">
-                <button
-                  class="group/card flex min-w-0 flex-1 items-start gap-4 text-left"
-                  aria-label={`Voir la fiche de ${hit.title}`}
-                  onClick={() => openProject(hit.slug || hit.projectId, modpacks() ? undefined : instanceId() || undefined)}
+
+        <div class="@container flex min-w-0 flex-col gap-8">
+          <div class="flex flex-col gap-4">
+            <div class="relative">
+              <span class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted">
+                <Icon name="search" size={12} />
+              </span>
+              <input
+                id="discover-search"
+                type="search"
+                class="field h-10 w-full pl-10 text-sm"
+                placeholder={`Rechercher sur Modrinth… (${navigator.userAgent.includes("Mac") ? "⌘K" : "Ctrl+K"})`}
+                aria-label="Rechercher"
+                value={query()}
+                onInput={(e) => setQuery(e.currentTarget.value)}
+              />
+            </div>
+
+            <Show when={actionError() ?? error()}>
+              {(message) => (
+                <Alert
+                  onClose={() => {
+                    setActionError(null);
+                    setError(null);
+                  }}
                 >
-                  <ProjectIcon url={hit.iconUrl} size={56} />
-                  <div class="flex min-w-0 flex-1 flex-col gap-1">
-                    <div class="flex items-baseline gap-2">
-                      <h2 class="truncate text-base font-semibold group-hover/card:text-xp-text group-focus-visible/card:text-xp-text">
-                        {hit.title}
-                      </h2>
-                      <span class="shrink-0 text-meta text-muted">par {hit.author}</span>
-                    </div>
-                    <p class="line-clamp-2 text-meta text-chalk-2">{hit.description}</p>
-                    <div class="mt-1 flex flex-wrap items-center gap-1.5 text-meta text-muted">
-                      <span class="flex items-center gap-1">
-                        <Icon name="download" size={12} />
-                        {formatCount(hit.downloads)}
-                      </span>
-                      <For each={hit.displayCategories.slice(0, 3)}>
-                        {(category) => (
-                          <span class="chip h-5 px-1.5 text-xs">
-                            {isLoaderCategory(category) ? loaderLabel(category) : categoryLabel(category)}
-                          </span>
-                        )}
-                      </For>
-                    </div>
-                  </div>
+                  {message()}
+                </Alert>
+              )}
+            </Show>
+          </div>
+
+          <Show when={needsWorld()}>
+            <div class="panel px-corners-md flex flex-col items-center gap-2 py-12 text-center">
+              <p class="text-chalk-2">Les datapacks s'ajoutent à un monde, et « {instance()?.name} » n'en a pas encore.</p>
+              <p class="text-sm text-muted">Lance le jeu et crée un monde : il apparaîtra ici.</p>
+            </div>
+          </Show>
+
+          <Show when={needsInstance()}>
+            <div class="panel px-corners-md flex flex-col items-center gap-3 py-14 text-center">
+              <p class="text-chalk-2">Crée d'abord une instance pour y installer du contenu, ou pars d'un modpack.</p>
+              <div class="flex gap-2">
+                <button class="btn btn-primary px-corners" onClick={() => setNewInstanceDialog({})}>
+                  <Icon name="plus" size={12} />
+                  Nouvelle instance
                 </button>
-                {action(hit)}
-              </li>
-            )}
-          </For>
-        </ul>
-        <Show when={hits().length < total()}>
-          <button class="btn px-corners mx-auto" disabled={loading()} onClick={() => void search(true)}>
-            {loading() ? "Chargement…" : "Voir plus"}
-          </button>
-        </Show>
-      </Show>
+                <button class="btn px-corners" onClick={() => setKind("modpack")}>
+                  Voir les modpacks
+                </button>
+              </div>
+            </div>
+          </Show>
+
+          <Show when={needsLoader()}>
+            <div class="panel px-corners-md flex items-center justify-between gap-4 p-4">
+              <p class="text-sm text-chalk-2">
+                Les mods ont besoin d'un loader : « {instance()?.name} » est une instance Vanilla.
+              </p>
+              <button class="btn px-corners shrink-0" onClick={() => setNewInstanceDialog({ version: instance()?.gameVersion })}>
+                <LoaderIcon loader="fabric" size={12} />
+                Créer une instance Fabric
+              </button>
+            </div>
+          </Show>
+
+          <Show when={needsIris()}>
+            <div class="panel px-corners-md flex items-center justify-between gap-4 p-4">
+              <p class="text-sm text-chalk-2">Les shaders ont besoin du mod Iris dans l'instance.</p>
+              <button class="btn px-corners shrink-0" disabled={isBusy(instanceId(), "iris")} onClick={() => void install("iris")}>
+                <Icon name="download" size={12} />
+                {isBusy(instanceId(), "iris") ? "Installation…" : "Installer Iris"}
+              </button>
+            </div>
+          </Show>
+
+          <Show when={searchable() && browsing()}>
+            <PictureShelf {...shelf("newest")} />
+            <div class="grid gap-x-6 gap-y-8 @2xl:grid-cols-2">
+              <ListShelf {...shelf("updated")} />
+              <ListShelf {...shelf("follows")} />
+            </div>
+          </Show>
+
+          <Show when={searchable()}>
+            <section class="flex flex-col gap-3" aria-labelledby="discover-results">
+              <div class="flex h-8 items-baseline gap-3">
+                <h2 id="discover-results" class="text-lg font-semibold">
+                  {browsing() ? SORT_LABELS.downloads : "Résultats"}
+                </h2>
+                <span class="text-meta text-muted">
+                  {loading() && hits().length === 0 ? "Recherche…" : `${formatCount(total())} résultat${total() > 1 ? "s" : ""}`}
+                </span>
+              </div>
+              <Show when={!loading() && hits().length === 0 && !error()}>
+                <div class="panel px-corners-md flex flex-col items-center gap-1.5 py-12 text-center">
+                  <p class="text-chalk-2">Rien trouvé{debounced() ? ` pour « ${debounced()} »` : ""}.</p>
+                  <p class="text-sm text-muted">
+                    {categories().length > 0 ? "Essaie avec moins de catégories." : "Essaie un autre mot, ou un autre type de contenu."}
+                  </p>
+                </div>
+              </Show>
+              <ul {...tabPanel("discover-kind", kind())} class="panel flex flex-col divide-y divide-line overflow-hidden" classList={{ hidden: hits().length === 0 }}>
+                <For each={hits()}>
+                  {(hit) => (
+                    <li class="flex items-start gap-4 p-3.5 transition-colors duration-100 hover:bg-white/[0.03] has-[button:focus-visible]:bg-white/[0.03]">
+                      <button
+                        class="group/card flex min-w-0 flex-1 items-start gap-4 text-left"
+                        aria-label={`Voir la fiche de ${hit.title}`}
+                        onClick={() => openProject(hit.slug || hit.projectId, modpacks() ? undefined : instanceId() || undefined)}
+                      >
+                        <ProjectIcon url={hit.iconUrl} size={56} />
+                        <div class="flex min-w-0 flex-1 flex-col gap-1">
+                          <div class="flex items-baseline gap-2">
+                            <h3 class="truncate text-base font-semibold group-hover/card:text-xp-text group-focus-visible/card:text-xp-text">
+                              {hit.title}
+                            </h3>
+                            <span class="shrink-0 text-meta text-muted">par {hit.author}</span>
+                          </div>
+                          <p class="line-clamp-2 text-meta text-chalk-2">{hit.description}</p>
+                          <div class="mt-1 flex flex-wrap items-center gap-1.5 text-meta text-muted">
+                            <span class="flex items-center gap-1">
+                              <Icon name="download" size={12} />
+                              {formatCount(hit.downloads)}
+                            </span>
+                            <For each={hit.displayCategories.slice(0, 3)}>
+                              {(category) => (
+                                <span class="chip h-5 px-1.5 text-xs">
+                                  {isLoaderCategory(category) ? loaderLabel(category) : categoryLabel(category)}
+                                </span>
+                              )}
+                            </For>
+                          </div>
+                        </div>
+                      </button>
+                      {action(hit)}
+                    </li>
+                  )}
+                </For>
+              </ul>
+              <Show when={hits().length < total()}>
+                <button class="btn px-corners mx-auto" disabled={loading()} onClick={() => void search(true)}>
+                  {loading() ? "Chargement…" : "Voir plus"}
+                </button>
+              </Show>
+            </section>
+          </Show>
+        </div>
+      </div>
       {/* Keyed: the dialog keeps its pack while it closes. */}
       <Show when={picking()} keyed>
         {(hit) => (
