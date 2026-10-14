@@ -1,7 +1,7 @@
 use serde::Serialize;
 use serde_json::Value;
 use tandem_core::content::deps::{self, Dependent, Provider};
-use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults};
+use tandem_core::content::modrinth::{self, ProjectType, SearchFilter, SearchResults, SearchSort};
 use tandem_core::content::project::{self, DependencyItem, ProjectDetails, ProjectVersions};
 use tandem_core::content::{self, creators, mrpack, perf, ContentUpdate, InstalledContent};
 use tandem_core::install;
@@ -260,6 +260,9 @@ pub async fn search_content(
     kind: ProjectType,
     instance_id: Option<String>,
     offset: u32,
+    sort: Option<SearchSort>,
+    categories: Option<Vec<String>>,
+    game_version: Option<String>,
 ) -> CommandResult<SearchResults> {
     // Modpacks create their own instance: the current one does not narrow the search.
     let instance = match (&instance_id, kind) {
@@ -268,11 +271,18 @@ pub async fn search_content(
         }
         _ => None,
     };
+    let categories = categories.unwrap_or_default();
     let filter = SearchFilter {
         query: &query,
         kind,
-        game_version: instance.as_ref().map(|i| i.game_version.as_str()),
+        // The instance decides the version; without one (modpacks), the player may pick it.
+        game_version: instance
+            .as_ref()
+            .map(|i| i.game_version.as_str())
+            .or(game_version.as_deref()),
         loader: instance.as_ref().map(|i| i.loader),
+        categories: &categories,
+        sort,
         offset,
         limit: 20,
     };

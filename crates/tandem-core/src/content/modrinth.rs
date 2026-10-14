@@ -53,6 +53,33 @@ impl From<ContentKind> for ProjectType {
     }
 }
 
+/// Order of search results (Modrinth's `index`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum SearchSort {
+    Relevance,
+    Downloads,
+    Follows,
+    Newest,
+    Updated,
+}
+
+impl SearchSort {
+    fn as_str(self) -> &'static str {
+        match self {
+            SearchSort::Relevance => "relevance",
+            SearchSort::Downloads => "downloads",
+            SearchSort::Follows => "follows",
+            SearchSort::Newest => "newest",
+            SearchSort::Updated => "updated",
+        }
+    }
+}
+
+/// Followers a project needs to show up when browsing by date: without a floor, the newest
+/// and freshly updated lists are mostly empty tests and private server packs.
+pub const BROWSE_MIN_FOLLOWS: u32 = 10;
+
 /// What the player searches for, already narrowed to an instance when there is one.
 #[derive(Debug, Clone, Default)]
 pub struct SearchFilter<'a> {
@@ -60,8 +87,22 @@ pub struct SearchFilter<'a> {
     pub kind: ProjectType,
     pub game_version: Option<&'a str>,
     pub loader: Option<Loader>,
+    /// Modrinth categories, all required.
+    pub categories: &'a [String],
+    /// `None`: relevance for a query, most downloaded otherwise.
+    pub sort: Option<SearchSort>,
     pub offset: u32,
     pub limit: u32,
+}
+
+impl SearchFilter<'_> {
+    fn sort(&self) -> SearchSort {
+        match self.sort {
+            Some(sort) => sort,
+            None if self.query.trim().is_empty() => SearchSort::Downloads,
+            None => SearchSort::Relevance,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -87,6 +128,7 @@ pub struct SearchHit {
     pub icon_url: Option<String>,
     #[serde(default)]
     pub display_categories: Vec<String>,
+    pub date_created: String,
     pub date_modified: String,
 }
 
@@ -334,6 +376,13 @@ fn facets(filter: &SearchFilter<'_>) -> String {
     if !loaders.is_empty() {
         groups.push(loaders.iter().map(|l| format!("categories:{l}")).collect());
     }
+    for category in filter.categories {
+        groups.push(vec![format!("categories:{category}")]);
+    }
+    let by_date = matches!(filter.sort(), SearchSort::Newest | SearchSort::Updated);
+    if by_date && filter.query.trim().is_empty() {
+        groups.push(vec![format!("follows>={BROWSE_MIN_FOLLOWS}")]);
+    }
     serde_json::to_string(&groups).unwrap_or_default()
 }
 
@@ -342,14 +391,7 @@ pub async fn search(ctx: &Context, filter: &SearchFilter<'_>) -> Result<SearchRe
     url.query_pairs_mut()
         .append_pair("query", filter.query.trim())
         .append_pair("facets", &facets(filter))
-        .append_pair(
-            "index",
-            if filter.query.trim().is_empty() {
-                "downloads"
-            } else {
-                "relevance"
-            },
-        )
+        .append_pair("index", filter.sort().as_str())
         .append_pair("offset", &filter.offset.to_string())
         .append_pair("limit", &filter.limit.clamp(1, 100).to_string());
     get(ctx, url).await
@@ -552,6 +594,43 @@ mod tests {
         assert_eq!(
             facets(&modpacks),
             r#"[["project_type:modpack"],["categories:fabric","categories:quilt","categories:forge","categories:neoforge"]]"#
+        );
+    }
+
+    #[test]
+    fn sorts_and_narrows() {
+        let categories = ["magic".to_string(), "quests".to_string()];
+        let newest = SearchFilter {
+            kind: ProjectType::Modpack,
+            game_version: Some("1.20.1"),
+            categories: &categories,
+            sort: Some(SearchSort::Newest),
+            ..Default::default()
+        };
+        assert_eq!(newest.sort(), SearchSort::Newest);
+        assert_eq!(
+            facets(&newest),
+            r#"[["project_type:modpack"],["versions:1.20.1"],["categories:fabric","categories:quilt","categories:forge","categories:neoforge"],["categories:magic"],["categories:quests"],["follows>=10"]]"#
+        );
+        // A query looks for something precise: no follower floor.
+        let searched = SearchFilter {
+            query: "create",
+            sort: Some(SearchSort::Updated),
+            ..Default::default()
+        };
+        assert_eq!(facets(&searched), r#"[["project_type:mod"]]"#);
+        let auto = SearchFilter {
+            query: " ",
+            ..Default::default()
+        };
+        assert_eq!(auto.sort(), SearchSort::Downloads);
+        assert_eq!(
+            SearchFilter {
+                query: "sodium",
+                ..Default::default()
+            }
+            .sort(),
+            SearchSort::Relevance
         );
     }
 
