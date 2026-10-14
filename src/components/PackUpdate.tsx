@@ -130,7 +130,7 @@ function UpdateDialog(props: { instance: Instance; versions: PackVersion[]; onCl
         </li>
         <li class="flex gap-2">
           <Icon name="check" size={11} class="mt-1 shrink-0 text-xp-text" />
-          Tu pourras revenir à la {props.instance.packVersion} depuis l'onglet Informations.
+          Tu pourras revenir à la {props.instance.packVersion} depuis l'onglet Réglages.
         </li>
       </ul>
       <Show when={changesGame()}>

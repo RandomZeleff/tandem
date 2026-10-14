@@ -5,7 +5,7 @@ import { installedContent, isBusy, loadContent, setContentEnabled } from "../lib
 import { Icon } from "./pixel";
 
 const HINTS: Record<CrashHint, string> = {
-  outOfMemory: "Le jeu a manqué de mémoire. Donne-lui-en plus dans l'onglet Informations.",
+  outOfMemory: "Le jeu a manqué de mémoire. Donne-lui-en plus dans l'onglet Réglages.",
   wrongJava: "Un mod demande une version de Java plus récente que celle prévue pour cette version de Minecraft.",
   graphics: "La fenêtre du jeu n'a pas pu s'ouvrir : souvent un souci de pilote graphique ou d'OpenGL.",
   incompatibleMods: "Des mods ne sont pas compatibles avec cette version du jeu, ou entre eux.",

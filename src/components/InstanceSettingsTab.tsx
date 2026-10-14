@@ -65,12 +65,6 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
           <Section title="Instance">
             <NameField instance={props.instance} onSave={(name) => save({ name }, "Instance renommée")} />
             <IconField instance={props.instance} onError={setError} />
-            <Row label="Copie" hint="Mods, réglages et mondes ; les mods ne prennent pas de place en plus.">
-              <button class="btn px-corners h-9 text-meta" disabled={props.locked} onClick={() => setDuplicating(true)}>
-                <Icon name="plus" size={11} />
-                Dupliquer
-              </button>
-            </Row>
           </Section>
           <Section title="Informations">
             <dl class="grid grid-cols-[auto_1fr] gap-x-8 gap-y-2.5 text-sm">
@@ -106,19 +100,24 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
               <dd class="font-mono text-xs">{props.instance.id}</dd>
             </dl>
           </Section>
-          <Section title="Supprimer l'instance">
-            <div class="flex items-center justify-between gap-4 py-3">
-              <span class="text-meta text-muted">Son dossier entier part avec elle, mondes compris.</span>
+          <Section title="Gestion">
+            <InlineRow label="Dupliquer" hint="Les mods ne prennent pas de place en plus.">
+              <button class="btn px-corners h-9 shrink-0 text-meta" disabled={props.locked} onClick={() => setDuplicating(true)}>
+                <Icon name="plus" size={11} />
+                Dupliquer…
+              </button>
+            </InlineRow>
+            <InlineRow label="Supprimer" hint="Mondes compris.">
               <button class="btn px-corners h-9 shrink-0 text-meta text-redstone-text" disabled={props.locked} onClick={() => props.onDelete()}>
                 <Icon name="trash" size={12} />
                 Supprimer…
               </button>
-            </div>
+            </InlineRow>
           </Section>
         </div>
 
         <Section title="Lancement">
-          <Row label="Mémoire" hint="En automatique, la mémoire suit la machine et le nombre de mods.">
+          <Row label="Mémoire">
             <MemoryPicker instance={props.instance} onError={setError} />
           </Row>
           <JavaField instance={props.instance} onSave={(javaPath) => save({ javaPath }, "Java enregistré")} onError={setError} />
@@ -149,6 +148,21 @@ function Section(props: { title: string; children: JSX.Element }) {
       <h2 class="panel-title mb-1">{props.title}</h2>
       <div class="flex flex-col divide-y divide-line">{props.children}</div>
     </section>
+  );
+}
+
+/** Label and hint on the left, a compact control on the right. */
+function InlineRow(props: { label: string; hint?: string; children: JSX.Element }) {
+  return (
+    <div class="flex items-center justify-between gap-6 py-3">
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <span class="text-sm font-medium">{props.label}</span>
+        <Show when={props.hint}>
+          <span class="text-meta text-muted">{props.hint}</span>
+        </Show>
+      </div>
+      {props.children}
+    </div>
   );
 }
 
@@ -278,7 +292,7 @@ function JavaField(props: { instance: Instance; onSave: (path: string | null) =>
 
   const selected = () => java()?.installs.find((j) => j.path === props.instance.javaPath);
   return (
-    <Row label="Java" for="instance-java" hint="Automatique convient presque toujours : Tandem télécharge le Java prévu par Mojang.">
+    <Row label="Java" for="instance-java">
       <Select id="instance-java" class="h-9 w-full text-meta" value={props.instance.javaPath ?? ""} options={options()} onChange={(v) => void choose(v)} />
       <Show when={selected() && java() && selected()!.major < java()!.required}>
         <Alert tone="warning">
@@ -298,7 +312,7 @@ function JvmArgsField(props: { instance: Instance; onSave: (args: string | null)
     if (args !== (props.instance.jvmArgs ?? "")) void props.onSave(args || null);
   };
   return (
-    <Row label="Arguments Java" for="instance-jvm" hint="Pour les joueurs avancés. Tandem ajoute déjà les réglages du ramasse-miettes adaptés.">
+    <Row label="Arguments Java" for="instance-jvm" hint="Pour les joueurs avancés.">
       <input
         id="instance-jvm"
         class="field h-9 w-full font-mono text-xs"
@@ -334,11 +348,11 @@ function WindowField(props: { instance: Instance; onSave: (size: [number, number
   }
 
   return (
-    <Row label="Fenêtre du jeu" for="instance-window" hint="Le plein écran se règle dans le jeu (F11).">
+    <Row label="Fenêtre du jeu" for="instance-window" hint="Plein écran : F11 en jeu.">
       <div class="flex flex-wrap items-center gap-2">
         <Select
           id="instance-window"
-          class="h-9 w-56 text-meta"
+          class="h-9 min-w-48 flex-1 text-meta"
           value={preset()}
           options={[
             { value: "", label: "Par défaut" },
@@ -365,7 +379,6 @@ function WindowField(props: { instance: Instance; onSave: (size: [number, number
   );
 }
 
-/** "Automatique" follows the machine and the mod count; fixed sizes stay as chosen. */
 /** Tandem Optimizations for this instance; follows the Settings until changed here. */
 function OptimizationsField(props: { instance: Instance; onError: (message: string) => void }) {
   const [on, { mutate }] = createResource(
@@ -385,13 +398,9 @@ function OptimizationsField(props: { instance: Instance; onError: (message: stri
   }
 
   return (
-    <div class="flex items-center justify-between gap-6 py-3">
-      <div class="flex min-w-0 flex-col gap-0.5">
-        <span class="text-sm font-medium">Optimisations Tandem</span>
-        <span class="text-meta text-muted">Un petit mod ajouté au lancement, jamais installé dans l'instance : le monde saute le travail inutile.</span>
-      </div>
+    <InlineRow label="Optimisations Tandem" hint="Le monde saute le travail inutile. Rien n'est installé dans l'instance.">
       <Toggle checked={on() ?? true} label="Optimisations Tandem" onChange={(v) => void change(v)} />
-    </div>
+    </InlineRow>
   );
 }
 
@@ -417,7 +426,7 @@ function MemoryPicker(props: { instance: Instance; onError: (message: string) =>
     <div class="flex flex-col gap-1.5">
       <Select
         label="Mémoire allouée"
-        class="h-9 w-56 text-meta"
+        class="h-9 w-full text-meta"
         value={String(props.instance.memoryMb ?? "auto")}
         options={[
           { value: "auto", label: "Automatique", hint: info() ? formatGigabytes(info()!.autoMb) : undefined },
@@ -461,7 +470,7 @@ function DuplicateDialog(props: { instance: Instance; onClose: () => void }) {
           </label>
           <input id="duplicate-name" autofocus class="field h-10 w-full" maxLength={64} value={name()} onInput={(e) => setName(e.currentTarget.value)} />
         </div>
-        <p class="text-meta text-muted">Mondes et captures compris. Les mods, partagés avec l'original, ne prennent pas de place en plus.</p>
+        <p class="text-meta text-muted">Mondes et captures compris.</p>
         <Show when={error()}>
           <Alert onClose={() => setError(null)}>{error()}</Alert>
         </Show>

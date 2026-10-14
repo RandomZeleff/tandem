@@ -36,7 +36,7 @@ function stageLabel(p: InstallProgress | undefined): string {
 }
 
 export default function InstanceDetail(props: { instance: Instance; tab?: string; world?: string }) {
-  const [tab, setTab] = remembered<Tab>("tab", (props.tab as Tab | undefined) ?? "console");
+  const [tab, setTab] = remembered<Tab>("tab", (props.tab as Tab | undefined) ?? "content");
   const [confirmDelete, setConfirmDelete] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const state = () => gameState(props.instance.id);
@@ -58,12 +58,12 @@ export default function InstanceDetail(props: { instance: Instance; tab?: string
   }
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "console", label: "Console" },
     { id: "content", label: "Contenu" },
     { id: "worlds", label: "Mondes" },
     { id: "screenshots", label: "Captures" },
     { id: "translation", label: "Traduction" },
     { id: "creators", label: "Créateurs" },
+    { id: "console", label: "Console" },
     { id: "info", label: "Réglages" },
   ];
 
