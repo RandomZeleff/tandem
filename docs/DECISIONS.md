@@ -343,3 +343,12 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Revue indépendante (outil impeccable) : 8 corrections demandées, toutes faites, puis 2 retouches.
 - Page de démonstration des composants : `pnpm dev` puis `/?fondations`.
 - Statut : validé
+
+### D51 · 2026-10-14 · Découvrir : tri, catégories et rayons tirés de Modrinth
+- Tout vient de la recherche Modrinth (`index` pour l'ordre, facettes pour les catégories et la version) : pas de serveur ni de calcul à Tandem.
+- Pas de « tendances » ni de note : Modrinth n'en donne pas, et les calculer demanderait de suivre les chiffres dans le temps. « Les plus suivis » sert de « plus appréciés ».
+- Plancher de 10 abonnés pour « Nouveautés » et « Mis à jour récemment » sans recherche (facette `follows>=10`) : sans lui, les premiers résultats sont des tests et des packs de serveurs privés. Une recherche tapée n'a pas de plancher.
+- Les catégories proposées sont écrites dans l'app (`src/lib/discover.ts`), par type : la liste de Modrinth bouge peu et cela évite une requête.
+- Rayons gardés 10 minutes en mémoire, comme les fiches (D32).
+- Statut : validé
+

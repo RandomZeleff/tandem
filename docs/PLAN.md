@@ -235,6 +235,14 @@ Cadrage complet : [REFONTE.md](REFONTE.md). Direction « le Minecraft moderne »
 
 Ensuite : retour aux petits ajouts.
 
+## Phase 8 — Un launcher pour le solo (cadrée le 2026-10-14)
+
+Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer seul, sans se prendre la tête. Le jeu à deux et la traduction restent des bonus, pas la vitrine. Un chantier fini avant le suivant.
+
+- [x] 1. Découvrir : tri (téléchargements, abonnés, nouveautés, mis à jour), filtres par catégorie, version du jeu pour les modpacks, rayons « Nouveautés », « Mis à jour récemment », « Les plus suivis » quand on ne cherche rien (D51). Pas de « tendances » (Modrinth n'en donne pas).
+- [ ] 2. « Continuer » en un clic, directement dans le dernier monde, puis carnet de partie par monde (statistiques, progrès, quêtes)
+- [ ] 3. Fiches de modpack « est-ce pour moi ? » (RAM conseillée face à celle du PC, nombre de mods, quêtes, style du pack, packs proches)
+
 ## Portage macOS
 
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
@@ -545,3 +553,11 @@ Ensuite : retour aux petits ajouts.
 - Vérifié avec le faux backend (instance avec un conflit, deux mises à jour et trois optimisations : liste des mods remontée d'environ 300 px).
 - Retouches demandées par Zeleff : toute la partie gauche d'une ligne (icône, nom, version) ouvre la fiche, plus seulement le nom ; vraie barre de recherche en haut de l'onglet (40 px, icône, toujours là dès qu'il y a du contenu) à la place du petit filtre qui n'apparaissait qu'au-delà de 15 éléments ; phrases qui répétaient l'évidence retirées (« x nouvelles versions… marquées dans la liste », description des optimisations, compteur « 4 éléments · 1 désactivé » passé dans la recherche).
 - Même passe sur les autres onglets : boutons d'action agrandis (36 px, texte 13 px) dans Mondes, Captures, Créateurs, Traduction et Réglages ; retirés : « 2 mondes » en tête (la liste le dit), la note sur les 5 sauvegardes gardées (passée en info-bulle de l'interrupteur), « Une image (carrée de préférence) ou un bloc », « Taille de la fenêtre au lancement », « Une confirmation est demandée », la phrase sur l'ordre de traduction ; textes de Créateurs et des quêtes traduites raccourcis.
+
+### 2026-10-14 (Phase 8, chantier 1 : Découvrir)
+- Cadrage de la Phase 8 avec Zeleff : rendre Tandem attirant pour le solo (découverte, reprise de partie, choix d'un modpack).
+- Fait : Découvrir a un tri (« Les plus téléchargés » ou « Pertinence » selon la recherche, « Les plus suivis », « Nouveautés », « Mis à jour récemment »), des catégories à cocher propres à chaque type, une version du jeu pour les modpacks. Sans recherche ni filtre, trois rayons défilants (12 projets chacun, « Tout voir » applique le tri) au-dessus de la liste des plus téléchargés. Changer de type revient aux rayons.
+- Nouveautés et mises à jour exigent 10 abonnés quand on ne cherche rien (D51) : sinon la liste est pleine de tests et de packs de serveurs privés.
+- Vérifié : tests Rust (facettes, ordre automatique), facettes testées sur la vraie API Modrinth, page avec le faux backend (rayons, filtres, « Tout voir », modpacks). Pas vérifié : la vraie app avec les vrais résultats.
+- Prochaine étape : chantier 2, « Continuer » en un clic dans le dernier monde.
+
