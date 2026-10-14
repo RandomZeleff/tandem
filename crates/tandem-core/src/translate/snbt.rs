@@ -1,5 +1,6 @@
 //! Just enough SNBT for FTB Quests: find quoted strings with the key they belong to, and
-//! replace them in place without touching the rest of the file.
+//! replace them in place without touching the rest of the file; or read a whole file as
+//! a tree (quest progress, see `journal`).
 
 /// A quoted string of an SNBT document, and the key it is the value of (for strings in
 /// a list, the list's key).
@@ -175,6 +176,142 @@ pub fn write_compound(entries: &[(String, Vec<String>)]) -> String {
     }
     out.push_str("}\n");
     out
+}
+
+/// A parsed SNBT value. Numbers, booleans and other bare words stay as written.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Value {
+    Compound(Vec<(String, Value)>),
+    List(Vec<Value>),
+    Str(String),
+    Bare(String),
+}
+
+impl Value {
+    pub fn get(&self, key: &str) -> Option<&Value> {
+        match self {
+            Value::Compound(entries) => entries.iter().find(|(k, _)| k == key).map(|(_, v)| v),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            Value::Str(s) | Value::Bare(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub fn as_list(&self) -> &[Value] {
+        match self {
+            Value::List(items) => items,
+            _ => &[],
+        }
+    }
+
+    /// Keys of a compound.
+    pub fn keys(&self) -> impl Iterator<Item = &str> {
+        let entries: &[(String, Value)] = match self {
+            Value::Compound(entries) => entries,
+            _ => &[],
+        };
+        entries.iter().map(|(k, _)| k.as_str())
+    }
+}
+
+/// The whole document as a tree (FTB Quests files: newline-separated, commas optional).
+pub fn parse(text: &str) -> Option<Value> {
+    let mut parser = Parser {
+        text,
+        bytes: text.as_bytes(),
+        at: 0,
+    };
+    parser.value()
+}
+
+struct Parser<'a> {
+    text: &'a str,
+    bytes: &'a [u8],
+    at: usize,
+}
+
+impl Parser<'_> {
+    fn skip(&mut self) {
+        while self.at < self.bytes.len()
+            && (self.bytes[self.at].is_ascii_whitespace() || self.bytes[self.at] == b',')
+        {
+            self.at += 1;
+        }
+    }
+
+    fn word(&mut self) -> Option<String> {
+        let start = self.at;
+        while self.at < self.bytes.len() && is_bare(self.bytes[self.at]) {
+            self.at += 1;
+        }
+        (self.at > start).then(|| self.text[start..self.at].to_owned())
+    }
+
+    fn string(&mut self) -> Option<String> {
+        let (value, end) = read_quoted(self.text, self.at)?;
+        self.at = end;
+        Some(value)
+    }
+
+    fn value(&mut self) -> Option<Value> {
+        self.skip();
+        match *self.bytes.get(self.at)? {
+            b'{' => {
+                self.at += 1;
+                let mut entries = Vec::new();
+                loop {
+                    self.skip();
+                    match *self.bytes.get(self.at)? {
+                        b'}' => {
+                            self.at += 1;
+                            return Some(Value::Compound(entries));
+                        }
+                        b'"' | b'\'' => {
+                            let key = self.string()?;
+                            entries.push((key, self.entry_value()?));
+                        }
+                        _ => {
+                            let key = self.word()?;
+                            entries.push((key, self.entry_value()?));
+                        }
+                    }
+                }
+            }
+            b'[' => {
+                self.at += 1;
+                // Typed arrays: `[I; 1, 2]`.
+                let rest = &self.bytes[self.at..];
+                if rest.len() >= 2 && rest[0].is_ascii_alphabetic() && rest[1] == b';' {
+                    self.at += 2;
+                }
+                let mut items = Vec::new();
+                loop {
+                    self.skip();
+                    if *self.bytes.get(self.at)? == b']' {
+                        self.at += 1;
+                        return Some(Value::List(items));
+                    }
+                    items.push(self.value()?);
+                }
+            }
+            b'"' | b'\'' => self.string().map(Value::Str),
+            _ => self.word().map(Value::Bare),
+        }
+    }
+
+    fn entry_value(&mut self) -> Option<Value> {
+        self.skip();
+        if self.bytes.get(self.at) != Some(&b':') {
+            return None;
+        }
+        self.at += 1;
+        self.value()
+    }
 }
 
 #[cfg(test)]

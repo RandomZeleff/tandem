@@ -15,6 +15,7 @@ pub mod install;
 pub mod instance;
 pub mod java;
 pub mod java_detect;
+pub mod journal;
 pub mod jvm;
 pub mod launch;
 pub mod launchers;
