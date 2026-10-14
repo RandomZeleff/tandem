@@ -12,14 +12,16 @@ import { ACTIVATION_SETTING, OPTIMIZATIONS_SETTING } from "../lib/optimizations"
 const AUTO_BACKUP_SETTING = "auto_backup_worlds";
 
 /** One setting: what it does on the left, its control on the right. */
-function Row(props: { title: string; description: string; control: JSX.Element; for?: string }) {
+function Row(props: { title: string; description?: string; control: JSX.Element; for?: string }) {
   return (
     <div class="flex items-center justify-between gap-6 py-3.5">
       <div class="flex min-w-0 flex-col gap-0.5">
         <label class="text-sm font-medium" for={props.for}>
           {props.title}
         </label>
-        <p class="text-meta text-muted">{props.description}</p>
+        <Show when={props.description}>
+          <p class="text-meta text-muted">{props.description}</p>
+        </Show>
       </div>
       <div class="shrink-0">{props.control}</div>
     </div>
@@ -74,7 +76,7 @@ export default function Settings() {
           <Row
             title="Quand le jeu démarre"
             for="setting-on-start"
-            description="Réduit, le launcher revient tout seul quand tu quittes le jeu."
+            description="Réduit, il revient quand tu quittes le jeu."
             control={
               <Select
                 id="setting-on-start"
@@ -90,7 +92,7 @@ export default function Settings() {
           />
           <Row
             title="Sauvegarder les mondes après chaque partie"
-            description="Les 5 dernières sauvegardes automatiques de chaque monde sont gardées."
+            description="Les 5 dernières sont gardées."
             control={
               <Toggle
                 checked={autoBackup() ?? true}
@@ -101,7 +103,7 @@ export default function Settings() {
           />
           <Row
             title="Optimisations Tandem"
-            description="Un petit mod que Tandem ajoute au lancement des instances Fabric et Quilt (1.20 à 1.21) : le monde, en solo comme quand tu invites des amis, saute le travail inutile. Rien n'est installé dans tes instances. Réglable aussi par instance."
+            description="Fabric et Quilt, 1.20 à 1.21 : le monde saute le travail inutile. Réglable par instance."
             control={
               <Toggle
                 checked={optimizations() ?? true}
@@ -112,7 +114,7 @@ export default function Settings() {
           />
           <Row
             title="Ralentir les créatures loin des joueurs"
-            description="Les créatures inactives à plus de 32 blocs de tout joueur sont simulées quatre fois moins souvent. Elles bougent plus lentement au loin ; fermes, villageois et combats ne changent pas."
+            description="Au-delà de 32 blocs. Fermes, villageois et combats ne changent pas."
             control={
               <Toggle
                 checked={activation() ?? true}
@@ -125,7 +127,7 @@ export default function Settings() {
         </Section>
 
         <Section title="Launcher">
-          <Row title="Version" description="Tandem, launcher Minecraft." control={<span class="font-mono text-sm">{info()?.version ?? "…"}</span>} />
+          <Row title="Version" control={<span class="font-mono text-sm">{info()?.version ?? "…"}</span>} />
           <div class="flex items-center justify-between gap-6 py-3.5">
             <div class="flex min-w-0 flex-col gap-0.5">
               <span class="text-sm font-medium">Dossier des données</span>

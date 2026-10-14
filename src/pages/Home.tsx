@@ -237,11 +237,11 @@ function Hero(props: { instance: Instance }) {
           </button>
           <button
             class="btn px-corners-md size-[54px] px-0"
-            aria-label="Détails et console"
-            title="Détails et console"
+            aria-label="Détails de l'instance"
+            title="Détails de l'instance"
             onClick={() => navigate({ page: "instance", id: props.instance.id })}
           >
-            <Icon name="terminal" size={24} />
+            <Icon name="dots" size={24} />
           </button>
           <button
             class="btn px-corners-md size-[54px] px-0"
@@ -265,7 +265,7 @@ function Welcome() {
       <div class="relative mt-auto flex max-w-[600px] flex-col gap-4 px-9 pb-8">
         <h1 class="title-display text-hero">Prêt à miner ?</h1>
         <p class="text-base text-chalk-2">
-          Crée une instance : Tandem télécharge le jeu et la bonne version de Java pour toi.
+          Crée une instance, Tandem s'occupe du reste.
         </p>
         <button
           class="btn btn-primary px-corners-md title-display h-[54px] w-fit px-7 text-[28px] uppercase"
@@ -301,12 +301,9 @@ function JoinFriend() {
 
   return (
     <section class="panel flex flex-col gap-3 p-4" aria-labelledby="home-join">
-      <div class="flex flex-col gap-1">
-        <h2 id="home-join" class="panel-title">
-          Rejoindre un ami
-        </h2>
-        <p class="text-meta text-muted">Entre le code qu'il t'a envoyé : Tandem prépare tout et lance le jeu.</p>
-      </div>
+      <h2 id="home-join" class="panel-title">
+        Rejoindre un ami
+      </h2>
       <Show
         when={!duo.guest}
         fallback={
@@ -319,7 +316,7 @@ function JoinFriend() {
           when={canPlayOnline()}
           fallback={
             <div class="flex flex-col gap-2.5">
-              <p class="text-meta text-chalk-2">Il faut un compte Microsoft pour jouer avec des amis.</p>
+              <p class="text-meta text-muted">Connecte ton compte Microsoft pour jouer à plusieurs.</p>
               <button class="btn px-corners h-10" onClick={() => openAccounts()}>
                 Ajouter mon compte
               </button>
@@ -393,7 +390,7 @@ function News() {
                 <div class="flex min-w-0 flex-col gap-2">
                   <div class="flex flex-col">
                     <span class="text-sm font-semibold">Snapshot {list().latest.snapshot}</span>
-                    <span class="text-meta text-muted">Teste-la dans une instance à part, sans toucher à tes mondes.</span>
+                    <span class="text-meta text-muted">Version de test</span>
                   </div>
                   <button
                     class="btn px-corners h-8 w-fit px-3 text-meta"
@@ -444,12 +441,12 @@ export default function Home() {
             fallback={
               <p class="text-sm text-muted">
                 {featured()
-                  ? "Une seule instance pour l'instant. Installe un modpack depuis Découvrir ou crée-en une autre."
+                  ? "Pas d'autre instance pour l'instant."
                   : "Tes instances apparaîtront ici."}
               </p>
             }
           >
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-4">
               <For each={others()}>{(instance) => <InstanceCard instance={instance} />}</For>
             </div>
           </Show>

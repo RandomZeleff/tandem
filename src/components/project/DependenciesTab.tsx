@@ -108,7 +108,7 @@ export default function DependenciesTab(props: {
 
       <Show when={props.mode === "content"}>
         <p class="text-xs text-muted">
-          Liste publiée sur Modrinth pour cette version. Le modpack peut contenir en plus des fichiers venus d'ailleurs.
+          Liste publiée sur Modrinth ; le modpack peut contenir d'autres fichiers.
         </p>
       </Show>
 

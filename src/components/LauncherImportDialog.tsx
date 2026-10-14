@@ -97,7 +97,7 @@ export default function LauncherImportDialog(props: { onClose: () => void }) {
   return (
     <Dialog title="Importer depuis un autre launcher" onClose={props.onClose} width={640}>
       <p class="-mt-2 text-sm text-chalk-2">
-        L'instance est copiée dans Tandem avec ses mods, mondes et réglages ; l'originale n'est pas modifiée.
+        Mods, mondes et réglages sont copiés ; l'original n'est pas modifié.
       </p>
 
       <div class="-mx-2 flex max-h-[min(460px,60vh)] flex-col gap-4 overflow-y-auto px-2">

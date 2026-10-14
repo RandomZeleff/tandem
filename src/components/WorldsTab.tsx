@@ -103,7 +103,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean; 
         </span>
         <label
           class="flex items-center gap-2.5 text-meta text-chalk-2"
-          title="Les 5 dernières sauvegardes automatiques de chaque monde sont gardées ; les manuelles, toutes."
+          title="Les 5 dernières sont gardées, les manuelles toutes."
         >
           Sauvegarde automatique après chaque partie
           <Toggle
@@ -124,7 +124,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean; 
         fallback={
           <div class="panel px-corners-md flex flex-col items-center gap-2 py-12 text-center">
             <p class="text-chalk-2">Aucun monde pour l'instant.</p>
-            <p class="text-sm text-muted">Crée un monde en jeu : il apparaîtra ici, avec ses sauvegardes.</p>
+            <p class="text-sm text-muted">Crée-en un en jeu, il apparaîtra ici.</p>
           </div>
         }
       >
@@ -163,8 +163,8 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean; 
         {(world) => (
           <Dialog title="Préparer pour jouer à plusieurs" onClose={() => setPreparing(null)} width={600}>
             <p class="text-chalk-2">
-              Tandem génère à l'avance le terrain de « {world().name} » autour du point d'apparition. Quand vous explorez à
-              plusieurs, le PC de l'hôte n'a plus à créer ce terrain pendant la partie : c'est ce qui le ralentit le plus.
+              Tandem génère à l'avance le terrain de « {world().name} » autour du point d'apparition : l'hôte ne ralentit plus
+              quand vous explorez à plusieurs.
             </p>
             <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Taille de la zone">
               <For each={PREGEN_SIZES}>
@@ -186,8 +186,7 @@ export default function WorldsTab(props: { instanceId: string; locked: boolean; 
               </For>
             </div>
             <p class="text-xs text-muted">
-              Le jeu reste fermé pendant la préparation et le monde grossit sur le disque. Tu peux annuler à tout moment : ce
-              qui est fait est gardé.
+              Le jeu reste fermé pendant la préparation. Tu peux annuler à tout moment, ce qui est fait est gardé.
             </p>
             <div class="flex justify-end gap-2">
               <button class="btn btn-ghost" onClick={() => setPreparing(null)}>

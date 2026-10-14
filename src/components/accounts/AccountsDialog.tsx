@@ -65,8 +65,7 @@ function BrowserWait(props: { url: string }) {
       <div class="flex flex-col gap-1.5">
         <p class="text-lg font-semibold">Continue dans ton navigateur</p>
         <p class="max-w-sm text-sm text-chalk-2">
-          Connecte-toi sur la page de Microsoft, puis reviens ici : la suite se fait toute seule. Tandem ne voit jamais ton
-          mot de passe.
+          Connecte-toi sur la page de Microsoft, puis reviens ici. Tandem ne voit jamais ton mot de passe.
         </p>
       </div>
       <Show when={props.url}>
@@ -126,7 +125,7 @@ function Welcome(props: { account: Account; onDone: () => void }) {
       </span>
       <div class="flex flex-col gap-1">
         <p class="title-display text-3xl leading-none">Bienvenue, {props.account.username} !</p>
-        <p class="text-sm text-chalk-2">Ton compte Microsoft est connecté et possède Minecraft. Tu peux jouer.</p>
+        <p class="text-sm text-chalk-2">Compte connecté, Minecraft trouvé : tu peux jouer.</p>
       </div>
       <button class="btn btn-primary px-corners px-6" onClick={props.onDone}>
         C'est parti
@@ -201,7 +200,7 @@ function OfflineForm() {
       <p class="text-meta text-muted">
         <Show
           when={allowed()}
-          fallback="Disponible une fois un compte Microsoft connecté : Tandem vérifie d'abord que tu possèdes le jeu."
+          fallback="Disponible après connexion d'un compte Microsoft qui possède le jeu."
         >
           Un pseudo local pour jouer sans connexion ou en LAN. Les serveurs en ligne ne l'acceptent pas.
         </Show>
@@ -345,8 +344,7 @@ export default function AccountsDialog() {
                   <div class="flex flex-col gap-1.5">
                     <p class="text-lg font-semibold">Connecte ton compte Minecraft</p>
                     <p class="max-w-sm text-sm text-chalk-2">
-                      La connexion se fait sur le site de Microsoft, dans ton navigateur. Tandem garde seulement de quoi te
-                      reconnecter, dans le coffre de ton système.
+                      La connexion se fait dans ton navigateur, sur le site de Microsoft.
                     </p>
                   </div>
                   <MicrosoftButton class="h-11 px-5" onClick={() => void signInWithMicrosoft()} />

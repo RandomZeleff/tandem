@@ -31,8 +31,8 @@ const iso = (hoursAgo: number) => new Date(now - hoursAgo * 3_600_000).toISOStri
 const instances: Instance[] = [
   ["survie-avec-leo", "Survie avec Léo", "26.3", "fabric", "0.19.5", iso(20)],
   ["pack-create", "Pack Create", "1.21.1", "neoforge", "21.1.77", iso(70)],
-  ["prominence-ii", "Prominence II", "1.20.1", "fabric", "0.19.3", iso(200)],
   ["crea-redstone", "Créa redstone", "26.3", "vanilla", null, iso(100)],
+  ["prominence-ii", "Prominence II", "1.20.1", "fabric", "0.19.3", iso(200)],
   ["nostalgie-1-12", "Nostalgie 1.12", "1.12.2", "vanilla", null, iso(500)],
 ].map(([id, name, gameVersion, loader, loaderVersion, lastPlayedAt]) => ({
   id: id!,

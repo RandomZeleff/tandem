@@ -37,8 +37,7 @@ export default function SupportReminder(props: { instance: Instance; onShow: () 
         <div class="flex min-w-0 flex-1 flex-col">
           <span class="text-sm">Plus de 10 heures sur {props.instance.name} !</span>
           <span class="text-meta text-muted">
-            {creators.latest} de ses créateurs acceptent les soutiens, directement chez eux. Si le pack te plaît, c'est le bon endroit
-            pour leur dire merci.
+            {creators.latest} de ses créateurs acceptent les soutiens : l'occasion de leur dire merci.
           </span>
         </div>
         <button

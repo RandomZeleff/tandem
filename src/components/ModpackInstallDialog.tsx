@@ -37,7 +37,7 @@ export default function ModpackInstallDialog(props: {
   return (
     <Dialog title={`Installer ${props.title}`} onClose={props.onClose} width={500}>
       <Show when={!versions.error} fallback={<Alert>Impossible de lire les versions : {errorMessage(versions.error)}</Alert>}>
-        <p class="text-chalk-2">Une nouvelle instance est créée avec la bonne version du jeu et du loader.</p>
+        <p class="text-chalk-2">Le modpack aura sa propre instance.</p>
         <div class="flex flex-col gap-1.5">
           <label class="text-meta font-medium text-muted" for="pack-version">
             Version

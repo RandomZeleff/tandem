@@ -40,13 +40,10 @@ export default function Instances() {
 
   return (
     <div class="mx-auto flex max-w-[1400px] flex-col gap-5">
-      <div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div class="flex min-w-0 flex-col gap-1.5">
-          <h1 class="title-display text-title">Instances</h1>
-          <span class="text-base text-chalk-2">Chaque instance a son propre dossier, ses mondes et ses réglages.</span>
-        </div>
+      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <h1 class="title-display text-title">Instances</h1>
         <div class="flex gap-2 whitespace-nowrap">
-          <button class="btn px-corners h-10 px-4" onClick={() => setLauncherImport(true)} title="Modrinth App, Prism, app CurseForge, launcher officiel… (fichiers déjà sur ce PC)">
+          <button class="btn px-corners h-10 px-4" onClick={() => setLauncherImport(true)} title="Modrinth App, Prism, CurseForge, launcher officiel…">
             <Icon name="arrow" size={12} />
             Depuis un autre launcher
           </button>

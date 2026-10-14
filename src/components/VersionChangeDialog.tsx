@@ -202,7 +202,7 @@ export default function VersionChangeDialog(props: { instance: Instance; onClose
         class="text-meta text-chalk-2"
         checked={keepCopy()}
         disabled={busy()}
-        label={`Garder une copie de l'instance en ${props.instance.gameVersion} (les mods ne prennent pas de place en plus)`}
+        label={`Garder une copie en ${props.instance.gameVersion}`}
         onChange={setKeepCopy}
       />
       <Show when={error()}>

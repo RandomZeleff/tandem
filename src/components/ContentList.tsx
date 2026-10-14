@@ -286,7 +286,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
           <Show when={(conflicts() ?? []).length > 0}>
             <div class="flex flex-col gap-2 border-t border-line px-4 py-3.5">
               <span class="text-sm font-medium text-redstone-text">
-                {conflicts()!.length === 1 ? "Deux mods ne peuvent pas tourner ensemble" : `${conflicts()!.length} paires de mods incompatibles`}
+                Mods incompatibles : le jeu risque de ne pas démarrer
               </span>
               <ul class="flex flex-col gap-1.5">
                 <For each={conflicts()}>
@@ -296,7 +296,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
                     return (
                       <li class="flex flex-wrap items-center gap-2 text-meta text-chalk-2">
                         <span class="mr-auto">
-                          <strong class="text-chalk">{c.name}</strong> et <strong class="text-chalk">{c.otherName}</strong> : le jeu risque de ne pas démarrer.
+                          <strong class="text-chalk">{c.name}</strong> et <strong class="text-chalk">{c.otherName}</strong>
                         </span>
                         <Show when={first()}>
                           {(item) => (
@@ -372,7 +372,7 @@ export default function ContentList(props: { instance: Instance; locked: boolean
             <Dialog title={n().verb === "disable" ? `Désactiver ${n().item.title} ?` : `Retirer ${n().item.title} ?`} onClose={close}>
               <p class="text-chalk-2">
                 {n().dependents.length === 1 ? "Un mod en a besoin" : `${n().dependents.length} mods en ont besoin`} pour
-                démarrer. Sans lui, le jeu s'arrêtera sur une erreur au lancement.
+                démarrer.
               </p>
               <ul class="flex flex-col gap-1 text-sm">
                 <For each={shown()}>{(d) => <li class="truncate text-chalk-2">· {d.name}</li>}</For>

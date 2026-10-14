@@ -50,7 +50,7 @@ function LinkChip(props: { link?: LinkStatus | null }) {
           title={
             link().direct
               ? "Liaison directe entre vos deux PC"
-              : "Liaison par un relais : vos box ne se laissent pas joindre directement. Ça marche, avec un peu plus de latence."
+              : "Liaison par un relais, avec un peu plus de latence"
           }
         >
           {link().pingMs} ms · {link().direct ? "direct" : "relais"}
@@ -138,10 +138,7 @@ function AccountGate(props: { children: JSX.Element }) {
           </span>
           <div class="flex flex-1 flex-col gap-1">
             <span class="font-semibold">Un compte Microsoft est nécessaire</span>
-            <span class="text-sm text-chalk-2">
-              Le monde ouvert vérifie les comptes auprès de Mojang : chaque joueur doit utiliser son compte
-              Microsoft, pas un compte hors ligne.
-            </span>
+            <span class="text-sm text-chalk-2">Chaque joueur doit utiliser son compte Microsoft.</span>
           </div>
           <button class="btn btn-light px-corners h-10 shrink-0" onClick={() => openAccounts()}>
             Comptes
@@ -220,9 +217,7 @@ function Start() {
         <section class="panel flex flex-col gap-4 p-5">
           <div class="flex flex-col gap-1">
             <h2 class="text-xl font-semibold">Inviter un ami</h2>
-            <p class="text-sm text-chalk-2">
-              Tu héberges : tes amis rejoignent ton monde avec un code. Ton monde reste chez toi.
-            </p>
+            <p class="text-sm text-chalk-2">Tes amis rejoignent ton monde avec un code.</p>
           </div>
           <label class="flex flex-col gap-1.5">
             <span class="text-meta text-muted">Instance où tu joues</span>
@@ -239,8 +234,7 @@ function Start() {
               <div class="flex min-w-0 flex-col gap-0.5">
                 <span class="text-sm font-semibold">Monde à part (bêta)</span>
                 <span class="text-meta text-muted">
-                  Ton monde tourne dans son propre programme : si ton jeu plante, tes amis continuent, et plus de limite de 8
-                  joueurs. Demande 2 à 4 Go de mémoire en plus.
+                  Tes amis continuent si ton jeu plante, sans limite de 8 joueurs. 2 à 4 Go de mémoire en plus.
                 </span>
               </div>
               <Toggle checked={separate()} label="Monde à part" onChange={setSeparate} />
@@ -266,10 +260,7 @@ function Start() {
         <section class="panel flex flex-col gap-4 p-5">
           <div class="flex flex-col gap-1">
             <h2 class="text-xl font-semibold">Rejoindre un ami</h2>
-            <p class="text-sm text-chalk-2">
-              Entre le code que ton ami t'a donné. Tandem prend ton instance qui correspond à la sienne et lance le jeu
-              dès que son monde est ouvert.
-            </p>
+            <p class="text-sm text-chalk-2">Entre le code que ton ami t'a donné.</p>
           </div>
           <form
             class="mt-auto flex flex-col gap-4"
@@ -301,10 +292,6 @@ function Start() {
           </form>
         </section>
       </div>
-      <p class="text-meta text-muted">
-        Aucun serveur à louer ni à configurer : vos deux PC se parlent directement quand c'est possible, sinon par un
-        relais chiffré gratuit. Il faut la même version de Minecraft et les mêmes mods des deux côtés.
-      </p>
     </AccountGate>
   );
 }
@@ -337,10 +324,7 @@ function Hosting() {
           <Icon name={copied() ? "check" : "invite"} size={12} />
           {copied() ? "Code copié" : "Copier le code"}
         </button>
-        <p class="max-w-sm text-sm text-chalk-2">
-          Donne ce code à tes amis : ils l'entrent dans Tandem, page « Jouer ensemble ». Il reste valable tant que tu
-          n'arrêtes pas l'invitation.
-        </p>
+        <p class="max-w-sm text-sm text-chalk-2">Tes amis l'entrent dans Tandem, page « Jouer ensemble ».</p>
         <button class="btn btn-ghost mt-auto text-sm" onClick={() => void stopHosting()}>
           Arrêter l'invitation
         </button>
@@ -493,10 +477,7 @@ function CopyOffer(props: { hostPlayer: string }) {
           <div class="flex items-center gap-4">
             <div class="flex min-w-0 flex-1 flex-col gap-0.5">
               <span class="text-sm font-semibold">Jouer avec les mêmes mods que {props.hostPlayer}</span>
-              <span class="text-meta text-chalk-2">
-                Tandem prépare une instance comme la sienne : son modpack, ses mods et ses réglages, depuis Modrinth ou
-                envoyés par {props.hostPlayer}. Tes instances ne changent pas.
-              </span>
+              <span class="text-meta text-chalk-2">Tandem prépare une instance comme la sienne, sans toucher aux tiennes.</span>
             </div>
             <button class="btn btn-light px-corners h-10 shrink-0 px-4 text-sm" onClick={() => void prepare()}>
               <Icon name="download" size={12} />
@@ -671,12 +652,9 @@ export default function Duo() {
   onMount(() => void startDuoEvents());
   return (
     <div class="mx-auto flex max-w-[1400px] flex-col gap-6">
-      <header class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div class="flex flex-col gap-1.5">
-          <h1 class="title-display text-title">Jouer ensemble</h1>
-          <p class="text-base text-chalk-2">Ton monde, tes potes. Zéro serveur.</p>
-        </div>
-        <Show when={activeAccount()}>
+      <header class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <h1 class="title-display text-title">Jouer ensemble</h1>
+        <Show when={activeAccount()?.kind === "microsoft" && activeAccount()}>
           {(account) => (
             <span class="flex items-center gap-2.5 rounded-md bg-slate-750 py-1.5 pr-3.5 pl-1.5 text-meta text-chalk-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
               <span class="slot size-7">
