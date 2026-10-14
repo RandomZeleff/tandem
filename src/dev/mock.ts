@@ -77,6 +77,8 @@ const hit = ([projectId, title, author, description, downloads, displayCategorie
   follows: Math.round(downloads / 1000),
   iconUrl: `https://cdn.modrinth.com/data/${projectId}/icon.png`,
   displayCategories,
+  featuredGallery: null,
+  color: [0x3c8527, 0x4f7bd6, 0xc9772b, 0x8a5bd1, 0x2f9c95][index % 5],
   dateCreated: iso(24 * (3 + index * 11)),
   dateModified: iso(6 + index * 30),
 });

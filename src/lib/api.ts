@@ -111,6 +111,10 @@ export interface SearchHit {
   follows: number;
   iconUrl: string | null;
   displayCategories: string[];
+  /** Gallery image chosen by the author for listings. */
+  featuredGallery: string | null;
+  /** Main colour of the icon, `0xRRGGBB`. */
+  color: number | null;
   dateCreated: string;
   dateModified: string;
 }

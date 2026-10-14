@@ -128,6 +128,12 @@ pub struct SearchHit {
     pub icon_url: Option<String>,
     #[serde(default)]
     pub display_categories: Vec<String>,
+    /// Gallery image chosen by the author for listings.
+    #[serde(default)]
+    pub featured_gallery: Option<String>,
+    /// Main colour of the icon (`0xRRGGBB`), for a picture-less card.
+    #[serde(default)]
+    pub color: Option<u32>,
     pub date_created: String,
     pub date_modified: String,
 }
