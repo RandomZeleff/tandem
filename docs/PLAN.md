@@ -250,9 +250,10 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - [x] Une seule fenêtre Tandem à la fois (D55)
 - [ ] Ajouter le secret `TAURI_SIGNING_PRIVATE_KEY` sur GitHub (Zeleff) et sauvegarder la clé privée
 - [ ] Tester une vraie mise à jour de bout en bout (0.1.0 installée → release suivante publiée)
-- [ ] Signature de l'installeur Windows (SmartScreen), par exemple SignPath pour les projets open source
+- [ ] Signature de l'installeur Windows (SmartScreen) : SignPath Foundation, à demander juste après la première release publique (signature faite dans `release.yml`)
 - [ ] Premier lancement guidé (connexion, première instance, mémoire)
-- [ ] Skins et capes
+- [x] Skins et capes : page Apparence (D56)
+- [ ] (plus tard) Packs de skins d'événement de Mojang, après vérification des droits
 
 ## Portage macOS
 
@@ -606,3 +607,10 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Vérifié : clippy, types, interface avec le faux backend (pastille, fenêtre, progression, « à jour »), installeur signé produit en local (`.sig`).
 - Pas vérifié : une vraie mise à jour de bout en bout (il faut une release publiée avec `latest.json`).
 - Prochaine étape : Zeleff ajoute le secret GitHub et teste l'installeur ; ensuite premier lancement guidé.
+
+### 2026-10-20 (page Apparence)
+- Fait : page Apparence ouverte depuis le menu du compte (D56). Aperçu 3D à tourner (skinview3d), capes du compte, bibliothèque sur le PC (import PNG, glisser-déposer, skin d'un joueur par pseudo, renommer, modèle bras larges / fins, retirer avec annulation), skins par défaut du jeu, « Porter ce skin ». La tête du compte suit le nouveau skin.
+- Vérifié : tests Rust (modèle deviné, fichiers refusés, noms des capes), exemple `skins` sur de vraies données (18 skins par défaut lus dans un jar, modèle bien deviné sur 6 d'entre eux, skin d'un joueur par pseudo, pseudo inconnu), clippy, types, page avec le faux backend.
+- Pas vérifié : l'envoi réel d'un skin et le changement de cape sur un vrai compte (à faire par Zeleff dans `tauri dev`).
+- Prochaine étape : Zeleff essaie la page avec son compte ; ensuite premier lancement guidé.
+

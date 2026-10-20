@@ -385,3 +385,13 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Les builds de test de la CI ne sont pas signées (`createUpdaterArtifacts` coupé) : seules les releases le sont.
 - Une seule fenêtre : plugin `single-instance`, chargé en premier. Relancer Tandem ramène la fenêtre ouverte : deux launchers partageraient la même base et les mêmes instances.
 - Statut : validé
+
+### D56 · 2026-10-20 · Page Apparence : skins et capes
+- Ouverte depuis le menu du compte (le skin appartient au compte), pas dans la navigation principale. Comptes Microsoft seulement ; un compte hors ligne garde le skin par défaut.
+- API officielle de Mojang : profil (skin et capes), envoi d'un skin (PNG + modèle « classic » ou « slim »), cape active, retour au skin par défaut. Textures téléchargées seulement depuis `textures.minecraft.net`, côté Rust, et données à l'interface en data URL.
+- Bibliothèque sur le PC : `<données>/skins/<sha1>.png`, noms et modèles dans le réglage `skin_library`. Un même skin n'est gardé qu'une fois. Ajouts : fichier PNG (bouton ou glisser-déposer sur la fenêtre), skin actuel d'un joueur par son pseudo (API publique de Mojang). Modèle deviné d'après la largeur du bras, modifiable.
+- Skins par défaut (les 9 du jeu, deux modèles) : lus dans un jar du jeu 1.19.3+ déjà installé, copiés une fois dans `skins/defaults`. Rien d'embarqué dans Tandem ; sans jar récent, un bouton « Remettre le skin par défaut ».
+- Pas de recherche dans NameMC ou les autres galeries : aucune n'a d'API publique, et lire leurs pages irait contre leurs conditions et casserait au moindre changement. Packs de skins d'événement de Mojang (MINECON…) : pas avant d'avoir vérifié la provenance des fichiers et les règles d'utilisation.
+- Aperçu 3D avec skinview3d (MIT, three.js), chargé seulement à l'ouverture de la page.
+- Statut : validé
+
