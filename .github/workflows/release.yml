@@ -85,6 +85,13 @@ jobs:
         with:
           path: dist-release
           merge-multiple: true
+      # Each artifact keeps its bundle subfolders (nsis/, msi/, dmg/, macos/): flattened
+      # so the release gets plain files.
+      - name: Flatten the downloaded files
+        run: |
+          find dist-release -mindepth 2 -type f -exec mv -t dist-release {} +
+          find dist-release -mindepth 1 -type d -empty -delete
+          ls -la dist-release
       - name: Check the tag matches the app version
         run: |
           app="v$(jq -r .version src-tauri/tauri.conf.json)"
