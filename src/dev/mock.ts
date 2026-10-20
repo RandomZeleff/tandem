@@ -358,7 +358,16 @@ function skinMocks() {
   return { library: skinLibrary, wardrobe };
 }
 
+/** Shape copied for instances the mocks create (the list may start empty). */
+const TEMPLATE: Instance = { ...instances[0] };
+
 export function installMocks() {
+  // `localStorage.setItem("mock-first-run", "1")`: a fresh install, to see the welcome steps.
+  if (localStorage.getItem("mock-first-run")) {
+    instances.splice(0);
+    accounts = [];
+    for (const key of Object.keys(settings)) delete settings[key];
+  }
   mockWindows("main");
   const w = window as unknown as { __TAURI_INTERNALS__?: Record<string, unknown> };
   (w.__TAURI_INTERNALS__ ??= {}).convertFileSrc = fakeScreenshot;
@@ -787,9 +796,12 @@ export function installMocks() {
             { id: "v51", versionNumber: "5.1.0c", versionType: "beta", gameVersions: ["1.19.2"], loaders: ["forge"], datePublished: "2024-05-11T00:00:00Z", size: 26_000_000, recommended: false },
           ];
         case "install_modpack": {
-          const pack = CATALOGUE.modpack.find((h) => h.projectId === args.projectId)!;
+          const pack = CATALOGUE.modpack.find((h) => h.projectId === args.projectId) ?? {
+            title: "Fabulously Optimized",
+            iconUrl: null,
+          };
           const created: Instance = {
-            ...instances[0],
+            ...TEMPLATE,
             id: pack.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
             name: pack.title,
             gameVersion: "26.2",
@@ -798,7 +810,7 @@ export function installMocks() {
             icon: pack.iconUrl,
             createdAt: new Date().toISOString(),
             lastPlayedAt: null,
-            packProjectId: pack.projectId,
+            packProjectId: args.projectId as string,
             packVersionId: "v1",
             packVersion: "14.1.0",
           };
@@ -828,7 +840,7 @@ export function installMocks() {
           if (String(args.path).endsWith(".zip"))
             throw "Ce modpack vient de CurseForge : Tandem n'installe rien depuis CurseForge. S'il est déjà installé dans un autre launcher, importe-le avec « Depuis un autre launcher ».";
           const created: Instance = {
-            ...instances[0],
+            ...TEMPLATE,
             id: "fabulously-optimized-import",
             name: "Fabulously Optimized",
             gameVersion: "1.21.4",
@@ -865,7 +877,7 @@ export function installMocks() {
         case "import_from_launcher": {
           const found = args.found as { name: string; gameVersion: string; loader: Instance["loader"]; loaderVersion: string | null };
           const created: Instance = {
-            ...instances[0],
+            ...TEMPLATE,
             id: found.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
             name: found.name,
             gameVersion: found.gameVersion.startsWith("latest") ? "26.3" : found.gameVersion,

@@ -7,6 +7,8 @@ import Sidebar from "./components/Sidebar";
 import TitleBar from "./components/TitleBar";
 import Toaster from "./components/Toaster";
 import UpdateDialog from "./components/UpdateDialog";
+import Onboarding from "./components/Onboarding";
+import { checkFirstRun, firstRun } from "./lib/onboarding";
 import { onGamePlayed, rosettaPrompt, setRosettaPrompt, startGameEvents } from "./lib/games";
 import type { ProjectType } from "./lib/api";
 import { startLogStream } from "./lib/logs";
@@ -63,6 +65,7 @@ function App() {
     void startTranslationEvents();
     void startDuoEvents();
     checkForUpdateLater();
+    void checkFirstRun().catch(() => {});
     onGamePlayed(() => {
       // A new screenshot may now be the instance's picture.
       forgetInstancePictures();
@@ -183,6 +186,10 @@ function App() {
             }}
           />
         )}
+      </Show>
+
+      <Show when={firstRun()}>
+        <Onboarding />
       </Show>
 
       <Toaster />
