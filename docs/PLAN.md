@@ -253,7 +253,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - [ ] Signature de l'installeur Windows (SmartScreen) : SignPath Foundation, à demander juste après la première release publique (signature faite dans `release.yml`)
 - [x] Premier lancement guidé (D57) : compte, import des autres launchers, première partie
 - [x] Skins et capes : page Apparence (D56)
-- [ ] (plus tard) Packs de skins d'événement de Mojang, après vérification des droits
+- [x] ~~Packs de skins d'événement de Mojang~~ : interdits par la licence ; remplacés par le Pack Tandem, six skins originaux (D58)
 
 ## Portage macOS
 
@@ -619,4 +619,10 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Vérifié : types, parcours complet avec le faux backend (`localStorage.setItem("mock-first-run", "1")`) : connexion, import, « Plus tard » / « Pas maintenant », création de la première instance, réglage posé.
 - Vérifié aussi par Zeleff dans la vraie app sur un dossier vide : connexion Microsoft, instances des autres launchers trouvées, « Minecraft optimisé » installé. Retouches demandées : pas de navigation ni de séparateur dans la barre de titre pendant l'écran, paysage qui défile (plans à vitesses différentes) au lieu du décor fixe.
 - Prochaine étape : au choix de Zeleff (signature SignPath après la première release, packs de skins d'événement, autre).
+
+### 2026-10-20 (Pack Tandem)
+- Vérifié : les packs d'événement de Mojang ne peuvent pas être redistribués (contrat de licence) ; Modrinth App les copie dans son code.
+- Fait : six skins originaux avec relief (deuxième couche) et ombrage, dessinés par un script versionné (`tools/skins/generate.py`), choisis avec Zeleff sur aperçu 3D. Section « Pack Tandem » dans la page Apparence (D58).
+- Vérifié : test Rust (les six PNG sont des skins valides, bras larges ou fins bien déclarés), clippy, types, page avec le faux backend (vrais PNG).
+- Pas vérifié : un skin du pack porté sur un vrai compte.
 

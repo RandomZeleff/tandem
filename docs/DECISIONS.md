@@ -402,3 +402,9 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Pas d'étape mémoire : la mémoire automatique (D18) convient, la changer reste dans les réglages de l'instance.
 - Statut : validé
 
+### D58 · 2026-10-20 · Un pack de skins à nous plutôt que ceux de Mojang
+- Les packs d'événement de Mojang (MINECON Earth 2017, Builders & Biomes…) ne sont pas proposés : le contrat de licence de Minecraft interdit de distribuer ce que Mojang a fait sans son accord, contenu du Marketplace compris. Modrinth App les embarque quand même ; pas Tandem.
+- À la place, le « Pack Tandem » : six skins originaux (Dino, Astronaute, Pirate, Robot, Mineur, Exploratrice), dessinés par `tools/skins/generate.py` (Pillow), sous la licence du projet. Ombrage par face et deuxième couche (capuches, casques, bottes, ceintures) pour le relief des skins récents.
+- Embarqués dans `tandem-core` (`assets/skins`, `include_bytes!`) : disponibles hors ligne, environ 27 Ko en tout. Identifiants `pack:<id>`, portés comme les autres skins.
+- Statut : validé
+
