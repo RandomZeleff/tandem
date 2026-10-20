@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { games } from "../lib/games";
 import { canGoBack, canGoForward, goBack, goForward, instances, navigate } from "../lib/store";
 import { sidebarCollapsed, toggleSidebar } from "../lib/ui";
+import { setUpdateDialog, update } from "../lib/updates";
 import { Icon, XpBar } from "./pixel";
 
 // macOS draws its own traffic lights over the bar (titleBarStyle: Overlay).
@@ -100,6 +101,17 @@ export default function TitleBar() {
       </div>
 
       <div data-tauri-drag-region class="flex h-full flex-1 items-center justify-end gap-2 px-3">
+        <Show when={update()}>
+          {(found) => (
+            <button
+              class="flex h-7 items-center gap-2 rounded-sm bg-slate-750 px-2.5 text-xs shadow-[inset_0_0_0_1px_var(--color-success-line)] hover:bg-slate-700 focus-visible:bg-slate-700"
+              onClick={() => setUpdateDialog(true)}
+            >
+              <Icon name="download" size={12} color="var(--color-xp)" />
+              Tandem {found().version}
+            </button>
+          )}
+        </Show>
         <Show when={installing()}>
           {(job) => (
             <button

@@ -5,6 +5,14 @@ export interface AppInfo {
   dataDir: string;
 }
 
+/** A newer Tandem published on GitHub. */
+export interface UpdateInfo {
+  version: string;
+  currentVersion: string;
+  /** Release notes, in Markdown. */
+  notes: string | null;
+}
+
 export type LogLevel = "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR";
 
 export interface LogEntry {
@@ -724,6 +732,8 @@ export type DuoGuestEvent =
 
 export const api = {
   appInfo: () => invoke<AppInfo>("app_info"),
+  checkUpdate: () => invoke<UpdateInfo | null>("check_update"),
+  installUpdate: () => invoke<void>("install_update"),
   getLogs: () => invoke<LogEntry[]>("get_logs"),
   getSetting: <T>(key: string) => invoke<T | null>("get_setting", { key }),
   setSetting: (key: string, value: unknown) => invoke<void>("set_setting", { key, value }),

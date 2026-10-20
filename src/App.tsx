@@ -6,12 +6,14 @@ import RosettaDialog from "./components/RosettaDialog";
 import Sidebar from "./components/Sidebar";
 import TitleBar from "./components/TitleBar";
 import Toaster from "./components/Toaster";
+import UpdateDialog from "./components/UpdateDialog";
 import { onGamePlayed, rosettaPrompt, setRosettaPrompt, startGameEvents } from "./lib/games";
 import type { ProjectType } from "./lib/api";
 import { startLogStream } from "./lib/logs";
 import { startTranslationEvents } from "./lib/translation";
 import { startDuoEvents } from "./lib/duo";
 import { toggleSidebar } from "./lib/ui";
+import { checkForUpdateLater, setUpdateDialog, updateDialog } from "./lib/updates";
 import {
   currentEntry,
   goBack,
@@ -58,6 +60,7 @@ function App() {
     void startGameEvents();
     void startTranslationEvents();
     void startDuoEvents();
+    checkForUpdateLater();
     onGamePlayed(() => {
       // A new screenshot may now be the instance's picture.
       forgetInstancePictures();
@@ -178,6 +181,10 @@ function App() {
       </Show>
 
       <Toaster />
+
+      <Show when={updateDialog()}>
+        <UpdateDialog onClose={() => setUpdateDialog(false)} />
+      </Show>
 
       <AccountsDialog />
 

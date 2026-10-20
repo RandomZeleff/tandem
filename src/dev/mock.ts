@@ -316,6 +316,20 @@ export function installMocks() {
       switch (cmd) {
         case "app_info":
           return { version: "0.1.0", dataDir: "C:\\Users\\you\\AppData\\Roaming\\Tandem" };
+        // `localStorage.setItem("mock-update", "1")` to see an available update.
+        case "check_update":
+          return localStorage.getItem("mock-update")
+            ? { version: "0.2.0", currentVersion: "0.1.0", notes: "Mises à jour automatiques.\nUne seule fenêtre Tandem à la fois." }
+            : null;
+        case "install_update": {
+          const total = 12_000_000;
+          for (let downloaded = 0; downloaded <= total; downloaded += 1_500_000) {
+            await emit("update://progress", { downloaded, total });
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          location.reload();
+          return null;
+        }
         case "get_logs":
           return logs;
         case "list_instances":

@@ -7,6 +7,7 @@ import TranslationSettings from "../components/translation/TranslationSettings";
 import { api, errorMessage } from "../lib/api";
 import { ON_GAME_START_SETTING, type OnGameStart } from "../lib/games";
 import { ACTIVATION_SETTING, OPTIMIZATIONS_SETTING } from "../lib/optimizations";
+import { checkForUpdate, setUpdateDialog, update } from "../lib/updates";
 
 /** Same key as the toggle in the Worlds tab. */
 const AUTO_BACKUP_SETTING = "auto_backup_worlds";
@@ -53,6 +54,20 @@ export default function Settings() {
   const [activation, { mutate: setActivation }] = createResource(
     async () => (await api.getSetting<boolean>(ACTIVATION_SETTING)) ?? true,
   );
+
+  const [checking, setChecking] = createSignal(false);
+  const [updateStatus, setUpdateStatus] = createSignal<string | null>(null);
+  async function check() {
+    setChecking(true);
+    setUpdateStatus(null);
+    try {
+      if (!(await checkForUpdate())) setUpdateStatus("à jour");
+    } catch (err) {
+      setUpdateStatus(errorMessage(err));
+    } finally {
+      setChecking(false);
+    }
+  }
 
   async function save<T>(key: string, value: T, apply: (v: T) => void) {
     apply(value);
@@ -127,7 +142,30 @@ export default function Settings() {
         </Section>
 
         <Section title="Launcher">
-          <Row title="Version" control={<span class="font-mono text-sm">{info()?.version ?? "…"}</span>} />
+          <div class="flex items-center justify-between gap-6 py-3.5">
+            <div class="flex min-w-0 flex-col gap-0.5">
+              <span class="text-sm font-medium">Version</span>
+              <p class="text-meta text-muted">
+                <span class="font-mono">{info()?.version ?? "…"}</span>
+                {updateStatus() ? ` · ${updateStatus()}` : ""}
+              </p>
+            </div>
+            <Show
+              when={update()}
+              fallback={
+                <button class="btn px-corners h-9 shrink-0 px-3 text-sm" disabled={checking()} onClick={check}>
+                  {checking() ? "Vérification…" : "Vérifier les mises à jour"}
+                </button>
+              }
+            >
+              {(found) => (
+                <button class="btn btn-primary px-corners h-9 shrink-0 px-3 text-sm" onClick={() => setUpdateDialog(true)}>
+                  <Icon name="download" size={12} />
+                  Installer la {found().version}
+                </button>
+              )}
+            </Show>
+          </div>
           <div class="flex items-center justify-between gap-6 py-3.5">
             <div class="flex min-w-0 flex-col gap-0.5">
               <span class="text-sm font-medium">Dossier des données</span>

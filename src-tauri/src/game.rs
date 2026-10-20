@@ -81,6 +81,11 @@ impl Games {
         }
     }
 
+    /// Whether any instance is preparing, installing or running.
+    pub fn any_busy(&self) -> bool {
+        !self.lock().is_empty()
+    }
+
     pub fn running_ids(&self) -> Vec<String> {
         self.lock()
             .iter()

@@ -34,6 +34,11 @@ pub struct Duo {
 }
 
 impl Duo {
+    /// Whether the player is hosting or has joined a session.
+    pub async fn active(&self) -> bool {
+        self.host.lock().await.is_some() || self.guest.lock().await.is_some()
+    }
+
     /// Whether this instance's world runs apart for an invitation right now.
     pub async fn serves(&self, instance_id: &str) -> bool {
         self.host

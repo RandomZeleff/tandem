@@ -2,6 +2,8 @@ name: Release
 
 # Pushing a tag `vX.Y.Z` builds the installers and opens a *draft* GitHub Release with
 # them and the notes from `docs/releases/vX.Y.Z.md`. Publishing the draft stays manual.
+# Once published, its `latest.json` tells installed launchers to update (GitHub's
+# "latest release" link, which skips drafts and pre-releases).
 on:
   push:
     tags: ["v*"]
@@ -28,12 +30,18 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm tauri build
+        env:
+          # Signs the update files (`.sig`) checked by the installed launchers.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: |
             target/release/bundle/msi/*.msi
             target/release/bundle/nsis/*.exe
+            target/release/bundle/msi/*.msi.sig
+            target/release/bundle/nsis/*.exe.sig
           if-no-files-found: error
 
   macos:
@@ -53,11 +61,18 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       # Unsigned for now: signing and notarization need an Apple Developer account.
-      - run: pnpm tauri build --target universal-apple-darwin --bundles dmg
+      # The `.app.tar.gz` is what installed launchers download to update themselves.
+      - run: pnpm tauri build --target universal-apple-darwin --bundles dmg,app
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
       - uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          path: |
+            target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz
+            target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz.sig
           if-no-files-found: error
 
   draft:
@@ -77,6 +92,15 @@ jobs:
             echo "Tag $GITHUB_REF_NAME but tauri.conf.json says $app" >&2
             exit 1
           fi
+      - name: Write latest.json for the updater
+        run: |
+          base="https://github.com/${{ github.repository }}/releases/download/$GITHUB_REF_NAME"
+          win=$(cd dist-release && ls *-setup.exe)
+          mac=$(cd dist-release && ls *.app.tar.gz)
+          jq -n             --arg version "${GITHUB_REF_NAME#v}"             --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)"             --rawfile notes "docs/releases/$GITHUB_REF_NAME.md"             --arg win_url "$base/$win" --rawfile win_sig "dist-release/$win.sig"             --arg mac_url "$base/$mac" --rawfile mac_sig "dist-release/$mac.sig"             '{version: $version, notes: $notes, pub_date: $date, platforms: {
+              "windows-x86_64": {url: $win_url, signature: $win_sig},
+              "darwin-x86_64": {url: $mac_url, signature: $mac_sig},
+              "darwin-aarch64": {url: $mac_url, signature: $mac_sig}}}'             > dist-release/latest.json
       - name: Create the draft
         env:
           GH_TOKEN: ${{ github.token }}
@@ -86,5 +110,4 @@ jobs:
           gh release create "$GITHUB_REF_NAME" dist-release/* \
             --draft --verify-tag \
             --title "Tandem ${GITHUB_REF_NAME#v}" \
-            --notes-file "$notes" \
-            $([[ "$GITHUB_REF_NAME" == v0.* ]] && echo --prerelease)
+            --notes-file "$notes"

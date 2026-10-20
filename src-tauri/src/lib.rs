@@ -7,6 +7,7 @@ mod modpack;
 mod pregen;
 mod screenshot_protocol;
 mod translation;
+mod updates;
 
 use std::sync::OnceLock;
 use std::time::Instant;
@@ -37,6 +38,7 @@ pub struct AppState {
     pub logins: accounts::Logins,
     pub duo: duo::Duo,
     pub pregens: pregen::Pregens,
+    pub updates: updates::Updates,
     _log_guard: WorkerGuard,
 }
 
@@ -44,6 +46,16 @@ pub struct AppState {
 pub fn run() {
     STARTED_AT.get_or_init(Instant::now);
     tauri::Builder::default()
+        // First, so a second launch only brings the open window back and exits: two
+        // launchers would share the same database and instances.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
@@ -81,6 +93,7 @@ pub fn run() {
                 logins: Default::default(),
                 duo: Default::default(),
                 pregens: Default::default(),
+                updates: Default::default(),
                 _log_guard: log_guard,
             });
             // Tauri creates the window and its webview before `setup`: most of this is theirs.
@@ -89,6 +102,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
+            updates::check_update,
+            updates::install_update,
             commands::ui_ready,
             commands::get_logs,
             commands::get_setting,
