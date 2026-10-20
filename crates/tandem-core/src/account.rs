@@ -147,6 +147,16 @@ impl Database {
     }
 
     /// Whether a Microsoft account (which owns the game: others are refused) was added.
+    /// New face of the skin after the player changed it in Tandem.
+    pub async fn set_account_avatar(&self, id: &str, avatar: &str) -> Result<()> {
+        sqlx::query("UPDATE accounts SET avatar = ? WHERE id = ?")
+            .bind(avatar)
+            .bind(id)
+            .execute(self.pool())
+            .await?;
+        Ok(())
+    }
+
     pub async fn has_microsoft_account(&self) -> Result<bool> {
         let count: i64 =
             sqlx::query_scalar("SELECT COUNT(*) FROM accounts WHERE kind = 'microsoft'")
