@@ -55,7 +55,12 @@ export default function TitleBar() {
         <div
           data-tauri-drag-region
           class="flex h-full shrink-0 items-center gap-2.5 overflow-hidden px-[22px] shadow-[inset_-1px_0_0_var(--color-divider)] transition-[width] duration-150 ease-out motion-reduce:transition-none"
-          classList={{ "w-60": !sidebarCollapsed(), "w-20 justify-center px-0": sidebarCollapsed() }}
+          classList={{
+            "w-60": !sidebarCollapsed(),
+            "w-20 justify-center px-0": sidebarCollapsed(),
+            // The line lines up with the sidebar, hidden by the welcome steps.
+            "shadow-none!": firstRun(),
+          }}
         >
           <Logo />
           <span data-tauri-drag-region class="title-display text-xl leading-none" classList={{ hidden: sidebarCollapsed() }}>
