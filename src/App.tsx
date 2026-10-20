@@ -74,11 +74,13 @@ function App() {
 
     // Back / Forward: mouse side buttons, Alt+arrows, and Cmd+[ / Cmd+] on macOS.
     const onMouse = (e: MouseEvent) => {
-      if (e.button !== 3 && e.button !== 4) return;
+      if ((e.button !== 3 && e.button !== 4) || firstRun()) return;
       e.preventDefault();
       if (e.type === "mouseup") (e.button === 3 ? goBack : goForward)();
     };
     const onKey = (e: KeyboardEvent) => {
+      // The welcome steps cover the app: nothing to navigate to behind them.
+      if (firstRun()) return;
       // Ctrl on Windows, Cmd on macOS.
       const mod = isMac ? e.metaKey : e.ctrlKey;
       if (mod && !e.altKey && !e.shiftKey) {

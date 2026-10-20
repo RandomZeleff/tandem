@@ -5,6 +5,7 @@ import { games } from "../lib/games";
 import { canGoBack, canGoForward, goBack, goForward, instances, navigate } from "../lib/store";
 import { sidebarCollapsed, toggleSidebar } from "../lib/ui";
 import { setUpdateDialog, update } from "../lib/updates";
+import { firstRun } from "../lib/onboarding";
 import { Icon, XpBar } from "./pixel";
 
 // macOS draws its own traffic lights over the bar (titleBarStyle: Overlay).
@@ -65,10 +66,11 @@ export default function TitleBar() {
 
       {/* Everything right of the brand column sits on the content side of the frame. */}
       <div data-tauri-drag-region class="flex h-full min-w-0 flex-1 items-center shadow-[inset_0_-1px_0_var(--color-divider)]">
+      {/* No navigation behind the welcome steps. */}
       <div
         data-tauri-drag-region
         class="flex h-full items-center gap-0.5 px-2"
-        classList={{ "pl-[84px]": isMac }}
+        classList={{ "pl-[84px]": isMac, invisible: firstRun() }}
       >
         <button
           class={navButton}
