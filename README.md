@@ -2,7 +2,7 @@
 
 **A fast, modern Minecraft: Java Edition launcher built for singleplayer — and for playing with your friends without renting a server.**
 
-> v0.1 is the first public version (see [Releases](https://github.com/RandomZeleff/tandem/releases)). The interface is in French for now.
+> v0.1 is the first public version (see [Releases](https://github.com/RandomZeleff/tandem/releases)). The interface is in French for now. Website: [randomzeleff.github.io](https://randomzeleff.github.io).
 
 ## Why Tandem?
 

@@ -652,3 +652,8 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 ### 2026-10-20 (README et notes de version)
 - Fait : README et `docs/releases/v0.1.0.md` mis à jour pour la v0.1 réelle : jouer ensemble sans serveur, amis, monde à part (bêta), Tandem Optimizations, apparence, premier lancement guidé, mises à jour automatiques ; « Pas encore là » revu (installeurs signés, Forge/NeoForge, reprise si l'hôte part).
 - Site : mis à jour et poussé dans un dépôt à part (`RandomZeleff.github.io`), en ligne le jour de la v0.1.
+
+### 2026-10-20 (publication de la v0.1.0)
+- Fait : v0.1.0 publiée (https://github.com/RandomZeleff/tandem/releases/tag/v0.1.0) : installeurs Windows (.exe, .msi) et macOS (.dmg universel), `latest.json` signé pour les mises à jour automatiques. Site en ligne : https://randomzeleff.github.io (dépôt `RandomZeleff.github.io`, GitHub Pages).
+- Corrigé avant : le test `mirrors_instance_folders_into_real_files` échouait sur macOS depuis plusieurs commits (un ancien lien vers un dossier y est un lien symbolique, à retirer comme un fichier) ; `release.yml` cherchait les installeurs à la racine alors que les artefacts gardent leurs sous-dossiers (premier passage du workflow).
+- Prochaine étape : demander la signature SignPath (Phase 9), tester une vraie mise à jour 0.1.0 → 0.1.1, test à deux PC des amis.
