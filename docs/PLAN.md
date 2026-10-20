@@ -255,6 +255,14 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - [x] Skins et capes : page Apparence (D56)
 - [x] ~~Packs de skins d'événement de Mojang~~ : interdits par la licence ; remplacés par le Pack Tandem, six skins originaux (D58)
 
+## Phase 10 — Amis (cadrée le 2026-10-20, D59)
+
+- [x] Moteur : clé durable, code d'ami publié sur le relais, liste en base, connexions directes entre amis, statut, demandes, invitations (exemple `friends selftest` sur les vrais relais)
+- [x] Service démarré avec l'app, statut calculé tout seul, réglages « Apparaître hors ligne » et « Mes amis peuvent rejoindre sans invitation »
+- [x] Panneau « Amis » dans Jouer ensemble, invitations reçues (notification par-dessus le jeu, badge, Rejoindre en un clic)
+- [ ] Test réel à deux PC (Zeleff + un ami, nouvel installeur des deux côtés)
+- [ ] (idée) Amis en ligne dans la barre latérale ; ajouter un ami après une partie jouée ensemble
+
 ## Portage macOS
 
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
@@ -625,4 +633,10 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Fait : six skins originaux avec relief (deuxième couche) et ombrage, dessinés par un script versionné (`tools/skins/generate.py`), choisis avec Zeleff sur aperçu 3D. Section « Pack Tandem » dans la page Apparence (D58).
 - Vérifié : test Rust (les six PNG sont des skins valides, bras larges ou fins bien déclarés), clippy, types, page avec le faux backend (vrais PNG).
 - Pas vérifié : un skin du pack porté sur un vrai compte.
+
+### 2026-10-20 (instances dans Jouer ensemble, amis)
+- Fait : « Créer une instance » dans les listes d'instances de Jouer ensemble, et un encadré clair quand il n'y en a aucune (le monde se crée dans le jeu). Bouton « Jouer avec des amis » sur chaque instance (icône seule dans une fenêtre étroite), qui ouvre Jouer ensemble avec l'instance choisie.
+- Fait : système d'amis sans serveur (D59) : moteur, service dans l'app, panneau Amis.
+- Vérifié : `friends selftest` (deux launchers, vrais relais : code, demande, acceptation, statut, invitation, hors ligne, retrait), tests Rust, clippy, types, interface avec le faux backend.
+- Pas vérifié : deux vrais PC.
 

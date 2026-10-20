@@ -408,3 +408,13 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Embarqués dans `tandem-core` (`assets/skins`, `include_bytes!`) : disponibles hors ligne, environ 27 Ko en tout. Identifiants `pack:<id>`, portés comme les autres skins.
 - Statut : validé
 
+### D59 · 2026-10-20 · Amis, toujours sans serveur Tandem
+- Choix de Zeleff : ajout par **code d'ami permanent**, statut complet (en ligne, en jeu sur telle instance, partie ouverte) avec « Apparaître hors ligne », et « Mes amis peuvent rejoindre sans invitation » au choix de l'hôte. Pas de recherche par pseudo : il faudrait un annuaire, donc un serveur.
+- Identité : une clé iroh durable par dossier de données, dans le coffre du système (un dossier de test est un autre joueur). Son identifiant de point d'accès est l'adresse du joueur.
+- Code d'ami (`XXXX-XXXX`, comme les invitations) publié sur le relais pkarr public d'iroh, republié toutes les 30 min (le relais le garde 2 h). Il ne sert qu'à se trouver la première fois : chaque ami garde ensuite l'identifiant de l'autre.
+- Quand Tandem est ouvert : un point d'accès iroh (`tandem/friends/1`) et une connexion par ami en ligne, gardée ouverte (keep-alive QUIC). Statut, demandes, acceptations, retraits et invitations y passent en direct : rien de public à part le code, réactif sans interroger le relais en boucle. Amis hors ligne réessayés toutes les 30 s.
+- Le statut est calculé par l'app toutes les 3 s (partie hébergée, sinon jeu lancé, sinon en ligne) ; l'invitation transmet le code d'invitation de la partie, et l'ami rejoint par le chemin habituel (préparation de l'instance, lancement automatique).
+- Ce qu'un inconnu peut faire : envoyer une demande, rien d'autre ; sa connexion est coupée au bout d'une minute s'il n'est pas accepté. Un ami retiré pendant qu'on était hors ligne l'apprend à la connexion suivante.
+- Compte Microsoft nécessaire (comme pour jouer ensemble).
+- Statut : validé
+
