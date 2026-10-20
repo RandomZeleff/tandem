@@ -27,6 +27,17 @@ Most launchers make playing together painful: you sign up for a hosting site, pa
 - Tandem Optimizations and the separate world on Forge and NeoForge.
 - Keep the world going when the host leaves.
 
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
+- Committers and reviewers: [Zeleff](https://github.com/RandomZeleff)
+- Approvers: [Zeleff](https://github.com/RandomZeleff)
+
+Installers are built from this repository by GitHub Actions ([`release.yml`](.github/workflows/release.yml)); each release is approved by hand before signing.
+
+Privacy policy: [randomzeleff.github.io/confidentialite.html](https://randomzeleff.github.io/confidentialite.html) (in French). In short: no Tandem server, no telemetry; Tandem only talks to the services the features need (Microsoft/Xbox/Mojang, Modrinth, loader servers, GitHub for updates, the public iroh relays for playing together and friends, and the AI service you pick, if any).
+
 ## Privacy & security
 
 - Sign-in uses the official Microsoft OAuth flow in your own browser.
