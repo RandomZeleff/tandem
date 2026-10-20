@@ -502,7 +502,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 
 ### 2026-10-12 (fin de « Jouer ensemble », cadrage de la refonte)
 - Chantier 5 (monde du groupe) abandonné (D48) : le groupe laisse héberger le meilleur PC. La feuille de route « Jouer ensemble » est terminée.
-- Refonte de l'interface cadrée (Phase 7, [REFONTE.md](REFONTE.md), [PRODUCT.md](../PRODUCT.md)) : retour de Zeleff et de son frère (« pas très propre ni agréable »), direction « le Minecraft moderne » choisie parmi plusieurs pistes, sombre, animations sobres, police carrée libre pour les grands titres.
+- Refonte de l'interface cadrée (Phase 7, [REFONTE.md](REFONTE.md)) : retour de Zeleff et de son frère (« pas très propre ni agréable »), direction « le Minecraft moderne » choisie parmi plusieurs pistes, sombre, animations sobres, police carrée libre pour les grands titres.
 - Prochaine étape : Phase 7, étape 1 (fondations).
 
 ### 2026-10-12 (refonte, étape 1 : fondations)

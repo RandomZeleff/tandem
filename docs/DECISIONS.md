@@ -337,7 +337,7 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Statut : validé
 
 ### D50 · 2026-10-12 · Système visuel « le Minecraft moderne » (remplace D11)
-- La refonte de la Phase 7 est terminée ; le système est décrit dans [`DESIGN.md`](../DESIGN.md), écrit à partir de ce qui est construit (jetons dans `src/index.css`, `.impeccable/design.json` en est la version lisible par l'outil de design).
+- La refonte de la Phase 7 est terminée ; les jetons du système sont dans `src/index.css` (sa description `DESIGN.md` reste hors du dépôt, avec les fichiers de l'outil de design).
 - Repris de D49 : surfaces graphite en paliers, boutons pleins qui s'enfoncent, vert pour l'action principale, coins presque carrés, Geist partout et Jersey 10 seulement pour les grands titres.
 - Ajouté pendant la refonte : jetons de texte `meta` (13), `title` (44, titres de page) et `hero` (64, accueil) ; un seul visuel d'instance partout (image mise en avant du modpack, sinon dernière capture, sinon un ciel dessiné de jour, de couchant ou de nuit selon l'instance) ; jamais d'étiquette au-dessus d'un titre ; l'or seulement pour les avertissements ; « Supprimer l'instance » dans l'onglet Réglages, plus dans l'en-tête ; pixel art (icônes, blocs, têtes, loaders) seulement à des tailles entières.
 - Revue indépendante (outil impeccable) : 8 corrections demandées, toutes faites, puis 2 retouches.

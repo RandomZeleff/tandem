@@ -13,5 +13,13 @@ CLAUDE.local.md
 # Built jar of the mod Tandem embeds (see mods/tandem-optimizations/README.md)
 !mods/tandem-optimizations/dist/
 
-# Impeccable design tool: question pages and local runs
-.impeccable/questions/
+# Design tool context (impeccable): local only
+.impeccable/
+PRODUCT.md
+DESIGN.md
+
+# Website and promotion: kept out of the launcher repository
+website/
+tandem-site.tar.gz
+docs/PROMOTION.md
+.openai/

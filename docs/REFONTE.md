@@ -1,6 +1,6 @@
 # Refonte de l'interface (cadrage, 12 octobre 2026)
 
-Retour de Zeleff et de son frère : l'interface « ne fait pas très propre ni agréable ». Objectif : un launcher au style moderne, toujours clairement Minecraft. Ce document cadre la refonte ; rien n'est encore codé. Produit et public : [PRODUCT.md](../PRODUCT.md).
+Retour de Zeleff et de son frère : l'interface « ne fait pas très propre ni agréable ». Objectif : un launcher au style moderne, toujours clairement Minecraft. Ce document cadre la refonte ; rien n'est encore codé.
 
 ## Ce qui ne va pas aujourd'hui (D11 « Deepslate »)
 
