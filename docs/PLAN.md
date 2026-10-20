@@ -248,7 +248,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 
 - [x] Mises à jour automatiques de Tandem (D55) : vérification au démarrage, pastille, installation en un clic, `latest.json` signé publié par `release.yml`
 - [x] Une seule fenêtre Tandem à la fois (D55)
-- [ ] Ajouter le secret `TAURI_SIGNING_PRIVATE_KEY` sur GitHub (Zeleff) et sauvegarder la clé privée
+- [x] Ajouter le secret `TAURI_SIGNING_PRIVATE_KEY` sur GitHub et sauvegarder la clé privée (Zeleff, 2026-10-20)
 - [ ] Tester une vraie mise à jour de bout en bout (0.1.0 installée → release suivante publiée)
 - [ ] Signature de l'installeur Windows (SmartScreen) : SignPath Foundation, à demander juste après la première release publique (signature faite dans `release.yml`)
 - [x] Premier lancement guidé (D57) : compte, import des autres launchers, première partie
