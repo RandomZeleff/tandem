@@ -251,7 +251,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - [ ] Ajouter le secret `TAURI_SIGNING_PRIVATE_KEY` sur GitHub (Zeleff) et sauvegarder la clé privée
 - [ ] Tester une vraie mise à jour de bout en bout (0.1.0 installée → release suivante publiée)
 - [ ] Signature de l'installeur Windows (SmartScreen) : SignPath Foundation, à demander juste après la première release publique (signature faite dans `release.yml`)
-- [ ] Premier lancement guidé (connexion, première instance, mémoire)
+- [x] Premier lancement guidé (D57) : compte, import des autres launchers, première partie
 - [x] Skins et capes : page Apparence (D56)
 - [ ] (plus tard) Packs de skins d'événement de Mojang, après vérification des droits
 
@@ -613,4 +613,10 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Vérifié : tests Rust (modèle deviné, fichiers refusés, noms des capes), exemple `skins` sur de vraies données (18 skins par défaut lus dans un jar, modèle bien deviné sur 6 d'entre eux, skin d'un joueur par pseudo, pseudo inconnu), clippy, types, page avec le faux backend.
 - Pas vérifié : l'envoi réel d'un skin et le changement de cape sur un vrai compte (à faire par Zeleff dans `tauri dev`).
 - Prochaine étape : Zeleff essaie la page avec son compte ; ensuite premier lancement guidé.
+
+### 2026-10-20 (premier lancement guidé)
+- Fait : écran de bienvenue au tout premier lancement (D57). Compte Microsoft, parties des autres launchers à cocher, première partie (Minecraft tel quel, Minecraft optimisé avec Fabulously Optimized, ou un modpack). Erreur « pas de release publiée » des mises à jour traitée comme « à jour ».
+- Vérifié : types, parcours complet avec le faux backend (`localStorage.setItem("mock-first-run", "1")`) : connexion, import, « Plus tard » / « Pas maintenant », création de la première instance, réglage posé.
+- Pas vérifié : la vraie app sur une installation neuve (tester avec `TANDEM_DATA_DIR` vers un dossier vide).
+- Prochaine étape : au choix de Zeleff (signature SignPath après la première release, packs de skins d'événement, autre).
 

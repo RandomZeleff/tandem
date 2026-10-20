@@ -395,3 +395,10 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Aperçu 3D avec skinview3d (MIT, three.js), chargé seulement à l'ouverture de la page.
 - Statut : validé
 
+### D57 · 2026-10-20 · Premier lancement guidé
+- Affiché une seule fois, sur une installation neuve : aucun compte et aucune instance. Quelqu'un qui passe d'une ancienne version de Tandem ne le voit pas (réglage `onboarding_done` posé d'office). « Passer » toujours visible ; la barre de titre reste accessible.
+- Trois étapes au plus : compte Microsoft (connexion habituelle, « Plus tard » possible), parties des autres launchers (seulement s'il y en a, à cocher, copiées), première partie. L'import d'au moins une partie termine le parcours : il y a déjà de quoi jouer.
+- Première partie : Minecraft dernière version tel quel, « Minecraft optimisé » (Fabulously Optimized, installé en arrière-plan avec la progression dans la barre de titre), ou Découvrir sur les modpacks.
+- Pas d'étape mémoire : la mémoire automatique (D18) convient, la changer reste dans les réglages de l'instance.
+- Statut : validé
+
