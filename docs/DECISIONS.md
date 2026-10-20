@@ -375,3 +375,13 @@ Format : date · décision · pourquoi · statut (proposé / validé / abandonn�
 - Une information apparaît là où on agit dessus : l'aide d'un service de traduction sous le choix du service, Dupliquer et Supprimer ensemble dans « Gestion ».
 - Onglets d'instance : Contenu d'abord (onglet par défaut), Console en avant-dernier, Réglages en dernier.
 - Statut : validé
+
+### D55 · 2026-10-20 · Mises à jour de Tandem et une seule fenêtre
+- Mises à jour par le plugin `updater` de Tauri, côté Rust (commandes `check_update` / `install_update`) : aucune requête réseau depuis l'interface.
+- Source : `latest.json` attaché à chaque GitHub Release par `release.yml`, lu via le lien « dernière release » de GitHub. Ce lien ignore les brouillons et les pré-versions : les versions 0.x ne sont donc plus marquées « pré-version », sinon personne ne recevrait la mise à jour. Publier le brouillon = la proposer à tous.
+- Fichiers signés (minisign). Clé privée hors du dépôt (`~/.tauri/tandem.key` chez Zeleff, secret `TAURI_SIGNING_PRIVATE_KEY` sur GitHub) ; clé publique dans `tauri.conf.json`. Perdre la clé privée = plus aucune mise à jour possible pour les launchers déjà installés : la sauvegarder.
+- Vérification discrète 5 s après le démarrage (pas de message si elle échoue), et bouton « Vérifier » dans Réglages. Une pastille dans la barre de titre annonce la nouvelle version ; rien ne s'installe sans clic.
+- Installation refusée pendant qu'un jeu tourne ou s'installe, ou pendant une partie avec des amis : l'installeur ferme Tandem. Windows : installeur NSIS en mode « passive » (barre de progression, pas de questions). macOS : `.app.tar.gz` universel.
+- Les builds de test de la CI ne sont pas signées (`createUpdaterArtifacts` coupé) : seules les releases le sont.
+- Une seule fenêtre : plugin `single-instance`, chargé en premier. Relancer Tandem ramène la fenêtre ouverte : deux launchers partageraient la même base et les mêmes instances.
+- Statut : validé

@@ -244,6 +244,16 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - [x] 3. Carnet de partie par monde : jour, temps de jeu, distance, créatures, blocs, morts ; grandes étapes vanilla datées ; quêtes FTB par chapitre (D52)
 - [x] 4. Fiches de modpack « est-ce pour moi ? » : mémoire face au PC, nombre de mods et taille, quêtes, thèmes dominants ; packs « dans le même esprit » (D53)
 
+## Phase 9 — Prêt à distribuer (cadrée le 2026-10-20)
+
+- [x] Mises à jour automatiques de Tandem (D55) : vérification au démarrage, pastille, installation en un clic, `latest.json` signé publié par `release.yml`
+- [x] Une seule fenêtre Tandem à la fois (D55)
+- [ ] Ajouter le secret `TAURI_SIGNING_PRIVATE_KEY` sur GitHub (Zeleff) et sauvegarder la clé privée
+- [ ] Tester une vraie mise à jour de bout en bout (0.1.0 installée → release suivante publiée)
+- [ ] Signature de l'installeur Windows (SmartScreen), par exemple SignPath pour les projets open source
+- [ ] Premier lancement guidé (connexion, première instance, mémoire)
+- [ ] Skins et capes
+
 ## Portage macOS
 
 - [x] Compiler et lancer l’app sur Mac (jamais testé : code écrit multi-plateforme, chemins `~/Library/Application Support/Tandem`)
@@ -590,3 +600,9 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Fait : tour de toutes les pages dans le navigateur. Textes d'aide raccourcis ou retirés partout (Accueil, Instances, réglages d'instance, Réglages, Jouer ensemble, Traduction, Glossaire, comptes, imports, dialogues) ; sous-titres de page retirés. Onglets d'instance : Contenu par défaut, Console déplacée en fin. Réglages d'instance : Dupliquer et Supprimer réunis dans « Gestion », listes de même largeur. Accueil : les 3 autres instances sur une ligne, bouton « Détails » plus clair que l'icône de console. Réglages : l'aide du service de traduction passe sous « Service ». Jouer ensemble : « Tu joues en tant que » seulement avec un compte Microsoft. Références à l'ancien onglet « Informations » corrigées en « Réglages ». Règle notée en D54.
 - Vérifié : types (`tsc`), pages revues avec le faux backend.
 - Prochaine étape : Zeleff regarde dans la vraie app et signale ce qui détonne encore.
+
+### 2026-10-20 (mises à jour automatiques, une seule fenêtre)
+- Fait : installeur de test compilé pour Zeleff. Mises à jour de Tandem (D55) : module `updates` (Rust), pastille « Tandem x.y » dans la barre de titre, fenêtre avec les notes et la progression, « Vérifier les mises à jour » dans Réglages ; refus pendant un jeu ou une partie à plusieurs. `release.yml` signe les fichiers et écrit `latest.json` ; les 0.x ne sont plus des pré-versions. Une seule fenêtre à la fois (`single-instance`).
+- Vérifié : clippy, types, interface avec le faux backend (pastille, fenêtre, progression, « à jour »), installeur signé produit en local (`.sig`).
+- Pas vérifié : une vraie mise à jour de bout en bout (il faut une release publiée avec `latest.json`).
+- Prochaine étape : Zeleff ajoute le secret GitHub et teste l'installeur ; ensuite premier lancement guidé.
