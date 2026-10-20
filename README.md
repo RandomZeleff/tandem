@@ -1,28 +1,31 @@
 # Tandem
 
-**A fast, modern Minecraft: Java Edition launcher built for singleplayer — and for playing with a friend without renting a server.**
+**A fast, modern Minecraft: Java Edition launcher built for singleplayer — and for playing with your friends without renting a server.**
 
-> 🚧 Early development: v0.1 is a first preview (see [Releases](https://github.com/RandomZeleff/tandem/releases)). The French UI comes first; co-op without a server is the next big step.
+> v0.1 is the first public version (see [Releases](https://github.com/RandomZeleff/tandem/releases)). The interface is in French for now.
 
 ## Why Tandem?
 
-Most launchers make playing together painful: you sign up for a hosting site, pay, upload your world, configure it. Tandem wants it to be as simple as clicking **"Invite a friend"**.
+Most launchers make playing together painful: you sign up for a hosting site, pay, upload your world, configure it. With Tandem you click **"Invite"**, send a short code, and your friend is in your world.
 
 ## What works today
 
-- **Instances** — isolated setups for vanilla, Fabric, Quilt, Forge and NeoForge, the right Java downloaded automatically, several instances running side by side, memory picked from your machine and mod count.
+- **Play together without a server** — share an `XXXX-XXXX` code and your friends join your world through a direct peer-to-peer connection (public relay as a fallback), with no Tandem server involved. Guests get a copy of the host's instance with the exact same mods, and the game launches straight into the world. Live ping, arrivals, kick, and a health card for the host. Optional *separate world* (beta, Fabric/Quilt): the world runs in a hidden server so friends keep playing if the host's game crashes.
+- **Friends** — permanent friend codes (no Tandem account), see who is online, playing or hosting, invite or join in one click, appear offline.
+- **Instances** — isolated setups for vanilla, Fabric, Quilt, Forge and NeoForge, the right Java downloaded automatically, several instances running side by side, memory picked from your machine and mod count. Import from the Modrinth App, Prism, the CurseForge app, the official launcher or any instance folder (originals are never modified).
 - **Content** — search and install mods, resource packs, shaders and modpacks from Modrinth; `.mrpack` install, import and export; one-click updates; warnings before disabling a library other mods need.
+- **AI modpack translation** — translate mods, quests and guide books into your language with a local model (Ollama, LM Studio) or your own API key; authors' translations always win, reversible in one click.
 - **Playing** — live console, memory and CPU graphs, crash analysis that names the likely culprit mod.
-- **Worlds and screenshots** — automatic backups after each session with undoable restore, screenshot gallery per instance.
-- **Fast** — starts in well under a second, parallel resumable downloads, stays smooth with hundreds of mods.
+- **Worlds and screenshots** — automatic backups after each session with undoable restore, a world logbook, screenshot gallery per instance.
+- **Accounts and skins** — Microsoft sign-in, several accounts, skin and cape changer with a 3D preview and the original *Tandem Pack* skins.
+- **Fast** — starts in well under a second, parallel resumable downloads, stays smooth with hundreds of mods. *Tandem Optimizations* (Fabric/Quilt 1.20–1.21) trims useless world work, added at launch without touching the instance.
+- **Self-updating** — signed updates checked at startup, installed in one click.
 
-## Planned features
+## Planned
 
-- **Co-op without a server** — open your world to LAN, share a short invite code, and your friend joins through a direct peer-to-peer connection (relay fallback). No mods, works on any version or loader.
-- **Instances** — isolated game setups, fast version switching, multiple instances running side by side.
-- **Import from other launchers** — bring your existing instances over from the Modrinth App, Prism, the CurseForge app or the official launcher (files are copied from your disk).
-- **AI modpack translation** — translate mods, quests and guide books into your language as a toggleable resource pack.
-- **Smooth accounts** — sign in with your Microsoft account, switch accounts in one click.
+- Signed installers (Windows SmartScreen, Apple notarization).
+- Tandem Optimizations and the separate world on Forge and NeoForge.
+- Keep the world going when the host leaves.
 
 ## Privacy & security
 

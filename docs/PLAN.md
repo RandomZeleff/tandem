@@ -648,3 +648,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 ### 2026-10-20 (page Réglages en sections)
 - Fait : Réglages découpés en sections avec un menu à gauche (Jeu, Performances, Agent IA, Launcher, Journal), une seule affichée à la fois. Agent IA : services en cartes (« Sur ton PC » / « En ligne », le service enregistré marqué « Actif »), puis la connexion du service choisi (clé, modèle, test), puis la langue. Les boutons de l'onglet Traduction ouvrent directement la section Agent IA.
 - Vérifié : types, navigation au clavier, choix d'un service + clé + test + enregistrement avec le faux backend, lien depuis l'onglet Traduction.
+
+### 2026-10-20 (README et notes de version)
+- Fait : README et `docs/releases/v0.1.0.md` mis à jour pour la v0.1 réelle : jouer ensemble sans serveur, amis, monde à part (bêta), Tandem Optimizations, apparence, premier lancement guidé, mises à jour automatiques ; « Pas encore là » revu (installeurs signés, Forge/NeoForge, reprise si l'hôte part).
+- Site : mis à jour et poussé dans un dépôt à part (`RandomZeleff.github.io`), en ligne le jour de la v0.1.
