@@ -752,7 +752,7 @@ async fn mirror_instance_folders(game_dir: &Path, dir: &Path) -> Result<()> {
             let dest = dir.join(&name);
             // A link left by an older Tandem: removed without touching its target.
             if std::fs::read_link(&dest).is_ok() {
-                std::fs::remove_dir(&dest)?;
+                remove_dir_link(&dest)?;
             }
             mirror_dir(&entry.path(), &dest)?;
         }
@@ -805,6 +805,16 @@ fn mirror_dir(from: &Path, to: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Removes a link to a folder without touching its target: a junction on Windows
+/// (removed like a folder), a symbolic link elsewhere (removed like a file).
+fn remove_dir_link(link: &Path) -> std::io::Result<()> {
+    if cfg!(windows) {
+        std::fs::remove_dir(link)
+    } else {
+        std::fs::remove_file(link)
+    }
+}
+
 /// A directory link: a junction on Windows (no administrator rights needed), a symlink
 /// elsewhere. Left as is when it already points there.
 async fn link_dir(target: &Path, link: &Path) -> Result<()> {
@@ -818,7 +828,7 @@ async fn link_dir(target: &Path, link: &Path) -> Result<()> {
         }
         match std::fs::read_link(&link) {
             // An old link: removed as a directory, without touching what it points to.
-            Ok(_) => std::fs::remove_dir(&link)?,
+            Ok(_) => remove_dir_link(&link)?,
             // A real folder the server made itself (a mod's data, before the instance had
             // one): kept, never replaced.
             Err(_) if std::fs::symlink_metadata(&link).is_ok() => {
