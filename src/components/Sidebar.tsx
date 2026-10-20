@@ -139,6 +139,16 @@ function AccountCard() {
           </Show>
           <button
             class="row flex w-full items-center gap-2.5 px-2 py-1.5 text-left text-sm"
+            onClick={() => {
+              setOpen(false);
+              navigate({ page: "appearance" });
+            }}
+          >
+            <Icon name="user" size={14} />
+            Apparence
+          </button>
+          <button
+            class="row flex w-full items-center gap-2.5 px-2 py-1.5 text-left text-sm"
             onClick={manage}
           >
             <Icon name="gear" size={14} />

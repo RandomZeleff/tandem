@@ -5,6 +5,25 @@ export interface AppInfo {
   dataDir: string;
 }
 
+export type SkinVariant = "classic" | "slim";
+
+/** What the active Microsoft account wears. Textures are PNG data URLs. */
+export interface Wardrobe {
+  skin: string | null;
+  variant: SkinVariant;
+  /** The library entry of this skin, when the player saved it. */
+  libraryId: string | null;
+  capes: { id: string; name: string; active: boolean; texture: string | null }[];
+}
+
+/** A saved skin, or a default one (`default:<name>:<variant>`). */
+export interface LibrarySkin {
+  id: string;
+  name: string;
+  variant: SkinVariant;
+  texture: string;
+}
+
 /** A newer Tandem published on GitHub. */
 export interface UpdateInfo {
   version: string;
@@ -732,6 +751,17 @@ export type DuoGuestEvent =
 
 export const api = {
   appInfo: () => invoke<AppInfo>("app_info"),
+  skinWardrobe: () => invoke<Wardrobe>("skin_wardrobe"),
+  skinApply: (skin: string) => invoke<Wardrobe>("skin_apply", { skin }),
+  skinReset: () => invoke<Wardrobe>("skin_reset"),
+  skinSetCape: (cape: string | null) => invoke<Wardrobe>("skin_set_cape", { cape }),
+  skinLibrary: () => invoke<LibrarySkin[]>("skin_library"),
+  skinDefaults: () => invoke<LibrarySkin[]>("skin_defaults"),
+  skinAddFile: (path: string) => invoke<LibrarySkin>("skin_add_file", { path }),
+  skinAddPlayer: (name: string) => invoke<LibrarySkin>("skin_add_player", { name }),
+  skinRename: (id: string, name: string) => invoke<void>("skin_rename", { id, name }),
+  skinSetVariant: (id: string, variant: SkinVariant) => invoke<void>("skin_set_variant", { id, variant }),
+  skinRemove: (id: string) => invoke<void>("skin_remove", { id }),
   checkUpdate: () => invoke<UpdateInfo | null>("check_update"),
   installUpdate: () => invoke<void>("install_update"),
   getLogs: () => invoke<LogEntry[]>("get_logs"),

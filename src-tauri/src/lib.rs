@@ -6,6 +6,7 @@ mod game;
 mod modpack;
 mod pregen;
 mod screenshot_protocol;
+mod skins;
 mod translation;
 mod updates;
 
@@ -192,6 +193,17 @@ pub fn run() {
             accounts::add_offline_account,
             accounts::set_active_account,
             accounts::remove_account,
+            skins::skin_wardrobe,
+            skins::skin_apply,
+            skins::skin_reset,
+            skins::skin_set_cape,
+            skins::skin_library,
+            skins::skin_defaults,
+            skins::skin_add_file,
+            skins::skin_add_player,
+            skins::skin_rename,
+            skins::skin_set_variant,
+            skins::skin_remove,
             accounts::begin_microsoft_login,
             accounts::finish_microsoft_login,
             accounts::cancel_microsoft_login,

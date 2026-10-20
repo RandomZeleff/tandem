@@ -302,6 +302,62 @@ async function fakeLaunch(id: string) {
   await emit("game://output", { instanceId: id, stream: "stdout", lines: ["[Render thread/INFO]: Sound engine started"] });
 }
 
+
+/** A plain skin in three colours (shirt, trousers, skin), as a PNG data URL. */
+function fakeSkin(shirt: string, legs: string, slim = false): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+  const c = canvas.getContext("2d")!;
+  const fill = (color: string, x: number, y: number, w: number, h: number) => {
+    c.fillStyle = color;
+    c.fillRect(x, y, w, h);
+  };
+  fill("#c58c6b", 0, 0, 32, 16); // head
+  fill("#3b2a1a", 8, 8, 8, 2); // hair
+  fill("#ffffff", 9, 12, 2, 1);
+  fill("#ffffff", 13, 12, 2, 1);
+  fill(shirt, 16, 16, 24, 16); // body
+  fill(shirt, 40, 16, slim ? 14 : 16, 16); // right arm
+  fill(shirt, 32, 48, slim ? 14 : 16, 16); // left arm
+  fill(legs, 0, 16, 16, 16); // right leg
+  fill(legs, 16, 48, 16, 16); // left leg
+  return canvas.toDataURL();
+}
+
+function fakeCape(color: string): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 32;
+  const c = canvas.getContext("2d")!;
+  c.fillStyle = color;
+  c.fillRect(0, 0, 22, 17);
+  c.fillStyle = "#ffffff";
+  c.fillRect(5, 6, 2, 4);
+  return canvas.toDataURL();
+}
+
+let skinLibrary: { id: string; name: string; variant: "classic" | "slim"; texture: string }[] | null = null;
+let wardrobe: { skin: string; variant: "classic" | "slim"; libraryId: string | null; capes: { id: string; name: string; active: boolean; texture: string }[] } | null = null;
+
+function skinMocks() {
+  skinLibrary ??= [
+    { id: "s1", name: "Chevalier", variant: "classic", texture: fakeSkin("#7a818a", "#3a3f48") },
+    { id: "s2", name: "Exploratrice", variant: "slim", texture: fakeSkin("#2e6b1e", "#7a5420", true) },
+    { id: "s3", name: "Été", variant: "classic", texture: fakeSkin("#f2c744", "#2a6fb0") },
+  ];
+  wardrobe ??= {
+    skin: skinLibrary[0].texture,
+    variant: "classic",
+    libraryId: "s1",
+    capes: [
+      { id: "c1", name: "Migrator", active: true, texture: fakeCape("#5b8bd6") },
+      { id: "c2", name: "15th Anniversary", active: false, texture: fakeCape("#c23b3b") },
+    ],
+  };
+  return { library: skinLibrary, wardrobe };
+}
+
 export function installMocks() {
   mockWindows("main");
   const w = window as unknown as { __TAURI_INTERNALS__?: Record<string, unknown> };
@@ -330,6 +386,54 @@ export function installMocks() {
           location.reload();
           return null;
         }
+        case "skin_wardrobe":
+          await new Promise((r) => setTimeout(r, 300));
+          return structuredClone(skinMocks().wardrobe);
+        case "skin_library":
+          return structuredClone(skinMocks().library);
+        case "skin_defaults":
+          return ["steve", "alex", "ari", "kai"].flatMap((name, i) =>
+            (["classic", "slim"] as const).map((variant) => ({
+              id: `default:${name}:${variant}`,
+              name: name[0].toUpperCase() + name.slice(1),
+              variant,
+              texture: fakeSkin(["#2aa3a3", "#4f9a3a", "#b04a8a", "#d6762f"][i], "#3b3fa0", variant === "slim"),
+            })),
+          );
+        case "skin_apply": {
+          const { library, wardrobe: w } = skinMocks();
+          const all = [...library];
+          const skin = all.find((s) => s.id === args.skin);
+          await new Promise((r) => setTimeout(r, 600));
+          if (skin) Object.assign(w, { skin: skin.texture, variant: skin.variant, libraryId: skin.id });
+          else if (typeof args.skin === "string") Object.assign(w, { skin: fakeSkin("#2aa3a3", "#3b3fa0"), libraryId: null });
+          return structuredClone(w);
+        }
+        case "skin_reset":
+          return structuredClone(Object.assign(skinMocks().wardrobe, { skin: fakeSkin("#2aa3a3", "#3b3fa0"), libraryId: null }));
+        case "skin_set_cape": {
+          const w = skinMocks().wardrobe;
+          w.capes = w.capes.map((c) => ({ ...c, active: c.id === args.cape }));
+          return structuredClone(w);
+        }
+        case "skin_add_player": {
+          const name = String(args.name);
+          if (name.toLowerCase() === "nobody") throw `Aucun joueur ne s'appelle « ${name} ».`;
+          const skin = { id: `p-${name}`, name, variant: "classic" as const, texture: fakeSkin("#8f4718", "#222222") };
+          skinMocks().library.unshift(skin);
+          return skin;
+        }
+        case "skin_add_file": {
+          const skin = { id: `f-${Date.now()}`, name: "Nouveau skin", variant: "slim" as const, texture: fakeSkin("#d64fa0", "#4a2a6a", true) };
+          skinMocks().library.unshift(skin);
+          return skin;
+        }
+        case "skin_rename":
+        case "skin_set_variant":
+          return null;
+        case "skin_remove":
+          skinLibrary = skinMocks().library.filter((s) => s.id !== args.id);
+          return null;
         case "get_logs":
           return logs;
         case "list_instances":

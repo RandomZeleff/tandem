@@ -35,6 +35,8 @@ import Duo from "./pages/Duo";
 
 /** Loaded on first visit: keeps it out of the startup bundle. */
 const Project = lazy(() => import("./pages/Project"));
+/** Carries the 3D viewer (three.js): only loaded when opened. */
+const Appearance = lazy(() => import("./pages/Appearance"));
 
 const isMac = navigator.userAgent.includes("Mac");
 
@@ -159,6 +161,9 @@ function App() {
             </Match>
             <Match when={route().page === "settings"}>
               <Settings />
+            </Match>
+            <Match when={route().page === "appearance"}>
+              <Appearance />
             </Match>
           </Switch>
             )}
