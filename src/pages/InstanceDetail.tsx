@@ -99,6 +99,16 @@ export default function InstanceDetail(props: { instance: Instance; tab?: string
             >
               <Icon name="folder" size={24} />
             </button>
+            {/* Shrinks to its icon in narrow windows, so the name keeps its room. */}
+            <button
+              class="btn btn-light px-corners-md h-[54px] px-5 text-base max-[1279px]:w-[54px] max-[1279px]:px-0"
+              aria-label="Jouer avec des amis"
+              title="Jouer avec des amis"
+              onClick={() => navigate({ page: "multi", instanceId: props.instance.id })}
+            >
+              <Icon name="invite" size={12} />
+              <span class="max-[1279px]:hidden">Jouer avec des amis</span>
+            </button>
             <PlayButton id={props.instance.id} size="lg" name={props.instance.name} />
           </div>
         </div>

@@ -229,7 +229,7 @@ function Hero(props: { instance: Instance }) {
             world={chosen()?.folder ?? null}
             worldName={chosen()?.name}
           />
-          <button class="btn btn-light px-corners-md h-[54px] px-6 text-base" onClick={() => navigate({ page: "multi" })}>
+          <button class="btn btn-light px-corners-md h-[54px] px-6 text-base" onClick={() => navigate({ page: "multi", instanceId: props.instance.id })}>
             <Icon name="invite" size={12} />
             <Show when={duo.host} fallback="Inviter des amis">
               {guests() === 0 ? "Partie ouverte" : guests() === 1 ? "1 ami connecté" : `${guests()} amis connectés`}
