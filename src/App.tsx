@@ -162,7 +162,7 @@ function App() {
               <Project {...(route() as { id: string; instanceId?: string })} />
             </Match>
             <Match when={route().page === "multi"}>
-              <Duo />
+              <Duo {...(route() as { instanceId?: string })} />
             </Match>
             <Match when={route().page === "settings"}>
               <Settings />
@@ -181,10 +181,11 @@ function App() {
           <NewInstanceDialog
             initialVersion={options().version}
             onClose={() => setNewInstanceDialog(null)}
-            onCreated={(instance) => {
+            onCreated={async (instance) => {
               setNewInstanceDialog(null);
-              void refetchInstances();
-              navigate({ page: "instance", id: instance.id });
+              await refetchInstances();
+              if (options().onCreated) options().onCreated!(instance);
+              else navigate({ page: "instance", id: instance.id });
             }}
           />
         )}

@@ -1,4 +1,4 @@
-import { createMemo, createResource, createSignal, For, type JSX, Match, onMount, Show, Switch } from "solid-js";
+import { createEffect, createMemo, createResource, createSignal, For, type JSX, Match, onMount, Show, Switch } from "solid-js";
 import Alert from "../components/Alert";
 import { AccountAvatar } from "../components/accounts/AccountVisuals";
 import HostHealth from "../components/HostHealth";
@@ -32,7 +32,8 @@ import {
 import { loaderLabel } from "../lib/format";
 import { gameState, output } from "../lib/games";
 import { skinLook } from "../lib/look";
-import { activeAccount, instances, remembered } from "../lib/store";
+import { activeAccount, instances, navigate, remembered, setNewInstanceDialog } from "../lib/store";
+import type { Instance } from "../lib/api";
 import { toast } from "../lib/toast";
 
 /** Ping and kind of link, as a small chip. */
@@ -118,12 +119,47 @@ function inWorld(instanceId: string): boolean {
   return false;
 }
 
+/** Last entry of the instance pickers: creates one without leaving the page. */
+const NEW_INSTANCE = "__new__";
+
 function instanceOptions() {
-  return instances().map((i) => ({
-    value: i.id,
-    label: i.name,
-    hint: `${i.gameVersion} · ${loaderLabel(i.loader)}`,
-  }));
+  return [
+    ...instances().map((i) => ({
+      value: i.id,
+      label: i.name,
+      hint: `${i.gameVersion} · ${loaderLabel(i.loader)}`,
+    })),
+    { value: NEW_INSTANCE, label: "Créer une instance", icon: <Icon name="plus" size={12} /> },
+  ];
+}
+
+/** Picks an instance, or opens the creation dialog and picks the new one. */
+function pickInstance(value: string, pick: (id: string) => void) {
+  if (value === NEW_INSTANCE) setNewInstanceDialog({ onCreated: (created: Instance) => pick(created.id) });
+  else pick(value);
+}
+
+/** Said instead of an empty picker: what an instance is, and how to get one. */
+function NoInstance() {
+  return (
+    <div class="px-corners-md flex flex-col gap-3 bg-slate-900 p-4 shadow-[inset_0_0_0_1px_var(--color-line)]">
+      <div class="flex flex-col gap-1">
+        <span class="text-sm font-semibold">Tu n'as pas encore d'instance</span>
+        <span class="text-meta text-muted">
+          Une instance, c'est ton Minecraft : une version, des mods, tes mondes. Le monde, lui, se crée dans le jeu.
+        </span>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn btn-primary px-corners h-9 px-3 text-sm" onClick={() => setNewInstanceDialog({ onCreated: () => {} })}>
+          <Icon name="plus" size={12} />
+          Créer ma première instance
+        </button>
+        <button class="btn px-corners h-9 px-3 text-sm" onClick={() => navigate({ page: "discover", kind: "modpack" })}>
+          Choisir un modpack
+        </button>
+      </div>
+    </div>
+  );
 }
 
 /** Both players need a Microsoft account: said before anything else. */
@@ -151,8 +187,8 @@ function AccountGate(props: { children: JSX.Element }) {
   );
 }
 
-function Start() {
-  const [hostInstance, setHostInstance] = remembered<string>("duo-host-instance", instances()[0]?.id ?? "");
+function Start(props: { instanceId?: string }) {
+  const [hostInstance, setHostInstance] = remembered<string>("duo-host-instance", props.instanceId ?? instances()[0]?.id ?? "");
   const [world, setWorld] = remembered<string>("duo-host-world", "");
   const [separate, setSeparate] = remembered<boolean>("duo-separate-world", false);
   const [code, setCode] = createSignal("");
@@ -160,6 +196,10 @@ function Start() {
   const [error, setError] = createSignal<string | null>(null);
 
   const chosen = createMemo(() => instances().find((i) => i.id === hostInstance()));
+  // The first instance, once there is one (created here, or the list loaded late).
+  createEffect(() => {
+    if (!chosen() && instances().length > 0) setHostInstance(instances()[0].id);
+  });
   const quickPlay = () => !!chosen() && opensWorldAtLaunch(chosen()!.gameVersion);
   const [worlds] = createResource(
     () => (quickPlay() ? hostInstance() : null),
@@ -219,10 +259,20 @@ function Start() {
             <h2 class="text-xl font-semibold">Inviter un ami</h2>
             <p class="text-sm text-chalk-2">Tes amis rejoignent ton monde avec un code.</p>
           </div>
-          <label class="flex flex-col gap-1.5">
-            <span class="text-meta text-muted">Instance où tu joues</span>
-            <Select class="h-10 w-full text-sm" value={hostInstance()} options={instanceOptions()} onChange={setHostInstance} />
-          </label>
+          <Show
+            when={instances().length > 0}
+            fallback={<NoInstance />}
+          >
+            <label class="flex flex-col gap-1.5">
+              <span class="text-meta text-muted">Instance où tu joues</span>
+              <Select
+                class="h-10 w-full text-sm"
+                value={hostInstance()}
+                options={instanceOptions()}
+                onChange={(v) => pickInstance(v, setHostInstance)}
+              />
+            </label>
+          </Show>
           <Show when={quickPlay() && !running() && (worlds()?.length ?? 0) > 0}>
             <label class="flex flex-col gap-1.5">
               <span class="text-meta text-muted">Monde</span>
@@ -623,7 +673,7 @@ function Joined() {
               label="Instance avec laquelle jouer"
               options={instanceOptions()}
               disabled={changing() || busy()}
-              onChange={(id) => void change(id)}
+              onChange={(id) => pickInstance(id, (picked) => void change(picked))}
             />
           </label>
           <Checkbox
@@ -648,7 +698,7 @@ function Joined() {
 }
 
 /** "Jouer ensemble": invite friends into your world, or join theirs, with a short code. */
-export default function Duo() {
+export default function Duo(props: { instanceId?: string }) {
   onMount(() => void startDuoEvents());
   return (
     <div class="mx-auto flex max-w-[1400px] flex-col gap-6">
@@ -666,7 +716,7 @@ export default function Duo() {
         </Show>
       </header>
 
-      <Switch fallback={<Start />}>
+      <Switch fallback={<Start instanceId={props.instanceId} />}>
         <Match when={duo.host}>
           <Hosting />
         </Match>

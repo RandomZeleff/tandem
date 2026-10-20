@@ -1,5 +1,5 @@
 import { createResource, createRoot, createSignal, type Signal } from "solid-js";
-import { api, type ProjectType } from "./api";
+import { api, type Instance, type ProjectType } from "./api";
 
 export type Route =
   | { page: "home" }
@@ -9,7 +9,7 @@ export type Route =
   | { page: "discover"; instanceId?: string; query?: string; kind?: ProjectType; world?: string }
   /** Modrinth project page (id or slug); `instanceId` is where content would go. */
   | { page: "project"; id: string; instanceId?: string }
-  | { page: "multi" }
+  | { page: "multi"; instanceId?: string }
   | { page: "settings" }
   | { page: "appearance" };
 
@@ -111,4 +111,8 @@ export const { instances, refetchInstances, accounts, refetchAccounts } = create
 export const activeAccount = () => accounts().find((a) => a.isActive);
 
 /** Open state of the "new instance" dialog, with an optional preselected version. */
-export const [newInstanceDialog, setNewInstanceDialog] = createSignal<{ version?: string } | null>(null);
+/** `onCreated` keeps the player where they are instead of opening the new instance. */
+export const [newInstanceDialog, setNewInstanceDialog] = createSignal<{
+  version?: string;
+  onCreated?: (instance: Instance) => void;
+} | null>(null);
