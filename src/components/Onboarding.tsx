@@ -8,7 +8,7 @@ import { toast } from "../lib/toast";
 import { trapFocus } from "../lib/ui";
 import { AccountAvatar, GrassBlock, MicrosoftLogo } from "./accounts/AccountVisuals";
 import { Checkbox, Icon } from "./pixel";
-import Scene from "./Scene";
+import ScrollingScene from "./ScrollingScene";
 
 /** Fabulously Optimized on Modrinth: vanilla look, much smoother. */
 const OPTIMIZED_PACK = "1KVo5zza";
@@ -146,8 +146,8 @@ export default function Onboarding() {
   return (
     <div class="fixed inset-x-0 top-10 bottom-0 z-20 flex bg-slate-900" role="dialog" aria-modal="true" aria-label="Bienvenue dans Tandem">
       <div class="relative hidden w-[42%] max-w-[560px] overflow-hidden bg-[#3E6FB0] min-[960px]:block">
-        <Scene variant="day" />
-        <div class="absolute inset-0 bg-[linear-gradient(0deg,rgb(16_17_19/0.8)_0%,transparent_60%)]" />
+        <ScrollingScene />
+        <div class="absolute inset-0 bg-[linear-gradient(0deg,rgb(16_17_19/0.7)_0%,transparent_32%)]" />
         <p class="title-display absolute bottom-10 left-10 text-hero">Tandem</p>
       </div>
 

@@ -531,6 +531,16 @@ button {
   animation: step-pulse 0.9s steps(2, jump-none) infinite;
 }
 
+/* Landscape layers sliding left one tile, forever (see ScrollingScene). */
+@keyframes scene-scroll {
+  to {
+    transform: translateX(var(--scene-tile));
+  }
+}
+.scene-scroll {
+  animation: scene-scroll linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .launch.is-playing .launch-fill {
     display: none;
@@ -543,7 +553,8 @@ button {
   .skeleton,
   .link-dot,
   .pop-in,
-  .step-pulse {
+  .step-pulse,
+  .scene-scroll {
     animation: none;
   }
 }
