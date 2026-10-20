@@ -148,7 +148,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
           <Show
             when={provider()}
             fallback={
-              <button class="btn btn-gold px-corners h-9 text-meta" onClick={() => navigate({ page: "settings" })}>
+              <button class="btn btn-gold px-corners h-9 text-meta" onClick={() => navigate({ page: "settings", section: "ai" })}>
                 <Icon name="gear" size={11} />
                 Choisir un service de traduction
               </button>
@@ -158,7 +158,7 @@ export default function TranslationTab(props: { instance: Instance; locked: bool
               <button
                 class="btn btn-ghost h-9 max-w-72 px-2.5 text-meta"
                 title="Changer de service dans les réglages"
-                onClick={() => navigate({ page: "settings" })}
+                onClick={() => navigate({ page: "settings", section: "ai" })}
               >
                 <Icon name="sparkle" size={11} />
                 <span class="truncate">{providerLabel(config())}</span>

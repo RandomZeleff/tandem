@@ -169,7 +169,7 @@ function App() {
               <Duo {...(route() as { instanceId?: string })} />
             </Match>
             <Match when={route().page === "settings"}>
-              <Settings />
+              <Settings {...(route() as { section?: string })} />
             </Match>
             <Match when={route().page === "appearance"}>
               <Appearance />

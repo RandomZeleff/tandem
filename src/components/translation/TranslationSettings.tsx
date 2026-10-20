@@ -1,13 +1,14 @@
-import { createEffect, createSignal, type JSX, on, Show } from "solid-js";
-import { api, errorMessage, type ProviderConfig } from "../../lib/api";
+import { createEffect, createSignal, For, type JSX, on, Show } from "solid-js";
+import { api, errorMessage, type ProviderConfig, type TranslationPreset } from "../../lib/api";
 import { openExternal } from "../../lib/projects";
 import { toast } from "../../lib/toast";
 import { refetchTranslationSettings, translationSettings } from "../../lib/translation";
 import Alert from "../Alert";
 import { Icon, Toggle } from "../pixel";
 import Select from "../Select";
+import { Row, Section } from "../SettingsSection";
 
-/** Settings of the AI translation: language, service, model and API key. */
+/** Settings of the AI translation: service, model, API key and language. */
 export default function TranslationSettings() {
   const [preset, setPreset] = createSignal("ollama");
   const [baseUrl, setBaseUrl] = createSignal("");
@@ -43,14 +44,23 @@ export default function TranslationSettings() {
   };
 
   function choosePreset(id: string) {
+    if (id === preset()) return;
     const info = translationSettings()?.presets.find((p) => p.id === id);
+    const current = saved()?.config;
     setPreset(id);
-    if (info && info.baseUrl) setBaseUrl(info.baseUrl);
-    if (info) setConcurrency(info.concurrency);
-    setModel("");
     setModels(null);
     setTested(null);
     setKey("");
+    // Back on the saved service: show what is saved rather than a blank form.
+    if (current && current.preset === id) {
+      setBaseUrl(current.baseUrl);
+      setModel(current.model);
+      setConcurrency(current.concurrency || 1);
+      return;
+    }
+    if (info && info.baseUrl) setBaseUrl(info.baseUrl);
+    if (info) setConcurrency(info.concurrency);
+    setModel("");
   }
 
   async function test() {
@@ -77,7 +87,7 @@ export default function TranslationSettings() {
       await api.setTranslationProvider(config(), key().trim() || null);
       setKey("");
       await refetchTranslationSettings();
-      toast("Service de traduction enregistré");
+      toast("Agent IA enregistré");
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -106,81 +116,57 @@ export default function TranslationSettings() {
     }
   }
 
+  const presets = (local: boolean) => translationSettings()?.presets.filter((p) => p.local === local) ?? [];
+
   return (
-    <section class="panel px-corners-md flex flex-col gap-4 px-5 pt-4 pb-5">
-      <div class="flex flex-col gap-0.5">
-        <h2 class="panel-title">Traduction IA</h2>
-        <p class="text-xs text-muted">
-          Se lance depuis l'onglet « Traduction » d'une instance, avec un modèle sur ton PC (gratuit) ou ta propre clé.
-        </p>
-      </div>
+    <>
       <Show when={error()}>
         <Alert onClose={() => setError(null)}>{error()}</Alert>
       </Show>
 
       <Show when={translationSettings()}>
         {(settings) => (
-          <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-8 gap-y-4 max-[1180px]:grid-cols-1">
-            <div class="flex flex-col gap-4">
-              <Field label="Langue de traduction" for="tr-locale">
-                <Select
-                  id="tr-locale"
-                  class="h-9 w-full text-sm"
-                  value={settings().preferences.locale}
-                  options={settings().languages.map((l) => ({ value: l.code, label: l.name }))}
-                  onChange={(v) => void savePreferences({ locale: v })}
-                />
-              </Field>
-              <div class="flex items-center justify-between gap-4">
-                <div class="flex flex-col gap-0.5">
-                  <span class="text-sm font-medium">Mettre le jeu dans cette langue</span>
-                  <span class="text-xs text-muted">Tant que la traduction d'une instance est active.</span>
-                </div>
-                <Toggle
-                  checked={settings().preferences.setGameLanguage}
-                  label="Mettre le jeu dans la langue de traduction"
-                  onChange={(v) => void savePreferences({ setGameLanguage: v })}
-                />
+          <>
+            <section class="panel px-corners-md flex flex-col gap-4 px-5 pt-4 pb-5">
+              <div class="flex flex-col gap-0.5">
+                <h2 class="panel-title">Agent IA</h2>
+                <p class="text-xs text-muted">Traduit les mods depuis l'onglet « Traduction » d'une instance.</p>
               </div>
-            </div>
+              <PresetGroup
+                title="Sur ton PC"
+                hint="Gratuit et privé. Plus lent sans carte graphique."
+                presets={presets(true)}
+                selected={preset()}
+                active={saved()?.config?.preset}
+                onSelect={choosePreset}
+              />
+              <PresetGroup
+                title="En ligne"
+                hint="Payant à l'usage, avec ta clé. Seuls les textes des mods sont envoyés."
+                presets={presets(false)}
+                selected={preset()}
+                active={saved()?.config?.preset}
+                onSelect={choosePreset}
+              />
+            </section>
 
-            <div class="flex flex-col gap-4">
-              <Field label="Service" for="tr-preset">
-                <Select
-                  id="tr-preset"
-                  class="h-9 w-full text-sm"
-                  value={preset()}
-                  options={settings().presets.map((p) => ({ value: p.id, label: p.label, hint: p.local ? "sur ton PC" : "en ligne" }))}
-                  onChange={choosePreset}
-                />
-              </Field>
-              <Show when={presetInfo()}>
-                {(info) => (
-                  <div class="flex flex-col gap-2 bg-slate-750 p-3.5 text-xs text-chalk-2 rounded-sm shadow-[inset_0_0_0_1px_var(--color-line)]">
-                    <Show
-                      when={info().local}
-                      fallback={
-                        <p>
-                          Payant à l'usage, sur ton compte. Seuls les textes des mods sont envoyés.
-                        </p>
-                      }
-                    >
-                      <p>
-                        Gratuit et privé : tout reste sur ton PC. Plus lent, surtout sans carte graphique.
-                        <Show when={info().id === "ollama"}>
-                          {" "}Après l'installation, télécharge un modèle, par exemple{" "}
-                          <code class="bg-slate-900 px-1 font-mono text-xs">ollama pull qwen2.5:7b</code>.
-                        </Show>
-                      </p>
-                    </Show>
-                    <Show when={info().helpUrl}>
-                      <button class="flex w-fit items-center gap-1.5 text-xp-text hover:underline" onClick={() => openExternal(info().helpUrl)}>
-                        <Icon name="external" size={10} />
-                        {info().local ? `Télécharger ${info().label}` : "Obtenir une clé API"}
-                      </button>
-                    </Show>
-                  </div>
-                )}
+            <section class="panel px-corners-md flex flex-col gap-4 px-5 pt-4 pb-5">
+              <div class="flex items-center justify-between gap-4">
+                <h2 class="panel-title">{presetInfo()?.label ?? "Connexion"}</h2>
+                <Show when={presetInfo()?.helpUrl}>
+                  {(url) => (
+                    <button class="flex items-center gap-1.5 text-xs text-xp-text hover:underline" onClick={() => openExternal(url())}>
+                      <Icon name="external" size={10} />
+                      {presetInfo()?.local ? `Télécharger ${presetInfo()?.label}` : "Obtenir une clé API"}
+                    </button>
+                  )}
+                </Show>
+              </div>
+              <Show when={preset() === "ollama"}>
+                <p class="text-xs text-chalk-2">
+                  Après l'installation, télécharge un modèle, par exemple{" "}
+                  <code class="bg-slate-900 px-1 font-mono text-xs">ollama pull qwen2.5:7b</code>.
+                </p>
               </Show>
               <Show when={preset() === "custom" || !presetInfo()?.baseUrl}>
                 <Field label="Adresse de l'API (compatible OpenAI)" for="tr-url">
@@ -248,11 +234,85 @@ export default function TranslationSettings() {
                   {saving() ? "Enregistrement…" : "Enregistrer"}
                 </button>
               </div>
-            </div>
-          </div>
+            </section>
+
+            <Section title="Langue">
+              <Row
+                title="Langue de traduction"
+                for="tr-locale"
+                control={
+                  <Select
+                    id="tr-locale"
+                    class="h-9 w-56 text-sm"
+                    value={settings().preferences.locale}
+                    options={settings().languages.map((l) => ({ value: l.code, label: l.name }))}
+                    onChange={(v) => void savePreferences({ locale: v })}
+                  />
+                }
+              />
+              <Row
+                title="Mettre le jeu dans cette langue"
+                description="Tant que la traduction d'une instance est active."
+                control={
+                  <Toggle
+                    checked={settings().preferences.setGameLanguage}
+                    label="Mettre le jeu dans la langue de traduction"
+                    onChange={(v) => void savePreferences({ setGameLanguage: v })}
+                  />
+                }
+              />
+            </Section>
+          </>
         )}
       </Show>
-    </section>
+    </>
+  );
+}
+
+/** Services of one kind (on the PC or online), as cards to pick from. */
+function PresetGroup(props: {
+  title: string;
+  hint: string;
+  presets: TranslationPreset[];
+  selected: string;
+  active: string | undefined;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div class="flex flex-col gap-2">
+      <div class="flex items-baseline gap-2">
+        <span class="text-sm font-medium">{props.title}</span>
+        <span class="text-xs text-muted">{props.hint}</span>
+      </div>
+      <div role="radiogroup" aria-label={props.title} class="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2">
+        <For each={props.presets}>
+          {(p) => {
+            const selected = () => props.selected === p.id;
+            return (
+              <button
+                type="button"
+                role="radio"
+                aria-checked={selected()}
+                class="flex min-h-12 items-center justify-between gap-2 rounded-sm bg-slate-750 px-3.5 py-2 text-left text-sm leading-tight transition-colors duration-100"
+                classList={{
+                  "font-semibold text-chalk shadow-[inset_0_0_0_2px_var(--color-grass-light)]": selected(),
+                  "font-medium text-chalk-2 shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-slate-650 hover:text-chalk": !selected(),
+                }}
+                onClick={() => props.onSelect(p.id)}
+              >
+                <span>{p.label}</span>
+                <Show when={props.active === p.id}>
+                  <span class="flex shrink-0 items-center gap-1 text-xs font-medium text-xp-text">
+                    <Icon name="check" size={10} />
+                    Actif
+                  </span>
+                </Show>
+              </button>
+            );
+          }}
+        </For>
+      </div>
+    </div>
   );
 }
 

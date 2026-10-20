@@ -10,7 +10,8 @@ export type Route =
   /** Modrinth project page (id or slug); `instanceId` is where content would go. */
   | { page: "project"; id: string; instanceId?: string }
   | { page: "multi"; instanceId?: string }
-  | { page: "settings" }
+  /** `section`: part of the settings to open (e.g. "ai"). */
+  | { page: "settings"; section?: string }
   | { page: "appearance" };
 
 interface Entry {

@@ -7,7 +7,7 @@ export interface TabItem<T extends string> {
 
 /**
  * Tab strip with the keyboard behaviour of native tabs: one Tab stop, arrows, Home/End.
- * `underline` for page sections, `segmented` for compact filters.
+ * `underline` for page sections, `segmented` for compact filters, `vertical` for a side menu.
  */
 export default function Tabs<T extends string>(props: {
   items: TabItem<T>[];
@@ -16,19 +16,21 @@ export default function Tabs<T extends string>(props: {
   label: string;
   /** Prefix of the tab ids; the panel is `${idPrefix}-panel` (see `tabPanel`). */
   idPrefix: string;
-  variant?: "underline" | "segmented";
+  variant?: "underline" | "segmented" | "vertical";
   class?: string;
   tabClass?: string;
 }) {
   let strip: HTMLDivElement | undefined;
   const segmented = () => props.variant === "segmented";
+  const vertical = () => props.variant === "vertical";
 
   function onKeyDown(e: KeyboardEvent) {
     const ids = props.items.map((t) => t.id);
     const index = ids.indexOf(props.value);
+    const [forward, back] = vertical() ? ["ArrowDown", "ArrowUp"] : ["ArrowRight", "ArrowLeft"];
     const next: Record<string, number> = {
-      ArrowRight: (index + 1) % ids.length,
-      ArrowLeft: (index - 1 + ids.length) % ids.length,
+      [forward]: (index + 1) % ids.length,
+      [back]: (index - 1 + ids.length) % ids.length,
       Home: 0,
       End: ids.length - 1,
     };
@@ -43,10 +45,12 @@ export default function Tabs<T extends string>(props: {
       ref={strip}
       role="tablist"
       aria-label={props.label}
+      aria-orientation={vertical() ? "vertical" : undefined}
       class={props.class}
       classList={{
         "flex w-fit gap-0.5 rounded-md bg-slate-900 p-[3px] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.3)]": segmented(),
-        "flex gap-1": !segmented(),
+        "flex flex-col gap-0.5": vertical(),
+        "flex gap-1": !segmented() && !vertical(),
       }}
       onKeyDown={onKeyDown}
     >
@@ -63,7 +67,14 @@ export default function Tabs<T extends string>(props: {
               tabIndex={selected() ? 0 : -1}
               class={props.tabClass}
               classList={
-                segmented()
+                vertical()
+                  ? {
+                      "flex h-10 items-center gap-3 rounded-sm px-2.5 text-left whitespace-nowrap transition-colors duration-100": true,
+                      "bg-white/[0.08] font-semibold text-chalk": selected(),
+                      "font-medium text-muted hover:bg-white/[0.04] hover:text-chalk focus-visible:bg-white/[0.04] focus-visible:text-chalk":
+                        !selected(),
+                    }
+                  : segmented()
                   ? {
                       "flex items-center gap-1.5 rounded-sm px-3 text-meta whitespace-nowrap transition-colors duration-100": true,
                       "bg-slate-600 font-semibold text-chalk shadow-[0_1px_0_rgb(0_0_0/0.35),inset_0_1px_0_rgb(255_255_255/0.08)]": selected(),
