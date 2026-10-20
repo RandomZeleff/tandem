@@ -617,6 +617,6 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 ### 2026-10-20 (premier lancement guidé)
 - Fait : écran de bienvenue au tout premier lancement (D57). Compte Microsoft, parties des autres launchers à cocher, première partie (Minecraft tel quel, Minecraft optimisé avec Fabulously Optimized, ou un modpack). Erreur « pas de release publiée » des mises à jour traitée comme « à jour ».
 - Vérifié : types, parcours complet avec le faux backend (`localStorage.setItem("mock-first-run", "1")`) : connexion, import, « Plus tard » / « Pas maintenant », création de la première instance, réglage posé.
-- Pas vérifié : la vraie app sur une installation neuve (tester avec `TANDEM_DATA_DIR` vers un dossier vide).
+- Vérifié aussi par Zeleff dans la vraie app sur un dossier vide : connexion Microsoft, instances des autres launchers trouvées, « Minecraft optimisé » installé. Retouches demandées : pas de navigation ni de séparateur dans la barre de titre pendant l'écran, paysage qui défile (plans à vitesses différentes) au lieu du décor fixe.
 - Prochaine étape : au choix de Zeleff (signature SignPath après la première release, packs de skins d'événement, autre).
 
