@@ -640,3 +640,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Vérifié : `friends selftest` (deux launchers, vrais relais : code, demande, acceptation, statut, invitation, hors ligne, retrait), tests Rust, clippy, types, interface avec le faux backend.
 - Pas vérifié : deux vrais PC.
 
+### 2026-10-20 (menu clic droit)
+- Fait : menu contextuel réutilisable (`ContextMenu`, clic droit, touche Menu ou Maj+F10, flèches, Échap, toujours dans la fenêtre). Sur les instances récentes de la barre latérale et les cartes d'instance (Accueil, Instances) : version, Jouer / Arrêter, Jouer avec des amis, Ouvrir, Mondes, Ajouter du contenu, Ouvrir le dossier, Dupliquer, Exporter en .mrpack, Supprimer (désactivés pendant que le jeu tourne). Les fenêtres Supprimer et Dupliquer sont maintenant communes à toute l'app.
+- Vérifié : types, menu et actions avec le faux backend (clavier, suppression, duplication, position près des bords).
+
