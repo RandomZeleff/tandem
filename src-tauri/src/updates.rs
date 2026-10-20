@@ -51,10 +51,21 @@ pub async fn check_update(
         tracing::warn!(error = %err, "update check unavailable");
         CommandError::msg("Impossible de vérifier les mises à jour.")
     })?;
-    let update = updater.check().await.map_err(|err| {
-        tracing::warn!(error = %err, "update check failed");
-        CommandError::msg("Impossible de vérifier les mises à jour. Vérifie ta connexion.")
-    })?;
+    let update = match updater.check().await {
+        Ok(update) => update,
+        // GitHub answered, but the latest release has no `latest.json` (none published
+        // since self-updates exist): nothing newer to offer.
+        Err(tauri_plugin_updater::Error::ReleaseNotFound) => {
+            tracing::info!("no update manifest published yet");
+            None
+        }
+        Err(err) => {
+            tracing::warn!(error = %err, "update check failed");
+            return Err(CommandError::msg(
+                "Impossible de vérifier les mises à jour. Vérifie ta connexion.",
+            ));
+        }
+    };
     let info = update.as_ref().map(|u| UpdateInfo {
         version: u.version.clone(),
         current_version: u.current_version.clone(),
