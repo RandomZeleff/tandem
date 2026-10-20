@@ -232,12 +232,19 @@ pub async fn wardrobe(ctx: &Context, account: &Account) -> Result<Wardrobe> {
 /// Puts a skin from the library (or a default one) on the account.
 pub async fn apply(ctx: &Context, account: &Account, skin: &str) -> Result<Wardrobe> {
     microsoft(account)?;
-    let (png, variant) = match skin.strip_prefix("default:") {
-        Some(name) => {
+    let (png, variant) = match (skin.strip_prefix("default:"), skin.strip_prefix("pack:")) {
+        (Some(name), _) => {
             let (name, variant) = parse_default(name)?;
             (default_skin(ctx, name, variant).await?, variant)
         }
-        None => {
+        (_, Some(id)) => {
+            let skin = PACK
+                .iter()
+                .find(|s| s.id == id)
+                .ok_or_else(|| Error::InvalidInput("Skin du pack inconnu.".into()))?;
+            (skin.png.to_vec(), skin.variant)
+        }
+        _ => {
             let entry = library_entry(ctx, skin).await?;
             (
                 tokio::fs::read(library_path(ctx, skin)).await?,
@@ -596,6 +603,48 @@ pub async fn remove(ctx: &Context, id: &str) -> Result<()> {
 }
 
 // ---------------------------------------------------------------------------------------
+// Tandem's own skins, drawn for the launcher (`tools/skins/generate.py`)
+
+struct PackSkin {
+    id: &'static str,
+    name: &'static str,
+    variant: Variant,
+    png: &'static [u8],
+}
+
+macro_rules! pack_skin {
+    ($id:literal, $name:literal, $variant:expr) => {
+        PackSkin {
+            id: $id,
+            name: $name,
+            variant: $variant,
+            png: include_bytes!(concat!("../assets/skins/", $id, ".png")),
+        }
+    };
+}
+
+const PACK: [PackSkin; 6] = [
+    pack_skin!("dino", "Dino", Variant::Classic),
+    pack_skin!("astronaute", "Astronaute", Variant::Classic),
+    pack_skin!("pirate", "Pirate", Variant::Slim),
+    pack_skin!("robot", "Robot", Variant::Classic),
+    pack_skin!("mineur", "Mineur", Variant::Classic),
+    pack_skin!("exploratrice", "Exploratrice", Variant::Slim),
+];
+
+/// The Tandem skin pack, shipped with the launcher.
+pub fn pack() -> Vec<LibrarySkin> {
+    PACK.iter()
+        .map(|s| LibrarySkin {
+            id: format!("pack:{}", s.id),
+            name: s.name.into(),
+            variant: s.variant,
+            texture: data_url(s.png),
+        })
+        .collect()
+}
+
+// ---------------------------------------------------------------------------------------
 // Default skins, read from a game jar already on this PC
 
 fn parse_default(spec: &str) -> Result<(&'static str, Variant)> {
@@ -747,6 +796,13 @@ mod tests {
         assert_eq!(cape_name(Some("MIGRATOR")), "Migrator");
         assert_eq!(cape_name(Some("15th_anniversary")), "15th Anniversary");
         assert_eq!(cape_name(None), "Cape");
+    }
+
+    #[test]
+    fn pack_skins_are_valid_and_their_model_is_right() {
+        for skin in &PACK {
+            assert_eq!(inspect(skin.png).unwrap(), skin.variant, "{}", skin.id);
+        }
     }
 
     #[test]

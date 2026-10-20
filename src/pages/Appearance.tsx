@@ -120,6 +120,7 @@ export default function Appearance() {
   );
   const [library, { mutate: setLibrary }] = createResource(api.skinLibrary, { initialValue: [] });
   const [defaults] = createResource(api.skinDefaults, { initialValue: [] });
+  const [pack] = createResource(api.skinPack, { initialValue: [] });
   const [defaultVariant, setDefaultVariant] = createSignal<SkinVariant>("classic");
   const shownDefaults = () => defaults().filter((s) => s.variant === defaultVariant());
 
@@ -425,6 +426,23 @@ export default function Appearance() {
                 </div>
               </Show>
             </Section>
+
+            <Show when={pack().length > 0}>
+              <Section title="Pack Tandem">
+                <div class="grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-2">
+                  <For each={pack()}>
+                    {(skin) => (
+                      <SkinCard
+                        skin={skin}
+                        selected={selected()?.id === skin.id}
+                        worn={false}
+                        onSelect={() => setSelected(skin)}
+                      />
+                    )}
+                  </For>
+                </div>
+              </Section>
+            </Show>
 
             <Section
               title="Skins par défaut"

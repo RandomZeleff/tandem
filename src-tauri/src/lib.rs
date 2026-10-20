@@ -199,6 +199,7 @@ pub fn run() {
             skins::skin_set_cape,
             skins::skin_library,
             skins::skin_defaults,
+            skins::skin_pack,
             skins::skin_add_file,
             skins::skin_add_player,
             skins::skin_rename,

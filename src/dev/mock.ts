@@ -358,6 +358,13 @@ function skinMocks() {
   return { library: skinLibrary, wardrobe };
 }
 
+/** The real Tandem skin pack, served by Vite. */
+const PACK_FILES = import.meta.glob<string>("../../crates/tandem-core/assets/skins/*.png", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+
 /** Shape copied for instances the mocks create (the list may start empty). */
 const TEMPLATE: Instance = { ...instances[0] };
 
@@ -409,6 +416,12 @@ export function installMocks() {
               texture: fakeSkin(["#2aa3a3", "#4f9a3a", "#b04a8a", "#d6762f"][i], "#3b3fa0", variant === "slim"),
             })),
           );
+        case "skin_pack":
+          return Object.entries(PACK_FILES).map(([path, url]) => {
+            const id = path.split("/").pop()!.replace(".png", "");
+            const slim = id === "pirate" || id === "exploratrice";
+            return { id: `pack:${id}`, name: id[0].toUpperCase() + id.slice(1), variant: slim ? "slim" : "classic", texture: url };
+          });
         case "skin_apply": {
           const { library, wardrobe: w } = skinMocks();
           const all = [...library];

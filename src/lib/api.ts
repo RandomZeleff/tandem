@@ -16,7 +16,7 @@ export interface Wardrobe {
   capes: { id: string; name: string; active: boolean; texture: string | null }[];
 }
 
-/** A saved skin, or a default one (`default:<name>:<variant>`). */
+/** A saved skin, a default one (`default:<name>:<variant>`) or one of Tandem's (`pack:<id>`). */
 export interface LibrarySkin {
   id: string;
   name: string;
@@ -757,6 +757,7 @@ export const api = {
   skinSetCape: (cape: string | null) => invoke<Wardrobe>("skin_set_cape", { cape }),
   skinLibrary: () => invoke<LibrarySkin[]>("skin_library"),
   skinDefaults: () => invoke<LibrarySkin[]>("skin_defaults"),
+  skinPack: () => invoke<LibrarySkin[]>("skin_pack"),
   skinAddFile: (path: string) => invoke<LibrarySkin>("skin_add_file", { path }),
   skinAddPlayer: (name: string) => invoke<LibrarySkin>("skin_add_player", { name }),
   skinRename: (id: string, name: string) => invoke<void>("skin_rename", { id, name }),

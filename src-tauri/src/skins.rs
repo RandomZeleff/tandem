@@ -58,6 +58,11 @@ pub async fn skin_defaults(state: State<'_, AppState>) -> CommandResult<Vec<Libr
 }
 
 #[tauri::command]
+pub fn skin_pack() -> Vec<LibrarySkin> {
+    skins::pack()
+}
+
+#[tauri::command]
 pub async fn skin_add_file(
     state: State<'_, AppState>,
     path: PathBuf,
