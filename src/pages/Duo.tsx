@@ -1,6 +1,7 @@
 import { createEffect, createMemo, createResource, createSignal, For, type JSX, Match, onMount, Show, Switch } from "solid-js";
 import Alert from "../components/Alert";
 import { AccountAvatar } from "../components/accounts/AccountVisuals";
+import FriendsPanel from "../components/FriendsPanel";
 import HostHealth from "../components/HostHealth";
 import InstanceSlot from "../components/InstanceSlot";
 import PlayButton from "../components/PlayButton";
@@ -724,6 +725,8 @@ export default function Duo(props: { instanceId?: string }) {
           <Joined />
         </Match>
       </Switch>
+
+      <FriendsPanel />
     </div>
   );
 }

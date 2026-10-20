@@ -2,6 +2,7 @@ import { createEffect, createResource, createSignal, For, type JSX, Show } from 
 import { api, errorMessage } from "../lib/api";
 import { gameState } from "../lib/games";
 import { duoActive, markArrivalsSeen, unseenArrivals } from "../lib/duo";
+import { friendsPending } from "../lib/friends";
 import { toast } from "../lib/toast";
 import { openAccounts, signInWithMicrosoft } from "../lib/accounts";
 import { AccountAvatar, AccountKindLabel, MicrosoftLogo } from "./accounts/AccountVisuals";
@@ -207,7 +208,7 @@ export default function Sidebar() {
               </Show>
               <Show when={item.to.page === "multi"}>
                 <Show
-                  when={unseenArrivals() > 0}
+                  when={unseenArrivals() + friendsPending() > 0}
                   fallback={
                     <Show when={duoActive()}>
                       <span
@@ -221,9 +222,15 @@ export default function Sidebar() {
                   <span
                     class="flex h-5 min-w-5 items-center justify-center rounded-sm bg-grass px-1.5 text-xs font-bold text-white shadow-[inset_0_-2px_0_var(--color-grass-edge)]"
                     classList={{ "absolute -top-0.5 right-0.5": sidebarCollapsed() }}
-                    title={unseenArrivals() > 1 ? `${unseenArrivals()} amis sont arrivés` : "Un ami est arrivé"}
+                    title={
+                      friendsPending() > 0
+                        ? "Une demande d'ami ou une invitation t'attend"
+                        : unseenArrivals() > 1
+                          ? `${unseenArrivals()} amis sont arrivés`
+                          : "Un ami est arrivé"
+                    }
                   >
-                    {unseenArrivals()}
+                    {unseenArrivals() + friendsPending()}
                   </span>
                 </Show>
               </Show>

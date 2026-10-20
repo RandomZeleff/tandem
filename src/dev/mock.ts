@@ -365,6 +365,28 @@ const PACK_FILES = import.meta.glob<string>("../../crates/tandem-core/assets/ski
   import: "default",
 });
 
+
+type MockFriend = {
+  id: string;
+  name: string;
+  mcUuid: string;
+  avatar: string | null;
+  state: "outgoing" | "incoming" | "friend";
+  addedAt: number;
+  presence: unknown;
+};
+const friendsMock = {
+  hidden: false,
+  open: false,
+  list: [
+    { id: "f-leo", name: "Léo", mcUuid: "", avatar: null, state: "friend", addedAt: 0, presence: { kind: "hosting", instance: "Prominence II", world: "Survie", code: "7K2P-QX9M" } },
+    { id: "f-ines", name: "Inès", mcUuid: "", avatar: null, state: "friend", addedAt: 0, presence: { kind: "playing", instance: "Cobbleverse" } },
+    { id: "f-sam", name: "Sam", mcUuid: "", avatar: null, state: "friend", addedAt: 0, presence: null },
+    { id: "f-noah", name: "Noah", mcUuid: "", avatar: null, state: "incoming", addedAt: 0, presence: null },
+    { id: "f-max", name: "…", mcUuid: "", avatar: null, state: "outgoing", addedAt: 0, presence: null },
+  ] as MockFriend[],
+};
+
 /** Shape copied for instances the mocks create (the list may start empty). */
 const TEMPLATE: Instance = { ...instances[0] };
 
@@ -455,6 +477,33 @@ export function installMocks() {
           return null;
         case "skin_remove":
           skinLibrary = skinMocks().library.filter((s) => s.id !== args.id);
+          return null;
+        case "friends_overview":
+          return {
+            available: accounts.some((a) => a.kind === "microsoft"),
+            code: "ZK4P-7QX2",
+            friends: structuredClone(friendsMock.list),
+            hidden: friendsMock.hidden,
+            openToFriends: friendsMock.open,
+          };
+        case "friends_add":
+          await new Promise((r) => setTimeout(r, 600));
+          if (String(args.code).startsWith("0000")) throw "Amis : aucun joueur n'a ce code d'ami";
+          friendsMock.list.push({ id: `f-${args.code}`, name: "…", mcUuid: "", avatar: null, state: "outgoing", addedAt: 0, presence: null });
+          return null;
+        case "friends_accept":
+          friendsMock.list = friendsMock.list.map((f) => (f.id === args.id ? { ...f, state: "friend", presence: { kind: "online" } } : f));
+          return null;
+        case "friends_remove":
+          friendsMock.list = friendsMock.list.filter((f) => f.id !== args.id);
+          return null;
+        case "friends_invite":
+          return null;
+        case "friends_set_hidden":
+          friendsMock.hidden = Boolean(args.hidden);
+          return null;
+        case "friends_set_open":
+          friendsMock.open = Boolean(args.open);
           return null;
         case "get_logs":
           return logs;

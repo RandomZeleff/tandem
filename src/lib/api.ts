@@ -24,6 +24,34 @@ export interface LibrarySkin {
   texture: string;
 }
 
+/** What a friend is doing, as they share it. */
+export type Presence =
+  | { kind: "online" }
+  | { kind: "playing"; instance: string }
+  | { kind: "hosting"; instance: string | null; world: string | null; code: string | null };
+
+export interface FriendView {
+  /** Their launcher's id. */
+  id: string;
+  name: string;
+  mcUuid: string;
+  avatar: string | null;
+  /** `outgoing`: request sent; `incoming`: request received. */
+  state: "outgoing" | "incoming" | "friend";
+  addedAt: number;
+  /** `null` when offline (or appearing so). */
+  presence: Presence | null;
+}
+
+export interface FriendsOverview {
+  /** False without a Microsoft account. */
+  available: boolean;
+  code: string | null;
+  friends: FriendView[];
+  hidden: boolean;
+  openToFriends: boolean;
+}
+
 /** A newer Tandem published on GitHub. */
 export interface UpdateInfo {
   version: string;
@@ -763,6 +791,13 @@ export const api = {
   skinRename: (id: string, name: string) => invoke<void>("skin_rename", { id, name }),
   skinSetVariant: (id: string, variant: SkinVariant) => invoke<void>("skin_set_variant", { id, variant }),
   skinRemove: (id: string) => invoke<void>("skin_remove", { id }),
+  friendsOverview: () => invoke<FriendsOverview>("friends_overview"),
+  friendsAdd: (code: string) => invoke<void>("friends_add", { code }),
+  friendsAccept: (id: string) => invoke<void>("friends_accept", { id }),
+  friendsRemove: (id: string) => invoke<void>("friends_remove", { id }),
+  friendsInvite: (id: string) => invoke<void>("friends_invite", { id }),
+  friendsSetHidden: (hidden: boolean) => invoke<void>("friends_set_hidden", { hidden }),
+  friendsSetOpen: (open: boolean) => invoke<void>("friends_set_open", { open }),
   checkUpdate: () => invoke<UpdateInfo | null>("check_update"),
   installUpdate: () => invoke<void>("install_update"),
   getLogs: () => invoke<LogEntry[]>("get_logs"),

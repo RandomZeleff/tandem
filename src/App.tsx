@@ -14,6 +14,7 @@ import type { ProjectType } from "./lib/api";
 import { startLogStream } from "./lib/logs";
 import { startTranslationEvents } from "./lib/translation";
 import { startDuoEvents } from "./lib/duo";
+import { startFriendsEvents } from "./lib/friends";
 import { toggleSidebar } from "./lib/ui";
 import { checkForUpdateLater, setUpdateDialog, updateDialog } from "./lib/updates";
 import {
@@ -64,6 +65,7 @@ function App() {
     void startGameEvents();
     void startTranslationEvents();
     void startDuoEvents();
+    void startFriendsEvents();
     checkForUpdateLater();
     void checkFirstRun().catch(() => {});
     onGamePlayed(() => {
