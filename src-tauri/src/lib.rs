@@ -2,6 +2,7 @@ mod accounts;
 mod commands;
 mod duo;
 mod error;
+mod friends;
 mod game;
 mod modpack;
 mod pregen;
@@ -40,6 +41,7 @@ pub struct AppState {
     pub duo: duo::Duo,
     pub pregens: pregen::Pregens,
     pub updates: updates::Updates,
+    pub friends: friends::FriendsState,
     _log_guard: WorkerGuard,
 }
 
@@ -95,9 +97,11 @@ pub fn run() {
                 duo: Default::default(),
                 pregens: Default::default(),
                 updates: Default::default(),
+                friends: Default::default(),
                 _log_guard: log_guard,
             });
             // Tauri creates the window and its webview before `setup`: most of this is theirs.
+            friends::spawn(app.handle().clone());
             tracing::info!(ms = uptime_ms(), "backend ready");
             Ok(())
         })
@@ -190,6 +194,13 @@ pub fn run() {
             commands::install_rosetta,
             commands::running_instances,
             accounts::list_accounts,
+            friends::friends_overview,
+            friends::friends_add,
+            friends::friends_accept,
+            friends::friends_remove,
+            friends::friends_invite,
+            friends::friends_set_hidden,
+            friends::friends_set_open,
             accounts::add_offline_account,
             accounts::set_active_account,
             accounts::remove_account,
@@ -230,7 +241,10 @@ pub fn run() {
             // Guests are told the session ended instead of waiting for a timeout.
             if let tauri::RunEvent::Exit = event {
                 if let Some(state) = app.try_state::<AppState>() {
-                    tauri::async_runtime::block_on(duo::shutdown(&state));
+                    tauri::async_runtime::block_on(async {
+                        duo::shutdown(&state).await;
+                        friends::shutdown(&state).await;
+                    });
                 }
             }
         });

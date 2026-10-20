@@ -34,6 +34,11 @@ pub struct Duo {
 }
 
 impl Duo {
+    /// The session the player hosts, if any.
+    pub async fn host_view(&self) -> Option<HostView> {
+        self.host.lock().await.as_ref().map(Hosting::view)
+    }
+
     /// Whether the player is hosting or has joined a session.
     pub async fn active(&self) -> bool {
         self.host.lock().await.is_some() || self.guest.lock().await.is_some()
