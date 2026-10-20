@@ -51,6 +51,8 @@ pub enum Error {
     Auth(String),
     #[error("Jouer ensemble : {0}")]
     Duo(String),
+    #[error("Amis : {0}")]
+    Friends(String),
     #[error("Monde à part : {0}")]
     WorldServer(String),
     #[error("Préparer le monde : {0}")]

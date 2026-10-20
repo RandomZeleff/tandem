@@ -71,9 +71,24 @@ pub fn proof(code: &str) -> String {
 
 /// Publishes (or refreshes) the record pointing the code at the host's endpoint.
 pub async fn publish(http: &reqwest::Client, code: &str, host: EndpointId) -> Result<()> {
-    let key = record_key(code);
-    let packet = SignedPacket::from_txt_strings(&key, RECORD, [format!("host={host}")], TTL_SECS)
-        .map_err(fail)?;
+    publish_record(http, &record_key(code), &format!("host={host}"), TTL_SECS).await
+}
+
+/// The host's endpoint for a code, or `None` if nobody is hosting with it.
+pub async fn resolve(http: &reqwest::Client, code: &str) -> Result<Option<EndpointId>> {
+    let value = resolve_record(http, &record_key(code).public()).await?;
+    Ok(value.and_then(|v| v.strip_prefix("host=")?.parse().ok()))
+}
+
+/// Publishes one TXT value under `key` on the public pkarr relay.
+pub(crate) async fn publish_record(
+    http: &reqwest::Client,
+    key: &SecretKey,
+    value: &str,
+    ttl_secs: u32,
+) -> Result<()> {
+    let packet =
+        SignedPacket::from_txt_strings(key, RECORD, [value.to_owned()], ttl_secs).map_err(fail)?;
     let response = http
         .put(format!("{PKARR_RELAY}/{}", key.public().to_z32()))
         .body(packet.to_relay_payload())
@@ -88,9 +103,11 @@ pub async fn publish(http: &reqwest::Client, code: &str, host: EndpointId) -> Re
     Ok(())
 }
 
-/// The host's endpoint for a code, or `None` if nobody is hosting with it.
-pub async fn resolve(http: &reqwest::Client, code: &str) -> Result<Option<EndpointId>> {
-    let public = record_key(code).public();
+/// The TXT value published under `public`, or `None` if there is none.
+pub(crate) async fn resolve_record(
+    http: &reqwest::Client,
+    public: &iroh::PublicKey,
+) -> Result<Option<String>> {
     let response = http
         .get(format!("{PKARR_RELAY}/{}", public.to_z32()))
         .send()
@@ -105,12 +122,9 @@ pub async fn resolve(http: &reqwest::Client, code: &str) -> Result<Option<Endpoi
         )));
     }
     let body = response.bytes().await?;
-    // Signed by the code's key: nobody without the code can forge it.
-    let packet = SignedPacket::from_relay_payload(&public, &body).map_err(fail)?;
-    Ok(packet
-        .txt_records(RECORD)
-        .iter()
-        .find_map(|value| value.strip_prefix("host=")?.parse().ok()))
+    // Signed by the record's key: nobody without it can forge the value.
+    let packet = SignedPacket::from_relay_payload(public, &body).map_err(fail)?;
+    Ok(packet.txt_records(RECORD).first().cloned())
 }
 
 #[cfg(test)]
