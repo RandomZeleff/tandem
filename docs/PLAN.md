@@ -644,3 +644,7 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Fait : menu contextuel réutilisable (`ContextMenu`, clic droit, touche Menu ou Maj+F10, flèches, Échap, toujours dans la fenêtre). Sur les instances récentes de la barre latérale et les cartes d'instance (Accueil, Instances) : version, Jouer / Arrêter, Jouer avec des amis, Ouvrir, Mondes, Ajouter du contenu, Ouvrir le dossier, Dupliquer, Exporter en .mrpack, Supprimer (désactivés pendant que le jeu tourne). Les fenêtres Supprimer et Dupliquer sont maintenant communes à toute l'app.
 - Vérifié : types, menu et actions avec le faux backend (clavier, suppression, duplication, position près des bords).
 
+
+### 2026-10-20 (page Réglages en sections)
+- Fait : Réglages découpés en sections avec un menu à gauche (Jeu, Performances, Agent IA, Launcher, Journal), une seule affichée à la fois. Agent IA : services en cartes (« Sur ton PC » / « En ligne », le service enregistré marqué « Actif »), puis la connexion du service choisi (clé, modèle, test), puis la langue. Les boutons de l'onglet Traduction ouvrent directement la section Agent IA.
+- Vérifié : types, navigation au clavier, choix d'un service + clé + test + enregistrement avec le faux backend, lien depuis l'onglet Traduction.
