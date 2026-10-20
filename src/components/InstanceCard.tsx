@@ -7,6 +7,8 @@ import InstanceSlot from "./InstanceSlot";
 import InstanceVisual from "./InstanceVisual";
 import { LoaderTag, XpBar } from "./pixel";
 import PlayButton from "./PlayButton";
+import { isMenuKey, openContextMenu } from "./ContextMenu";
+import { instanceMenuItems } from "./InstanceActions";
 
 export default function InstanceCard(props: { instance: Instance }) {
   const state = () => gameState(props.instance.id);
@@ -22,7 +24,12 @@ export default function InstanceCard(props: { instance: Instance }) {
       aria-label={`Ouvrir ${props.instance.name}`}
       class="panel group flex cursor-pointer flex-col overflow-hidden transition-colors duration-100 hover:bg-slate-650 focus-visible:bg-slate-650"
       onClick={() => navigate({ page: "instance", id: props.instance.id })}
+      onContextMenu={(e) => openContextMenu(e, instanceMenuItems(props.instance))}
       onKeyDown={(e) => {
+        if (isMenuKey(e)) {
+          openContextMenu(e, instanceMenuItems(props.instance));
+          return;
+        }
         if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault();
           navigate({ page: "instance", id: props.instance.id });

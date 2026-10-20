@@ -3,7 +3,6 @@ import Alert from "../components/Alert";
 import ContentList from "../components/ContentList";
 import CreatorsTab from "../components/CreatorsTab";
 import CrashPanel from "../components/CrashPanel";
-import Dialog from "../components/Dialog";
 import GameConsole from "../components/GameConsole";
 import GameStatsPanel from "../components/GameStatsPanel";
 import InstanceSlot from "../components/InstanceSlot";
@@ -21,7 +20,7 @@ import TranslationTab from "../components/translation/TranslationTab";
 import { api, errorMessage, type InstallProgress, type Instance, isTransferStage } from "../lib/api";
 import { formatBytes } from "../lib/format";
 import { gameState } from "../lib/games";
-import { navigate, refetchInstances, remembered } from "../lib/store";
+import { navigate, remembered } from "../lib/store";
 
 type Tab = "console" | "content" | "worlds" | "screenshots" | "translation" | "creators" | "info";
 
@@ -37,25 +36,12 @@ function stageLabel(p: InstallProgress | undefined): string {
 
 export default function InstanceDetail(props: { instance: Instance; tab?: string; world?: string }) {
   const [tab, setTab] = remembered<Tab>("tab", (props.tab as Tab | undefined) ?? "content");
-  const [confirmDelete, setConfirmDelete] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const state = () => gameState(props.instance.id);
   const ratio = () => {
     const p = state().progress;
     return p && isTransferStage(p.stage) && p.totalBytes > 0 ? p.doneBytes / p.totalBytes : 0;
   };
-
-  async function remove() {
-    try {
-      await api.deleteInstance(props.instance.id);
-      setConfirmDelete(false);
-      navigate({ page: "instances" });
-      await refetchInstances();
-    } catch (err) {
-      setConfirmDelete(false);
-      setError(errorMessage(err));
-    }
-  }
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "content", label: "Contenu" },
@@ -186,29 +172,12 @@ export default function InstanceDetail(props: { instance: Instance; tab?: string
               <CreatorsTab instance={props.instance} />
             </Match>
             <Match when={tab() === "info"}>
-              <InstanceSettingsTab instance={props.instance} locked={state().status !== "idle"} onDelete={() => setConfirmDelete(true)} />
+              <InstanceSettingsTab instance={props.instance} locked={state().status !== "idle"} />
             </Match>
           </Switch>
         </div>
       </div>
 
-      <Show when={confirmDelete()}>
-        <Dialog title="Supprimer l'instance ?" onClose={() => setConfirmDelete(false)}>
-          <p class="text-chalk-2">
-            « {props.instance.name} » et tout son dossier seront supprimés, <strong>mondes compris</strong>. Cette action est
-            définitive.
-          </p>
-          <div class="flex justify-end gap-2">
-            <button class="btn btn-ghost" onClick={() => setConfirmDelete(false)}>
-              Annuler
-            </button>
-            <button class="btn btn-danger px-corners" onClick={remove}>
-              <Icon name="trash" size={12} />
-              Supprimer
-            </button>
-          </div>
-        </Dialog>
-      </Show>
     </div>
   );
 }

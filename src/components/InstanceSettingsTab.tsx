@@ -5,10 +5,10 @@ import { formatGigabytes, formatRelative } from "../lib/format";
 import { instanceOptimizationsKey, OPTIMIZATIONS_SETTING, supportsOptimizations } from "../lib/optimizations";
 import { BLOCK_COUNT, blockLook } from "../lib/look";
 import { openProject } from "../lib/projects";
-import { navigate, refetchInstances } from "../lib/store";
+import { refetchInstances } from "../lib/store";
 import { toast } from "../lib/toast";
 import Alert from "./Alert";
-import Dialog from "./Dialog";
+import { askDeleteInstance, askDuplicateInstance } from "./InstanceActions";
 import InstanceSlot from "./InstanceSlot";
 import { PackRollback } from "./PackUpdate";
 import { BlockSlot, Icon, LoaderTag, Toggle } from "./pixel";
@@ -28,9 +28,8 @@ const MEMORY_STEPS_GB = [1, 2, 3, 4, 6, 8, 10, 12, 16, 24, 32];
 const longDate = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
 
 /** An instance's own settings: name, icon, Java, JVM arguments, window size, memory. */
-export default function InstanceSettingsTab(props: { instance: Instance; locked: boolean; onDelete: () => void }) {
+export default function InstanceSettingsTab(props: { instance: Instance; locked: boolean }) {
   const [error, setError] = createSignal<string | null>(null);
-  const [duplicating, setDuplicating] = createSignal(false);
   const [changingVersion, setChangingVersion] = createSignal(false);
 
   /** Saves the editable settings with one field changed. */
@@ -102,13 +101,13 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
           </Section>
           <Section title="Gestion">
             <InlineRow label="Dupliquer" hint="Les mods ne prennent pas de place en plus.">
-              <button class="btn px-corners h-9 shrink-0 text-meta" disabled={props.locked} onClick={() => setDuplicating(true)}>
+              <button class="btn px-corners h-9 shrink-0 text-meta" disabled={props.locked} onClick={() => askDuplicateInstance(props.instance)}>
                 <Icon name="plus" size={11} />
                 Dupliquer…
               </button>
             </InlineRow>
             <InlineRow label="Supprimer" hint="Mondes compris.">
-              <button class="btn px-corners h-9 shrink-0 text-meta text-redstone-text" disabled={props.locked} onClick={() => props.onDelete()}>
+              <button class="btn px-corners h-9 shrink-0 text-meta text-redstone-text" disabled={props.locked} onClick={() => askDeleteInstance(props.instance)}>
                 <Icon name="trash" size={12} />
                 Supprimer…
               </button>
@@ -134,9 +133,6 @@ export default function InstanceSettingsTab(props: { instance: Instance; locked:
 
       <Show when={changingVersion()}>
         <VersionChangeDialog instance={props.instance} onClose={() => setChangingVersion(false)} />
-      </Show>
-      <Show when={duplicating()}>
-        <DuplicateDialog instance={props.instance} onClose={() => setDuplicating(false)} />
       </Show>
     </div>
   );
@@ -439,50 +435,3 @@ function MemoryPicker(props: { instance: Instance; onError: (message: string) =>
   );
 }
 
-function DuplicateDialog(props: { instance: Instance; onClose: () => void }) {
-  const [name, setName] = createSignal(`${props.instance.name} (copie)`.slice(0, 64));
-  const [busy, setBusy] = createSignal(false);
-  const [error, setError] = createSignal<string | null>(null);
-
-  async function duplicate(e: Event) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      const created = await api.duplicateInstance(props.instance.id, name().trim());
-      await refetchInstances();
-      toast(`« ${created.name} » créée`);
-      props.onClose();
-      navigate({ page: "instance", id: created.id });
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog title="Dupliquer l'instance" onClose={() => !busy() && props.onClose()}>
-      <form class="flex flex-col gap-4" onSubmit={(e) => void duplicate(e)}>
-        <div class="flex flex-col gap-1.5">
-          <label class="text-xs text-muted" for="duplicate-name">
-            Nom de la copie
-          </label>
-          <input id="duplicate-name" autofocus class="field h-10 w-full" maxLength={64} value={name()} onInput={(e) => setName(e.currentTarget.value)} />
-        </div>
-        <p class="text-meta text-muted">Mondes et captures compris.</p>
-        <Show when={error()}>
-          <Alert onClose={() => setError(null)}>{error()}</Alert>
-        </Show>
-        <div class="flex justify-end gap-2">
-          <button type="button" class="btn btn-ghost" disabled={busy()} onClick={props.onClose}>
-            Annuler
-          </button>
-          <button type="submit" class="btn btn-primary px-corners px-5" disabled={busy() || !name().trim()}>
-            {busy() ? "Copie…" : "Dupliquer"}
-          </button>
-        </div>
-      </form>
-    </Dialog>
-  );
-}

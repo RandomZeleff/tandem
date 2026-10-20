@@ -6,6 +6,8 @@ import RosettaDialog from "./components/RosettaDialog";
 import Sidebar from "./components/Sidebar";
 import TitleBar from "./components/TitleBar";
 import Toaster from "./components/Toaster";
+import { ContextMenuHost } from "./components/ContextMenu";
+import { InstanceDialogs } from "./components/InstanceActions";
 import UpdateDialog from "./components/UpdateDialog";
 import Onboarding from "./components/Onboarding";
 import { checkFirstRun, firstRun } from "./lib/onboarding";
@@ -198,6 +200,9 @@ function App() {
       </Show>
 
       <Toaster />
+
+      <ContextMenuHost />
+      <InstanceDialogs />
 
       <Show when={updateDialog()}>
         <UpdateDialog onClose={() => setUpdateDialog(false)} />

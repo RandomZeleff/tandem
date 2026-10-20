@@ -7,6 +7,8 @@ import { toast } from "../lib/toast";
 import { openAccounts, signInWithMicrosoft } from "../lib/accounts";
 import { AccountAvatar, AccountKindLabel, MicrosoftLogo } from "./accounts/AccountVisuals";
 import { onDismiss, sidebarCollapsed } from "../lib/ui";
+import { isMenuKey, openContextMenu } from "./ContextMenu";
+import { instanceMenuItems } from "./InstanceActions";
 import InstanceSlot from "./InstanceSlot";
 import { accounts, activeAccount, instances, navigate, refetchAccounts, route, type Route } from "../lib/store";
 import { Icon, type IconName, LoaderTag } from "./pixel";
@@ -261,6 +263,8 @@ export default function Sidebar() {
                     "is-selected": route().page === "instance" && (route() as { id: string }).id === instance.id,
                   }}
                   onClick={() => navigate({ page: "instance", id: instance.id })}
+                  onContextMenu={(e) => openContextMenu(e, instanceMenuItems(instance))}
+                  onKeyDown={(e) => isMenuKey(e) && openContextMenu(e, instanceMenuItems(instance))}
                 >
                   <InstanceSlot instance={instance} size={32} />
                   <span class="flex min-w-0 flex-1 flex-col" classList={{ hidden: sidebarCollapsed() }}>
