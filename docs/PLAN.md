@@ -657,3 +657,6 @@ Objectif : qu'un joueur aguerri ait envie d'ouvrir Tandem souvent, pour jouer se
 - Fait : v0.1.0 publiée (https://github.com/RandomZeleff/tandem/releases/tag/v0.1.0) : installeurs Windows (.exe, .msi) et macOS (.dmg universel), `latest.json` signé pour les mises à jour automatiques. Site en ligne : https://randomzeleff.github.io (dépôt `RandomZeleff.github.io`, GitHub Pages).
 - Corrigé avant : le test `mirrors_instance_folders_into_real_files` échouait sur macOS depuis plusieurs commits (un ancien lien vers un dossier y est un lien symbolique, à retirer comme un fichier) ; `release.yml` cherchait les installeurs à la racine alors que les artefacts gardent leurs sous-dossiers (premier passage du workflow).
 - Prochaine étape : demander la signature SignPath (Phase 9), tester une vraie mise à jour 0.1.0 → 0.1.1, test à deux PC des amis.
+
+### 2026-10-21 (organisation GitHub)
+- Fait : le projet vit maintenant dans l'organisation `tandem-launcher` : code sur https://github.com/tandem-launcher/tandem, site sur https://tandem-launcher.github.io, page de profil de l'organisation. Liens mis à jour (README, notes de version, site, adresse des mises à jour dans `tauri.conf.json`, user-agent). Les launchers 0.1.0 déjà installés suivent la redirection de GitHub depuis l'ancienne adresse (vérifié).
