@@ -11,7 +11,7 @@ use crate::paths::DataDir;
 const USER_AGENT: &str = concat!(
     "Tandem/",
     env!("CARGO_PKG_VERSION"),
-    " (+https://github.com/RandomZeleff/tandem)"
+    " (+https://github.com/tandem-launcher/tandem)"
 );
 
 /// An optional refresh (one with a local copy to fall back on) gives up after this.

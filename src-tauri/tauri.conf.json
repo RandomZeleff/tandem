@@ -46,7 +46,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE3NDcyREY0QzUwMDI4RTgKUldUb0tBREY5QzFIRnlBMDArcUpPdjZQa01nOWZJWmIvQ092OVBFOE1kelJiZmFoZE0wV0UrU1IK",
-      "endpoints": ["https://github.com/RandomZeleff/tandem/releases/latest/download/latest.json"],
+      "endpoints": ["https://github.com/tandem-launcher/tandem/releases/latest/download/latest.json"],
       "windows": { "installMode": "passive" }
     }
   }

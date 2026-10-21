@@ -2,7 +2,7 @@
 
 **A fast, modern Minecraft: Java Edition launcher built for singleplayer — and for playing with your friends without renting a server.**
 
-> v0.1 is the first public version (see [Releases](https://github.com/RandomZeleff/tandem/releases)). The interface is in French for now. Website: [randomzeleff.github.io](https://randomzeleff.github.io).
+> v0.1 is the first public version (see [Releases](https://github.com/tandem-launcher/tandem/releases)). The interface is in French for now. Website: [tandem-launcher.github.io](https://tandem-launcher.github.io).
 
 ## Why Tandem?
 
@@ -31,12 +31,12 @@ Most launchers make playing together painful: you sign up for a hosting site, pa
 
 Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
 
-- Committers and reviewers: [Zeleff](https://github.com/RandomZeleff)
-- Approvers: [Zeleff](https://github.com/RandomZeleff)
+- Committers and reviewers: [members of tandem-launcher](https://github.com/orgs/tandem-launcher/people)
+- Approvers: [owners of tandem-launcher](https://github.com/orgs/tandem-launcher/people?query=role%3Aowner)
 
 Installers are built from this repository by GitHub Actions ([`release.yml`](.github/workflows/release.yml)); each release is approved by hand before signing.
 
-Privacy policy: [randomzeleff.github.io/confidentialite.html](https://randomzeleff.github.io/confidentialite.html) (in French). In short: no Tandem server, no telemetry; Tandem only talks to the services the features need (Microsoft/Xbox/Mojang, Modrinth, loader servers, GitHub for updates, the public iroh relays for playing together and friends, and the AI service you pick, if any).
+Privacy policy: [tandem-launcher.github.io/confidentialite.html](https://tandem-launcher.github.io/confidentialite.html) (in French). In short: no Tandem server, no telemetry; Tandem only talks to the services the features need (Microsoft/Xbox/Mojang, Modrinth, loader servers, GitHub for updates, the public iroh relays for playing together and friends, and the AI service you pick, if any).
 
 ## Privacy & security
 
